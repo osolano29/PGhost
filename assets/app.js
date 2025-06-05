@@ -1,102 +1,236 @@
 // ================ CONFIGURACIÓN ================
-// Importamos el ABI y dirección del contrato desde el JSON
-import GhostToken from './contracts/GhostToken.json';
-
-// Configuración de Polygon Amoy
-const AMOY_CONFIG = {
-    chainId: '0x13882', // 80002 en hexadecimal
-    chainName: 'Polygon Amoy Testnet',
-    nativeCurrency: {
-        name: 'MATIC',
-        symbol: 'MATIC',
-        decimals: 18
-    },
-    rpcUrls: ['https://rpc-amoy.polygon.technology/'],
-    blockExplorerUrls: ['https://amoy.polygonscan.com/']
-};
+// Importamos la configuración del contrato
+import { CONTRACT_CONFIG, AMOY_CONFIG } from './ghost-token.js';
 
 // Variables globales
-let web3;
-let contract;
-let userAddress;
-let isOwner = false;
-let isAuxiliary = false;
+let web3, contract, userAddress, isOwner = false, isAuxiliary = false;
+
+// Elementos del DOM
+const DOM = {
+    connectBtn: document.getElementById('connectWallet'),
+    transferBtn: document.getElementById('transferTokens'),
+    burnBtn: document.getElementById('burnTokens'),
+    mintBtn: document.getElementById('mintTokens'),
+    pauseWalletBtn: document.getElementById('pauseWallet'),
+    unpauseWalletBtn: document.getElementById('unpauseWallet'),
+    pauseContractBtn: document.getElementById('pauseContract'),
+    unpauseContractBtn: document.getElementById('unpauseContract'),
+    setAuxiliaryBtn: document.getElementById('setAuxiliaryBtn'),
+    claimOwnershipBtn: document.getElementById('claimOwnershipBtn'),
+    approveRecoveryBtn: document.getElementById('approveRecoveryBtn'),
+    executeRecoveryBtn: document.getElementById('executeRecoveryBtn'),
+    toggleAllowanceBtn: document.getElementById('toggleAllowanceBtn'),
+    walletStatus: document.getElementById('walletStatus'),
+    networkInfo: document.getElementById('networkInfo'),
+    tokenBalance: document.getElementById('tokenBalance'),
+    totalSupply: document.getElementById('totalSupply'),
+    contractStatus: document.getElementById('contractPausedStatus'),
+    walletStatusIndicator: document.getElementById('walletPausedStatus'),
+    auxiliaryAddress: document.getElementById('auxiliaryAddress'),
+    recoveryNominee: document.getElementById('recoveryNominee'),
+    recoveryDeadline: document.getElementById('recoveryDeadline'),
+    recoveryApproved: document.getElementById('recoveryApproved'),
+    loader: document.getElementById('loader')
+};
 
 // ================ FUNCIONES PRINCIPALES ================
-
-// Inicialización mejorada con detección robusta de MetaMask
-export async function initWeb3() {
-    // 1. Detección mejorada para todas las versiones de MetaMask
-    const ethereumProvider = detectMetaMask();
+export async function initApp() {
+    setupEventListeners();
     
-    if (!ethereumProvider) {
-        showMetaMaskModal();
-        return false;
+    // Solución para warning de postMessage en local
+    if (window.location.protocol === 'file:') {
+        console.warn('Modo local detectado - Algunas funciones pueden estar limitadas');
     }
+    
+    // Conexión automática si ya está conectado
+    if (window.ethereum?.selectedAddress) {
+        await connectWallet();
+    }
+}
 
+async function connectWallet() {
     try {
-        // 2. Configurar Web3
-        web3 = new Web3(ethereumProvider);
+        showLoader();
         
-        // 3. Conectar cuentas
-        const accounts = await connectAccounts(ethereumProvider);
-        if (!accounts || accounts.length === 0) {
-            throw new Error("No se obtuvieron cuentas");
+        // 1. Detección mejorada de MetaMask
+        const provider = detectProvider();
+        if (!provider) {
+            showMetaMaskModal();
+            return false;
         }
 
+        // 2. Configurar Web3 y conectar
+        web3 = new Web3(provider);
+        const accounts = await provider.request({ method: 'eth_requestAccounts' });
         userAddress = accounts[0];
-        updateUI(); // Actualizar UI inmediatamente
-
-        // 4. Configurar red y contrato
-        await setupNetwork();
-        contract = new web3.eth.Contract(GhostToken.abi, GhostToken.networks["80002"].address);
         
-        // 5. Cargar datos iniciales
+        // 3. Configurar red y contrato
+        await setupNetwork();
+        initContract();
+        
+        // 4. Cargar datos iniciales
         await loadInitialData();
         
-        console.log("Conexión exitosa con:", userAddress);
+        updateUI();
         return true;
         
     } catch (error) {
-        handleConnectionError(error);
+        handleError(error, "Error al conectar");
         return false;
+    } finally {
+        hideLoader();
+    }
+}
+
+// ================ FUNCIONES DEL CONTRATO ================
+
+// ---- Funciones de Lectura ----
+async function loadInitialData() {
+    try {
+        const [balance, supply, paused, walletPaused, auxiliary, recovery] = await Promise.all([
+            contract.methods.balanceOf(userAddress).call(),
+            contract.methods.totalSupply().call(),
+            contract.methods.paused().call(),
+            contract.methods.isWalletPaused(userAddress).call(),
+            contract.methods.auxiliaryOwner().call(),
+            contract.methods.recoveryStatus().call()
+        ]);
+        
+        // Actualizar UI con los datos
+        DOM.tokenBalance.textContent = `${web3.utils.fromWei(balance, 'ether')} GO`;
+        DOM.totalSupply.textContent = `${web3.utils.fromWei(supply, 'ether')} GO`;
+        DOM.contractStatus.textContent = paused ? '⛔ PAUSADO' : '✅ Activo';
+        DOM.walletStatusIndicator.textContent = walletPaused ? '⛔ PAUSADA' : '✅ Activa';
+        
+        // Verificar roles
+        const owner = await contract.methods.owner().call();
+        isOwner = userAddress.toLowerCase() === owner.toLowerCase();
+        isAuxiliary = userAddress.toLowerCase() === auxiliary.toLowerCase();
+        
+        // Mostrar/ocultar funciones según roles
+        toggleRoleSections();
+        
+        // Actualizar datos de recovery
+        updateRecoveryUI(recovery);
+        
+    } catch (error) {
+        handleError(error, "Error cargando datos iniciales");
+    }
+}
+
+// ---- Funciones de Escritura ----
+async function transferTokens() {
+    try {
+        const recipient = DOM.recipientAddress.value;
+        const amount = DOM.transferAmount.value;
+        
+        validateAddress(recipient);
+        validateAmount(amount);
+        
+        showLoader();
+        const tx = await contract.methods.transfer(
+            recipient, 
+            web3.utils.toWei(amount, 'ether')
+        ).send({ from: userAddress });
+        
+        showFeedback("Transferencia exitosa!");
+        await loadInitialData();
+        return tx;
+        
+    } catch (error) {
+        handleError(error, "Error en transferencia");
+    } finally {
+        hideLoader();
+    }
+}
+
+async function mintTokens() {
+    if (!isOwner) {
+        showFeedback("Solo el owner puede mintear tokens", "error");
+        return;
+    }
+    
+    try {
+        const recipient = DOM.mintAddress.value;
+        const amount = DOM.mintAmount.value;
+        
+        validateAddress(recipient);
+        validateAmount(amount);
+        
+        showLoader();
+        const tx = await contract.methods.mint(
+            recipient,
+            web3.utils.toWei(amount, 'ether')
+        ).send({ from: userAddress });
+        
+        showFeedback("Tokens minteados exitosamente!");
+        await loadInitialData();
+        return tx;
+        
+    } catch (error) {
+        handleError(error, "Error minteando tokens");
+    } finally {
+        hideLoader();
+    }
+}
+
+// ---- Sistema de Ownership ----
+async function setAuxiliaryOwner() {
+    try {
+        const newAuxiliary = DOM.newAuxiliary.value;
+        validateAddress(newAuxiliary);
+        
+        showLoader();
+        await contract.methods.setAuxiliaryOwner(newAuxiliary)
+            .send({ from: userAddress });
+        
+        showFeedback("Auxiliar actualizado correctamente");
+        await loadInitialData();
+        
+    } catch (error) {
+        handleError(error, "Error asignando auxiliar");
+    } finally {
+        hideLoader();
+    }
+}
+
+async function executeRecovery() {
+    try {
+        showLoader();
+        await contract.methods.executeRecovery()
+            .send({ from: userAddress });
+        
+        showFeedback("¡Ownership transferido exitosamente!");
+        await loadInitialData();
+        
+    } catch (error) {
+        handleError(error, "Error ejecutando recovery");
+    } finally {
+        hideLoader();
     }
 }
 
 // ================ FUNCIONES AUXILIARES ================
-
-function detectMetaMask() {
+function detectProvider() {
     if (window.ethereum) {
+        // Manejar múltiples proveedores
         if (window.ethereum.providers) {
             return window.ethereum.providers.find(p => p.isMetaMask) || window.ethereum;
         }
         return window.ethereum;
     }
     
-    if (window.web3 && window.web3.currentProvider && window.web3.currentProvider.isMetaMask) {
+    // Soporte para versiones antiguas
+    if (window.web3?.currentProvider?.isMetaMask) {
         return window.web3.currentProvider;
     }
     
     return null;
 }
 
-async function connectAccounts(provider) {
-    try {
-        return await provider.request({ method: 'eth_requestAccounts' });
-    } catch (error) {
-        console.log("Método moderno falló, intentando método legacy...");
-        try {
-            return await web3.eth.getAccounts();
-        } catch (legacyError) {
-            throw new Error("No se pudo conectar a las cuentas");
-        }
-    }
-}
-
 async function setupNetwork() {
     try {
         const chainId = await web3.eth.getChainId();
-        
         if (chainId !== 80002) {
             try {
                 await window.ethereum.request({
@@ -114,122 +248,107 @@ async function setupNetwork() {
                 }
             }
         }
+        DOM.networkInfo.innerHTML = `<span>Red: Polygon Amoy</span>`;
     } catch (error) {
-        console.error("Error configurando red:", error);
-        throw new Error("Error configurando la red");
+        handleError(error, "Error configurando red");
     }
 }
 
-// ================ FUNCIONES DEL CONTRATO ================
-
-// Funciones de lectura
-export async function getBalance() {
-    try {
-        const balance = await contract.methods.balanceOf(userAddress).call();
-        const formattedBalance = web3.utils.fromWei(balance, 'ether');
-        document.getElementById('tokenBalance').textContent = `${formattedBalance} GO`;
-        return formattedBalance;
-    } catch (error) {
-        console.error("Error obteniendo balance:", error);
-        document.getElementById('tokenBalance').textContent = "Error";
-        return "0";
-    }
+function initContract() {
+    contract = new web3.eth.Contract(
+        CONTRACT_CONFIG.abi,
+        CONTRACT_CONFIG.networks["80002"].address
+    );
 }
 
-export async function getTotalSupply() {
-    try {
-        const supply = await contract.methods.totalSupply().call();
-        const formattedSupply = web3.utils.fromWei(supply, 'ether');
-        document.getElementById('totalSupply').textContent = `${formattedSupply} GO`;
-        return formattedSupply;
-    } catch (error) {
-        console.error("Error obteniendo suministro:", error);
-        document.getElementById('totalSupply').textContent = "Error";
-        return "0";
-    }
+function toggleRoleSections() {
+    document.getElementById('ownerSection').style.display = isOwner ? 'block' : 'none';
+    document.getElementById('auxiliarySection').style.display = isAuxiliary ? 'block' : 'none';
 }
 
-// Funciones de escritura
-export async function transferTokens() {
-    const recipient = document.getElementById('recipientAddress').value;
-    const amount = document.getElementById('transferAmount').value;
-    
-    if (!web3.utils.isAddress(recipient)) {
-        alert("Dirección inválida");
-        return;
-    }
-    
-    if (!amount || isNaN(amount) || Number(amount) <= 0) {
-        alert("Cantidad inválida");
-        return;
-    }
-
-    try {
-        showLoader();
-        const amountInWei = web3.utils.toWei(amount, 'ether');
-        await contract.methods.transfer(recipient, amountInWei)
-            .send({ from: userAddress });
-        
-        alert("Transferencia exitosa!");
-        await getBalance();
-    } catch (error) {
-        console.error("Error en transferencia:", error);
-        alert(`Error: ${getUserFriendlyError(error)}`);
-    } finally {
-        hideLoader();
-    }
+function updateRecoveryUI([nominee, deadline, approved]) {
+    DOM.recoveryNominee.textContent = nominee === '0x0' ? 'Ninguno' : shortAddress(nominee);
+    DOM.recoveryDeadline.textContent = deadline === '0' ? 'N/A' : new Date(deadline * 1000).toLocaleString();
+    DOM.recoveryApproved.textContent = approved ? '✅ Aprobado' : '❌ No aprobado';
 }
 
 // ================ UTILIDADES ================
-
-function showLoader() {
-    document.getElementById('loader').style.display = 'flex';
+function setupEventListeners() {
+    // Conexión y operaciones básicas
+    DOM.connectBtn.addEventListener('click', connectWallet);
+    DOM.transferBtn.addEventListener('click', transferTokens);
+    DOM.burnBtn.addEventListener('click', burnTokens);
+    
+    // Funciones de owner
+    if (DOM.mintBtn) DOM.mintBtn.addEventListener('click', mintTokens);
+    if (DOM.pauseContractBtn) DOM.pauseContractBtn.addEventListener('click', () => togglePause(true));
+    if (DOM.unpauseContractBtn) DOM.unpauseContractBtn.addEventListener('click', () => togglePause(false));
+    
+    // Funciones de auxiliar
+    if (DOM.setAuxiliaryBtn) DOM.setAuxiliaryBtn.addEventListener('click', setAuxiliaryOwner);
+    if (DOM.claimOwnershipBtn) DOM.claimOwnershipBtn.addEventListener('click', claimOwnership);
+    
+    // Recovery
+    if (DOM.approveRecoveryBtn) DOM.approveRecoveryBtn.addEventListener('click', approveRecovery);
+    if (DOM.executeRecoveryBtn) DOM.executeRecoveryBtn.addEventListener('click', executeRecovery);
 }
 
-function hideLoader() {
-    document.getElementById('loader').style.display = 'none';
+function validateAddress(address) {
+    if (!web3.utils.isAddress(address)) {
+        throw new Error("Dirección inválida");
+    }
 }
 
-function updateUI() {
-    document.getElementById('walletAddress').textContent = shortAddress(userAddress);
-    document.getElementById('network').textContent = "Polygon Amoy Testnet";
+function validateAmount(amount) {
+    if (!amount || isNaN(amount) || Number(amount) <= 0) {
+        throw new Error("Cantidad inválida");
+    }
+}
+
+function showFeedback(message, type = "success") {
+    const feedbackEl = document.getElementById('feedback');
+    if (feedbackEl) {
+        feedbackEl.textContent = message;
+        feedbackEl.className = `feedback ${type}`;
+        setTimeout(() => feedbackEl.textContent = '', 5000);
+    } else {
+        alert(message);
+    }
+}
+
+function handleError(error, context = "") {
+    console.error(context, error);
+    
+    let message = error.message;
+    if (error.code === 4001) message = "Cancelado por el usuario";
+    else if (error.message.includes("user denied transaction")) message = "Transacción rechazada";
+    else if (error.message.includes("insufficient funds")) message = "Fondos insuficientes para gas";
+    
+    showFeedback(`${context}: ${message}`, "error");
 }
 
 function shortAddress(address) {
     return address ? `${address.substring(0, 6)}...${address.substring(38)}` : "N/A";
 }
 
-function getUserFriendlyError(error) {
-    if (error.message.includes("user denied transaction")) {
-        return "Transacción cancelada por el usuario";
-    }
-    if (error.message.includes("insufficient funds")) {
-        return "Fondos insuficientes para gas";
-    }
-    return error.message.split("(")[0].trim() || "Error desconocido";
+function showLoader() {
+    DOM.loader.style.display = 'flex';
 }
 
-// ================ INICIALIZACIÓN ================
-
-// Asignación de event listeners
-function setupEventListeners() {
-    document.getElementById('connectWallet').addEventListener('click', initWeb3);
-    document.getElementById('transferTokens').addEventListener('click', transferTokens);
-    document.getElementById('getBalance').addEventListener('click', getBalance);
-    // Agrega más listeners según necesites
+function hideLoader() {
+    DOM.loader.style.display = 'none';
 }
 
-// Inicialización cuando el DOM esté listo
-document.addEventListener('DOMContentLoaded', () => {
-    setupEventListeners();
-    
-    // Intento de conexión automática si ya está conectado
-    if (window.ethereum && window.ethereum.selectedAddress) {
-        initWeb3();
-    }
-});
+function updateUI() {
+    DOM.walletStatus.innerHTML = `<span>Conectado: ${shortAddress(userAddress)}</span>`;
+    DOM.connectBtn.disabled = true;
+    DOM.connectBtn.innerHTML = `<i class="fas fa-check-circle"></i> Conectado`;
+}
 
-// Escuchar cambios de cuenta/red
+// Inicialización
+document.addEventListener('DOMContentLoaded', initApp);
+
+// Manejo de cambios en la wallet
 if (window.ethereum) {
     window.ethereum.on('accountsChanged', (accounts) => {
         if (accounts.length > 0) {
@@ -238,8 +357,6 @@ if (window.ethereum) {
             loadInitialData();
         }
     });
-
-    window.ethereum.on('chainChanged', () => {
-        window.location.reload();
-    });
+    
+    window.ethereum.on('chainChanged', () => window.location.reload());
 }
