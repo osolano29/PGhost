@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GhostToken (GO) - Interfaz Completa</title>
+    <link rel="stylesheet" href="styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/web3@1.8.0/dist/web3.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header con información de conexión -->
+        <header class="header">
+            <h1><i class="fas fa-ghost"></i> GhostToken (GO)</h1>
+            <div class="wallet-info">
+                <p id="walletStatus"><i class="fas fa-wallet"></i> <span>No conectado</span></p>
+                <p id="networkInfo"><i class="fas fa-network-wired"></i> <span>Red: Desconocida</span></p>
+                <button id="connectWallet" class="btn-connect">
+                    <i class="fas fa-plug"></i> Conectar Wallet
+                </button>
+            </div>
+        </header>
+
+        <!-- Sección de Guía Rápida -->
+        <section class="guide-card">
+            <h2><i class="fas fa-info-circle"></i> Guía Rápida</h2>
+            <div class="guide-content">
+                <div class="guide-step">
+                    <span class="step-number">1</span>
+                    <p>Conecta tu wallet de MetaMask usando el botón superior</p>
+                </div>
+                <div class="guide-step">
+                    <span class="step-number">2</span>
+                    <p>Asegúrate de estar en <strong>Polygon Amoy Testnet</strong></p>
+                </div>
+                <div class="guide-step">
+                    <span class="step-number">3</span>
+                    <p>Usa las secciones según tus permisos (Usuario normal, Owner o Auxiliar)</p>
+                </div>
+            </div>
+            <div class="network-help">
+                <p><strong>¿Necesitas MATIC de prueba?</strong> Visita el faucet oficial de Polygon.</p>
+                <a href="https://faucet.polygon.technology/" target="_blank" class="btn-help">
+                    <i class="fas fa-faucet"></i> Obtener MATIC Testnet
+                </a>
+            </div>
+        </section>
+
+        <!-- Sección de Información del Token -->
+        <section class="card">
+            <h2><i class="fas fa-coins"></i> Información del Token</h2>
+            <div class="info-grid">
+                <div class="info-item">
+                    <label>Tu Balance:</label>
+                    <div class="value" id="tokenBalance">0 GO</div>
+                    <button id="refreshBalance" class="btn-icon" title="Actualizar balance">
+                        <i class="fas fa-sync-alt"></i>
+                    </button>
+                </div>
+                <div class="info-item">
+                    <label>Suministro Total:</label>
+                    <div class="value" id="totalSupply">-</div>
+                </div>
+                <div class="info-item">
+                    <label>Estado del Contrato:</label>
+                    <div class="value" id="contractPausedStatus">-</div>
+                </div>
+                <div class="info-item">
+                    <label>Tu Estado:</label>
+                    <div class="value" id="walletPausedStatus">-</div>
+                </div>
+            </div>
+            <div class="info-tooltip">
+                <i class="fas fa-info-circle"></i>
+                <span class="tooltip-text">
+                    GhostToken (GO) es un token ERC-20 con funciones avanzadas de seguridad y control.
+                </span>
+            </div>
+        </section>
+
+        <!-- Sección de Transferencias -->
+        <section class="card">
+            <h2><i class="fas fa-exchange-alt"></i> Transferencias</h2>
+            <div class="form-group">
+                <label for="recipientAddress">Dirección Destino:</label>
+                <input type="text" id="recipientAddress" placeholder="0x..." pattern="^0x[a-fA-F0-9]{40}$">
+                <div class="input-help">
+                    <i class="fas fa-question-circle"></i>
+                    <div class="help-text">
+                        Dirección Ethereum válida (0x seguido de 40 caracteres hexadecimales).
+                        Ejemplo: 0x742d35Cc6634C0532925a3b844Bc454e4438f44e
+                    </div>
+                </div>
+            </div>
+            <div class="form-group">
+                <label for="transferAmount">Cantidad GO:</label>
+                <input type="number" id="transferAmount" placeholder="Ej: 10.5" min="0" step="0.000001">
+                <div class="input-help">
+                    <i class="fas fa-question-circle"></i>
+                    <div class="help-text">
+                        1 GO = 10^18 unidades. El gas fee se pagará en MATIC.
+                    </div>
+                </div>
+            </div>
+            <button id="transferTokens" class="btn-primary">
+                <i class="fas fa-paper-plane"></i> Transferir GO
+            </button>
+            <div class="transaction-help">
+                <p><i class="fas fa-exclamation-triangle"></i> Verifica dos veces la dirección antes de enviar. Las transacciones son irreversibles.</p>
+            </div>
+        </section>
+
+        <!-- Sección de Quemado (Burn) -->
+        <section class="card">
+            <h2><i class="fas fa-fire"></i> Quemar Tokens</h2>
+            <div class="form-group">
+                <label for="burnAmount">Cantidad a Quemar:</label>
+                <input type="number" id="burnAmount" placeholder="Ej: 5.2" min="0" step="0.000001">
+                <div class="input-help">
+                    <i class="fas fa-question-circle"></i>
+                    <div class="help-text">
+                        Quemar tokens los elimina permanentemente de circulación, reduciendo el suministro total.
+                    </div>
+                </div>
+            </div>
+            <button id="burnTokens" class="btn-warning">
+                <i class="fas fa-fire"></i> Quemar GO
+            </button>
+            <div class="warning-box">
+                <i class="fas fa-exclamation-circle"></i>
+                <p>¡Esta acción es irreversible! Los tokens quemados no podrán recuperarse.</p>
+            </div>
+        </section>
+
+        <!-- Sección de Seguridad -->
+        <section class="card">
+            <h2><i class="fas fa-shield-alt"></i> Seguridad</h2>
+            <div class="security-buttons">
+                <button id="pauseWallet" class="btn-warning">
+                    <i class="fas fa-pause"></i> Pausar mi Wallet
+                </button>
+                <button id="unpauseWallet" class="btn-success">
+                    <i class="fas fa-play"></i> Despausar mi Wallet
+                </button>
+            </div>
+            <div class="info-box">
+                <p><i class="fas fa-info-circle"></i> Al pausar tu wallet:</p>
+                <ul>
+                    <li>Bloquearás todas las transferencias entrantes y salientes</li>
+                    <li>No podrás quemar tokens</li>
+                    <li>Puedes despausar en cualquier momento</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Sección de Owner (visible solo para el owner) -->
+        <section class="card owner-section" id="ownerSection">
+            <h2><i class="fas fa-crown"></i> Funciones de Owner</h2>
+            
+            <div class="tabs">
+                <button class="tab-btn active" data-tab="mint-tab">Mint</button>
+                <button class="tab-btn" data-tab="pause-tab">Pausar Contrato</button>
+                <button class="tab-btn" data-tab="whitelist-tab">Whitelist</button>
+                <button class="tab-btn" data-tab="recovery-tab">Recovery</button>
+            </div>
+            
+            <!-- Subsección Mint -->
+            <div class="tab-content active" id="mint-tab">
+                <h3><i class="fas fa-coins"></i> Crear Nuevos Tokens</h3>
+                <div class="form-group">
+                    <label for="mintAddress">Dirección Destino:</label>
+                    <input type="text" id="mintAddress" placeholder="0x..." pattern="^0x[a-fA-F0-9]{40}$">
+                </div>
+                <div class="form-group">
+                    <label for="mintAmount">Cantidad GO:</label>
+                    <input type="number" id="mintAmount" placeholder="Ej: 1000" min="0">
+                </div>
+                <button id="mintTokens" class="btn-primary">
+                    <i class="fas fa-magic"></i> Mintear Tokens
+                </button>
+                <div class="info-box">
+                    <p><i class="fas fa-exclamation-triangle"></i> Solo el owner puede crear nuevos tokens. Esto afectará el suministro total.</p>
+                </div>
+            </div>
+            
+            <!-- Subsección Pausa Global -->
+            <div class="tab-content" id="pause-tab">
+                <h3><i class="fas fa-globe"></i> Control Global</h3>
+                <div class="button-group">
+                    <button id="pauseContract" class="btn-warning">
+                        <i class="fas fa-pause"></i> Pausar Contrato
+                    </button>
+                    <button id="unpauseContract" class="btn-success">
+                        <i class="fas fa-play"></i> Despausar Contrato
+                    </button>
+                </div>
+                <div class="warning-box">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <p>Al pausar el contrato, se bloquearán TODAS las transferencias y operaciones en el contrato inteligente hasta que se despause.</p>
+                </div>
+            </div>
+            
+            <!-- Subsección Whitelist -->
+            <div class="tab-content" id="whitelist-tab">
+                <h3><i class="fas fa-list-check"></i> Whitelist de Contratos</h3>
+                <div class="form-group">
+                    <label for="contractAddress">Dirección del Contrato:</label>
+                    <input type="text" id="contractAddress" placeholder="0x..." pattern="^0x[a-fA-F0-9]{40}$">
+                </div>
+                <div class="form-group">
+                    <label class="toggle-label">
+                        <input type="checkbox" id="allowContractToggle">
+                        <span class="toggle-slider"></span>
+                        <span class="toggle-text">Permitir este contrato</span>
+                    </label>
+                </div>
+                <button id="toggleAllowanceBtn" class="btn-secondary">
+                    <i class="fas fa-save"></i> Actualizar Permiso
+                </button>
+                <div class="info-box">
+                    <p>Contratos permitidos actualmente:</p>
+                    <ul id="allowedContractsList">
+                        <li>Usa el formulario para añadir contratos</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <!-- Subsección Recovery -->
+            <div class="tab-content" id="recovery-tab">
+                <h3><i class="fas fa-user-shield"></i> Sistema de Recovery</h3>
+                <div class="recovery-status">
+                    <div class="status-item">
+                        <label>Nominado Actual:</label>
+                        <span id="recoveryNominee">Ninguno</span>
+                    </div>
+                    <div class="status-item">
+                        <label>Plazo:</label>
+                        <span id="recoveryDeadline">-</span>
+                    </div>
+                    <div class="status-item">
+                        <label>Aprobado:</label>
+                        <span id="recoveryApproved">-</span>
+                    </div>
+                </div>
+                <button id="approveRecoveryBtn" class="btn-secondary">
+                    <i class="fas fa-check-circle"></i> Aprobar/Rechazar Recovery
+                </button>
+                <div class="info-box">
+                    <p><i class="fas fa-info-circle"></i> El proceso de recovery:</p>
+                    <ol>
+                        <li>El auxiliar inicia el proceso</li>
+                        <li>El owner actual debe aprobarlo</li>
+                        <li>Después de 7 días, el nominado puede completarlo</li>
+                    </ol>
+                </div>
+            </div>
+        </section>
+
+        <!-- Sección de Auxiliar (visible solo para auxiliary owner) -->
+        <section class="card auxiliary-section" id="auxiliarySection">
+            <h2><i class="fas fa-user-cog"></i> Funciones de Auxiliar</h2>
+            
+            <div class="form-group">
+                <label for="newAuxiliary">Nuevo Auxiliar:</label>
+                <input type="text" id="newAuxiliary" placeholder="0x..." pattern="^0x[a-fA-F0-9]{40}$">
+                <div class="input-help">
+                    <i class="fas fa-question-circle"></i>
+                    <div class="help-text">
+                        Solo el owner actual puede asignar un nuevo auxiliar. El auxiliar puede iniciar el proceso de recovery.
+                    </div>
+                </div>
+            </div>
+            <button id="setAuxiliaryBtn" class="btn-secondary">
+                <i class="fas fa-user-edit"></i> Asignar Auxiliar
+            </button>
+            
+            <div class="current-auxiliary">
+                <p>Auxiliar Actual: <span id="auxiliaryAddress">No asignado</span></p>
+            </div>
+            
+            <div class="recovery-actions">
+                <button id="claimOwnershipBtn" class="btn-warning">
+                    <i class="fas fa-user-lock"></i> Iniciar Recovery
+                </button>
+                <button id="executeRecoveryBtn" class="btn-primary">
+                    <i class="fas fa-key"></i> Completar Recovery
+                </button>
+            </div>
+            
+            <div class="warning-box">
+                <i class="fas fa-exclamation-triangle"></i>
+                <p>El proceso de recovery tarda 7 días y requiere aprobación del owner actual. Usar solo en casos de emergencia.</p>
+            </div>
+        </section>
+
+        <!-- Loader para transacciones -->
+        <div id="loader" class="loader-container">
+            <div class="loader">
+                <div class="spinner"></div>
+                <p>Procesando transacción...</p>
+                <p class="loader-small">Por favor espera y no cierres esta página</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
