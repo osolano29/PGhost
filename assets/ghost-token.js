@@ -1,7 +1,15 @@
-// Exporta los datos del contrato como módulo
-export const GhostToken = {
-  "abi": [  "contractName": "GhostToken",
-  "abi": [{
+// Datos del contrato GhostToken (GO)
+export const CONTRACT_CONFIG = {
+  abi: [
+    {
+      "inputs": [
+        {"internalType": "string","name": "tokenName","type": "string"},
+        {"internalType": "string","name": "tokenSymbol","type": "string"}
+      ],
+      "stateMutability": "nonpayable",
+      "type": "constructor"
+    },
+    {
 		"inputs": [
 			{
 				"internalType": "address",
@@ -836,22 +844,23 @@ export const GhostToken = {
 		],
 		"stateMutability": "view",
 		"type": "function"
-	}], // ABI completo aquí
-  "networks": {
-    "80002": {
-      "address": "0x742d35Cc6634C0532925a3b844Bc454e4438f44e" // Tu dirección en Amoy
+	}// ... Pega aquí TODO el ABI de tu contrato
+  ],
+  networks: {
+    "80002": { // Polygon Amoy
+      address: "0x742d35Cc6634C0532925a3b844Bc454e4438f44e" // Tu dirección de contrato en Amoy
     }
   }
 };
 
 export const AMOY_CONFIG = {
-    chainId: '0x13882',
-    chainName: 'Polygon Amoy Testnet',
-    nativeCurrency: {
-        name: 'MATIC',
-        symbol: 'MATIC',
-        decimals: 18
-    },
-    rpcUrls: ['https://rpc-amoy.polygon.technology/'],
-    blockExplorerUrls: ['https://amoy.polygonscan.com/']
+  chainId: '0x13882', // 80002 en hexadecimal
+  chainName: 'Polygon Amoy Testnet',
+  nativeCurrency: {
+    name: 'MATIC',
+    symbol: 'MATIC',
+    decimals: 18
+  },
+  rpcUrls: ['https://rpc-amoy.polygon.technology/'],
+  blockExplorerUrls: ['https://amoy.polygonscan.com/']
 };
