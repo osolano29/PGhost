@@ -3,10 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GhostToken (GO) - Interfaz Completa</title>
-    <link rel="stylesheet" href="styles.css">
-    <script src="https://cdn.jsdelivr.net/npm/web3@1.8.0/dist/web3.min.js"></script>
+    <title>GhostToken (GO) - Interfaz Web3</title>
+    <link rel="stylesheet" href="./assets/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/web3@1.8.0/dist/web3.min.js"></script>
 </head>
 <body>
     <div class="container">
@@ -21,31 +21,6 @@
                 </button>
             </div>
         </header>
-
-        <!-- Sección de Guía Rápida -->
-        <section class="guide-card">
-            <h2><i class="fas fa-info-circle"></i> Guía Rápida</h2>
-            <div class="guide-content">
-                <div class="guide-step">
-                    <span class="step-number">1</span>
-                    <p>Conecta tu wallet de MetaMask usando el botón superior</p>
-                </div>
-                <div class="guide-step">
-                    <span class="step-number">2</span>
-                    <p>Asegúrate de estar en <strong>Polygon Amoy Testnet</strong></p>
-                </div>
-                <div class="guide-step">
-                    <span class="step-number">3</span>
-                    <p>Usa las secciones según tus permisos (Usuario normal, Owner o Auxiliar)</p>
-                </div>
-            </div>
-            <div class="network-help">
-                <p><strong>¿Necesitas MATIC de prueba?</strong> Visita el faucet oficial de Polygon.</p>
-                <a href="https://faucet.polygon.technology/" target="_blank" class="btn-help">
-                    <i class="fas fa-faucet"></i> Obtener MATIC Testnet
-                </a>
-            </div>
-        </section>
 
         <!-- Sección de Información del Token -->
         <section class="card">
@@ -71,12 +46,6 @@
                     <div class="value" id="walletPausedStatus">-</div>
                 </div>
             </div>
-            <div class="info-tooltip">
-                <i class="fas fa-info-circle"></i>
-                <span class="tooltip-text">
-                    GhostToken (GO) es un token ERC-20 con funciones avanzadas de seguridad y control.
-                </span>
-            </div>
         </section>
 
         <!-- Sección de Transferencias -->
@@ -85,29 +54,18 @@
             <div class="form-group">
                 <label for="recipientAddress">Dirección Destino:</label>
                 <input type="text" id="recipientAddress" placeholder="0x..." pattern="^0x[a-fA-F0-9]{40}$">
-                <div class="input-help">
-                    <i class="fas fa-question-circle"></i>
-                    <div class="help-text">
-                        Dirección Ethereum válida (0x seguido de 40 caracteres hexadecimales).
-                        Ejemplo: 0x742d35Cc6634C0532925a3b844Bc454e4438f44e
-                    </div>
-                </div>
+                <small class="input-hint">Ejemplo: 0x742d35Cc6634C0532925a3b844Bc454e4438f44e</small>
             </div>
             <div class="form-group">
                 <label for="transferAmount">Cantidad GO:</label>
                 <input type="number" id="transferAmount" placeholder="Ej: 10.5" min="0" step="0.000001">
-                <div class="input-help">
-                    <i class="fas fa-question-circle"></i>
-                    <div class="help-text">
-                        1 GO = 10^18 unidades. El gas fee se pagará en MATIC.
-                    </div>
-                </div>
+                <small class="input-hint">1 GO = 10<sup>18</sup> unidades</small>
             </div>
             <button id="transferTokens" class="btn-primary">
                 <i class="fas fa-paper-plane"></i> Transferir GO
             </button>
-            <div class="transaction-help">
-                <p><i class="fas fa-exclamation-triangle"></i> Verifica dos veces la dirección antes de enviar. Las transacciones son irreversibles.</p>
+            <div class="info-box">
+                <p><i class="fas fa-info-circle"></i> Verifica la dirección antes de enviar. Las transacciones son irreversibles.</p>
             </div>
         </section>
 
@@ -117,15 +75,118 @@
             <div class="form-group">
                 <label for="burnAmount">Cantidad a Quemar:</label>
                 <input type="number" id="burnAmount" placeholder="Ej: 5.2" min="0" step="0.000001">
-                <div class="input-help">
-                    <i class="fas fa-question-circle"></i>
-                    <div class="help-text">
-                        Quemar tokens los elimina permanentemente de circulación, reduciendo el suministro total.
-                    </div>
-                </div>
+                <small class="input-hint">Reduce el suministro total permanentemente</small>
             </div>
             <button id="burnTokens" class="btn-warning">
                 <i class="fas fa-fire"></i> Quemar GO
+            </button>
+            <div class="warning-box">
+                <i class="fas fa-exclamation-triangle"></i>
+                <p>¡Esta acción es irreversible! Los tokens quemados no podrán recuperarse.</p>
+            </div>
+        </section>
+
+        <!-- Sección de Seguridad -->
+        <section class="card">
+            <h2><i class="fas fa-shield-alt"></i> Seguridad</h2>
+            <div class="button-group">
+                <button id="pauseWallet" class="btn-warning">
+                    <i class="fas fa-pause"></i> Pausar mi Wallet
+                </button>
+                <button id="unpauseWallet" class="btn-success">
+                    <i class="fas fa-play"></i> Despausar mi Wallet
+                </button>
+            </div>
+            <div class="info-box">
+                <p><i class="fas fa-info-circle"></i> Al pausar tu wallet:</p>
+                <ul>
+                    <li>Bloquearás todas las transferencias</li>
+                    <li>No podrás quemar tokens</li>
+                    <li>Puedes despausar cuando quieras</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Sección de Owner (visible solo para el owner) -->
+        <section class="card owner-section" id="ownerSection">
+            <h2><i class="fas fa-crown"></i> Funciones de Owner</h2>
+            
+            <div class="tabs">
+                <button class="tab-btn active" data-tab="mint-tab">Mint</button>
+                <button class="tab-btn" data-tab="pause-tab">Pausar Contrato</button>
+            </div>
+            
+            <!-- Subsección Mint -->
+            <div class="tab-content active" id="mint-tab">
+                <div class="form-group">
+                    <label for="mintAddress">Dirección Destino:</label>
+                    <input type="text" id="mintAddress" placeholder="0x..." pattern="^0x[a-fA-F0-9]{40}$">
+                </div>
+                <div class="form-group">
+                    <label for="mintAmount">Cantidad GO:</label>
+                    <input type="number" id="mintAmount" placeholder="Ej: 1000" min="0">
+                </div>
+                <button id="mintTokens" class="btn-primary">
+                    <i class="fas fa-magic"></i> Mintear Tokens
+                </button>
+                <div class="info-box">
+                    <p><i class="fas fa-exclamation-triangle"></i> Solo el owner puede crear nuevos tokens.</p>
+                </div>
+            </div>
+            
+            <!-- Subsección Pausa Global -->
+            <div class="tab-content" id="pause-tab">
+                <div class="button-group">
+                    <button id="pauseContract" class="btn-warning">
+                        <i class="fas fa-pause"></i> Pausar Contrato
+                    </button>
+                    <button id="unpauseContract" class="btn-success">
+                        <i class="fas fa-play"></i> Despausar Contrato
+                    </button>
+                </div>
+                <div class="warning-box">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <p>Al pausar el contrato, se bloquearán TODAS las transferencias.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Loader para transacciones -->
+        <div id="loader" class="loader-container">
+            <div class="loader">
+                <div class="spinner"></div>
+                <p>Procesando transacción...</p>
+                <p class="loader-small">Por favor espera y no cierres esta página</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script type="module" src="./assets/app.js"></script>
+    <script>
+        // Manejo básico de pestañas para la sección de owner
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const tabId = btn.getAttribute('data-tab');
+                
+                // Oculta todos los contenidos
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.classList.remove('active');
+                });
+                
+                // Desactiva todos los botones
+                document.querySelectorAll('.tab-btn').forEach(tabBtn => {
+                    tabBtn.classList.remove('active');
+                });
+                
+                // Activa el seleccionado
+                document.getElementById(tabId).classList.add('active');
+                btn.classList.add('active');
+            });
+        });
+    </script>
+</body>
+</html>
             </button>
             <div class="warning-box">
                 <i class="fas fa-exclamation-circle"></i>
