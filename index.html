@@ -3,28 +3,53 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GhostToken (GO) - Plataforma Completa</title>
+    <title>GhostToken (GO) - Administración Completa</title>
     <link rel="stylesheet" href="./assets/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
 </head>
 <body>
     <div class="container">
-        <!-- Header con Estado de Conexión -->
+        <!-- Header Mejorado con Estado de Conexión Unificado -->
         <header class="header">
             <div class="header-brand">
                 <h1><i class="fas fa-ghost"></i> GhostToken (GO)</h1>
-                <p class="network-badge" id="networkIndicator">🔴 Sin conexión</p>
             </div>
-            <div class="wallet-connect">
-                <div id="walletInfo" class="wallet-info">
-                    <span id="walletAddress">No conectado</span>
-                    <span id="walletStatus" class="status-dot"></span>
+            
+            <div class="connection-status-container">
+                <div class="connection-status-badge disconnected" id="networkStatus">
+                    <span class="status-indicator disconnected"></span>
+                    <span id="networkStatusText">Desconectado</span>
                 </div>
+                
+                <div class="wallet-info" id="walletInfo" style="display:none;">
+                    <span class="wallet-address" id="walletAddress"></span>
+                    <button id="disconnectWallet" class="btn-connect">
+                        <i class="fas fa-plug"></i> Desconectar
+                    </button>
+                </div>
+                
                 <button id="connectWallet" class="btn-connect">
                     <i class="fas fa-plug"></i> Conectar Wallet
                 </button>
             </div>
         </header>
+
+        <!-- Loader Global -->
+        <div id="loader" class="loader-overlay">
+            <div class="loader-content">
+                <div class="loader-spinner"></div>
+                <p id="loaderText">Procesando transacción...</p>
+                <p class="loader-subtext">Por favor espera y no cierres esta página</p>
+            </div>
+        </div>
+
+        <!-- Notificación Flotante -->
+        <div id="notification" class="notification">
+            <div class="notification-content">
+                <span id="notificationMessage"></span>
+            </div>
+        </div>
 
         <!-- Panel de Información del Token -->
         <section class="info-panel">
@@ -46,9 +71,9 @@
             </div>
 
             <div class="info-card">
-                <h2><i class="fas fa-network-wired"></i> Red</h2>
-                <div class="info-value" id="networkInfo">Polygon Amoy</div>
-                <div class="info-hint">Testnet de Polygon</div>
+                <h2><i class="fas fa-network-wired"></i> Estado del Contrato</h2>
+                <div class="info-value" id="contractPausedStatus">-</div>
+                <div class="info-hint">Estado actual del contrato</div>
             </div>
         </section>
 
@@ -123,7 +148,7 @@
             </div>
 
             <button id="burnTokens" class="btn-warning">
-                <i class="fas fa-fire"></i> Quemar Tokens Permanentemente
+                <i class="fas fa-fire"></i> Quemar Tokens
             </button>
 
             <div class="burn-warning">
@@ -137,7 +162,7 @@
             </div>
         </section>
 
-        <!-- Sección de Seguridad -->
+        <!-- Sección de Seguridad de Wallet -->
         <section class="action-card security-card">
             <div class="card-header">
                 <h2><i class="fas fa-shield-alt"></i> Seguridad de Wallet</h2>
@@ -152,12 +177,8 @@
 
             <div class="security-status">
                 <div class="status-item">
-                    <span>Estado actual:</span>
-                    <span id="walletPausedStatus" class="status-badge">Cargando...</span>
-                </div>
-                <div class="status-item">
-                    <span>Contrato:</span>
-                    <span id="contractPausedStatus" class="status-badge">Cargando...</span>
+                    <span>Estado de tu Wallet:</span>
+                    <span id="walletPausedStatus" class="status-badge">-</span>
                 </div>
             </div>
 
@@ -254,31 +275,35 @@
                 </div>
             </div>
 
-            <!-- Pestaña Recovery (Modificada) -->
+            <!-- Pestaña Recovery -->
             <div id="recovery-tab" class="tab-content">
-                <div class="recovery-status">
-                    <div class="status-item">
-                        <span>Nominado Actual:</span>
-                        <span id="recoveryNominee">Ninguno</span>
+                <div class="recovery-grid">
+                    <div class="recovery-item">
+                        <span class="recovery-label">Nominado Actual:</span>
+                        <span class="recovery-value" id="recoveryNominee">Ninguno</span>
                     </div>
-                    <div class="status-item">
-                        <span>Plazo:</span>
-                        <span id="recoveryDeadline">-</span>
+                    <div class="recovery-item">
+                        <span class="recovery-label">Plazo:</span>
+                        <span class="recovery-value" id="recoveryDeadline">-</span>
                     </div>
-                    <div class="status-item">
-                        <span>Aprobado:</span>
-                        <span id="recoveryApproved">-</span>
+                    <div class="recovery-item">
+                        <span class="recovery-label">Aprobado:</span>
+                        <span class="recovery-value" id="recoveryApproved">-</span>
                     </div>
-                    <!-- Línea insertada para mostrar el tiempo restante -->
-                    <div class="status-item">
-                        <span>Tiempo Restante:</span>
-                        <span id="recoveryRemainingTime">-</span>
+                    <div class="recovery-item">
+                        <span class="recovery-label">Tiempo Restante:</span>
+                        <span class="recovery-value" id="recoveryRemainingTime">-</span>
                     </div>
                 </div>
 
-                <button id="approveRecovery" class="btn-secondary">
-                    <i class="fas fa-check-circle"></i> Gestionar Recovery
-                </button>
+                <div class="button-group">
+                    <button id="approveRecoveryBtn" class="btn-secondary">
+                        <i class="fas fa-check-circle"></i> Aprobar Recovery
+                    </button>
+                    <button id="executeRecoveryBtn" class="btn-warning">
+                        <i class="fas fa-user-shield"></i> Ejecutar Recovery
+                    </button>
+                </div>
 
                 <div class="recovery-info">
                     <p><i class="fas fa-info-circle"></i> El proceso de recovery:</p>
@@ -312,10 +337,10 @@
             </div>
 
             <div class="button-group">
-                <button id="setAuxiliary" class="btn-secondary">
+                <button id="setAuxiliaryBtn" class="btn-secondary">
                     <i class="fas fa-save"></i> Actualizar Auxiliar
                 </button>
-                <button id="claimOwnership" class="btn-warning">
+                <button id="claimOwnershipBtn" class="btn-warning">
                     <i class="fas fa-user-lock"></i> Iniciar Recovery
                 </button>
             </div>
@@ -329,21 +354,15 @@
                 </ul>
             </div>
         </section>
+    </div>
 
-        <!-- Loader Global -->
-        <div id="loader" class="loader-overlay">
-            <div class="loader-content">
-                <div class="loader-spinner"></div>
-                <p id="loaderText">Procesando transacción...</p>
-                <p class="loader-subtext">Por favor espera y no cierres esta página</p>
-            </div>
-        </div>
-
-        <!-- Notificación Flotante -->
-        <div id="notification" class="notification">
-            <div class="notification-content">
-                <span id="notificationMessage"></span>
-            </div>
+    <!-- Modal para MetaMask -->
+    <div id="metaMaskModal" class="modal">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>MetaMask no detectado</h2>
+            <p>Para usar esta DApp necesitas instalar MetaMask.</p>
+            <a href="https://metamask.io/" target="_blank" class="btn-primary">Instalar MetaMask</a>
         </div>
     </div>
 
