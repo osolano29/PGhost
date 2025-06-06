@@ -356,15 +356,25 @@
         </section>
     </div>
 
-    <!-- Modal para MetaMask -->
-    <div id="metaMaskModal" class="modal">
-        <div class="modal-content">
-            <span class="close">&times;</span>
-            <h2>MetaMask no detectado</h2>
-            <p>Para usar esta DApp necesitas instalar MetaMask.</p>
-            <a href="https://metamask.io/" target="_blank" class="btn-primary">Instalar MetaMask</a>
-        </div>
+<!-- Modal para MetaMask (debe estar fuera del container principal) -->
+<div id="metaMaskModal" class="modal" style="display: none;">
+    <div class="modal-content">
+        <span class="close">&times;</span>
+        <h2>MetaMask no detectado</h2>
+        <p>Para usar esta DApp necesitas instalar MetaMask.</p>
+        <a href="https://metamask.io/" target="_blank" class="btn-primary">
+            Instalar MetaMask
+        </a>
+        <p class="modal-alternative">
+            Si ya lo tienes instalado, asegúrate de:
+        </p>
+        <ul>
+            <li>Estar usando un navegador compatible</li>
+            <li>Tener la extensión activada</li>
+            <li>Actualizar a la última versión</li>
+        </ul>
     </div>
+</div>
 
     <!-- Importación de Web3 -->
     <script src="https://cdn.jsdelivr.net/npm/web3@1.8.0/dist/web3.min.js"></script>
