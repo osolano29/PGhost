@@ -848,7 +848,7 @@ export const CONTRACT_CONFIG = {
   ],
   networks: {
     "80002": { // Polygon Amoy
-      address: "0x742d35Cc6634C0532925a3b844Bc454e4438f44e" // Tu dirección de contrato en Amoy
+      address: "0x86515211ca4BaD6bF76dE30c86cB5D972b8be95C" // Tu dirección de contrato en Amoy
     }
   }
 };
