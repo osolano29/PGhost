@@ -67,22 +67,30 @@ const DOM = {
 
 // ================ INICIALIZACIÓN ================
 export async function initApp() {
+    console.log("Inicializando aplicación..."); // Debug
+    
     if (!verifyCriticalDOM()) {
         console.error("Elementos críticos del DOM no encontrados");
+        showNotification("Error inicializando la aplicación", "error");
         return;
     }
 
+    console.log("Configurando event listeners..."); // Debug
     setupEventListeners();
     setupModalCloseButton();
+    setupWalletListeners(); // Añadir esta línea
     
     // Verificación inicial silenciosa
     try {
+        console.log("Verificando conexión existente..."); // Debug
         if (window.ethereum?.selectedAddress) {
             await connectWallet(true); // Modo silencioso
+            console.log("Conexión automática exitosa"); // Debug
         }
     } catch (e) {
         console.log("Verificación inicial fallida:", e.message);
     }
+    console.log("Inicialización completada"); // Debug
 }
 
 function verifyCriticalDOM() {
@@ -112,29 +120,41 @@ function setupModalCloseButton() {
 // ================ GESTIÓN DE CONEXIÓN ================
 async function connectWallet(silent = false) {
     try {
+        console.log("Iniciando conexión..."); // Debug
         if (!silent) showLoader("Conectando con MetaMask...");
         
+        console.log("Detectando proveedor..."); // Debug
         const provider = detectProvider();
+        console.log("Proveedor detectado:", provider ? "Sí" : "No"); // Debug
+        
         if (!provider) {
+            console.log("Mostrando modal de MetaMask"); // Debug
             if (!silent && !isMetaMaskInstalled()) {
                 showMetaMaskModal();
-                throw new Error("MetaMask no detectado");
             }
-            throw new Error("Proveedor no disponible");
+            throw new Error("MetaMask no detectado");
         }
 
+        console.log("Configurando Web3..."); // Debug
         web3 = new Web3(provider);
+        
+        console.log("Solicitando cuentas..."); // Debug
         const accounts = await provider.request({ 
             method: 'eth_requestAccounts' 
         }).catch(err => {
+            console.error("Error solicitando cuentas:", err); // Debug
             throw new Error("El usuario rechazó la conexión");
         });
+        
+        console.log("Cuentas obtenidas:", accounts); // Debug
         
         if (!accounts?.length) {
             throw new Error("No se obtuvieron cuentas");
         }
         
         userAddress = accounts[0];
+        console.log("Usuario conectado:", userAddress); // Debug
+        
         await setupNetwork();
         initContract();
         await loadInitialData();
@@ -144,6 +164,7 @@ async function connectWallet(silent = false) {
         return true;
         
     } catch (error) {
+        console.error("Error en connectWallet:", error); // Debug
         if (!silent) {
             handleError(error, "Error al conectar");
         }
@@ -598,7 +619,17 @@ async function claimOwnership() {
 
 // ================ FUNCIONES AUXILIARES ================
 function setupEventListeners() {
+    console.log("Configurando listeners..."); // Debug
     // Conexión
+    if (DOM.connectWallet) {
+        console.log("Registrando listener para connectWallet"); // Debug
+        DOM.connectWallet.addEventListener('click', async () => {
+            console.log("Click en Conectar Wallet detectado"); // Debug
+            await connectWallet();
+        });
+    } else {
+        console.error("Elemento connectWallet no encontrado"); // Debug
+    }
     if (DOM.connectWallet) DOM.connectWallet.addEventListener('click', connectWallet);
     if (DOM.disconnectWallet) DOM.disconnectWallet.addEventListener('click', disconnectWallet);
     if (DOM.refreshBalance) DOM.refreshBalance.addEventListener('click', loadInitialData);
