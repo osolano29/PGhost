@@ -30,7 +30,14 @@ const DOM = {
     recoveryNominee: document.getElementById('recoveryNominee'),
     recoveryDeadline: document.getElementById('recoveryDeadline'),
     recoveryApproved: document.getElementById('recoveryApproved'),
-    loader: document.getElementById('loader')
+    recoveryRemainingTime: document.getElementById('recoveryRemainingTime'), // Nuevo elemento
+    loader: document.getElementById('loader'),
+    // Elementos de formulario
+    recipientAddress: document.getElementById('recipientAddress'),
+    transferAmount: document.getElementById('transferAmount'),
+    mintAddress: document.getElementById('mintAddress'),
+    mintAmount: document.getElementById('mintAmount'),
+    newAuxiliary: document.getElementById('newAuxiliary')
 };
 
 // ================ FUNCIONES PRINCIPALES ================
@@ -87,13 +94,13 @@ async function connectWallet() {
 // ---- Funciones de Lectura ----
 async function loadInitialData() {
     try {
-        const [balance, supply, paused, walletPaused, auxiliary, recovery] = await Promise.all([
+        const [balance, supply, paused, walletPaused, auxiliary, recoveryData] = await Promise.all([
             contract.methods.balanceOf(userAddress).call(),
             contract.methods.totalSupply().call(),
             contract.methods.paused().call(),
             contract.methods.isWalletPaused(userAddress).call(),
             contract.methods.auxiliaryOwner().call(),
-            contract.methods.recoveryStatus().call()
+            contract.methods.recoveryStatus().call() // Devuelve un objeto
         ]);
         
         // Actualizar UI con los datos
@@ -101,6 +108,7 @@ async function loadInitialData() {
         DOM.totalSupply.textContent = `${web3.utils.fromWei(supply, 'ether')} GO`;
         DOM.contractStatus.textContent = paused ? '⛔ PAUSADO' : '✅ Activo';
         DOM.walletStatusIndicator.textContent = walletPaused ? '⛔ PAUSADA' : '✅ Activa';
+        DOM.auxiliaryAddress.textContent = auxiliary === '0x0000000000000000000000000000000000000000' ? 'Ninguno' : shortAddress(auxiliary);
         
         // Verificar roles
         const owner = await contract.methods.owner().call();
@@ -110,11 +118,41 @@ async function loadInitialData() {
         // Mostrar/ocultar funciones según roles
         toggleRoleSections();
         
-        // Actualizar datos de recovery
-        updateRecoveryUI(recovery);
+        // Actualizar datos de recovery con el objeto completo
+        updateRecoveryUI(recoveryData);
         
     } catch (error) {
         handleError(error, "Error cargando datos iniciales");
+    }
+}
+
+function updateRecoveryUI({nominee, deadline, approved, remainingTime}) {
+    // Dirección del nominee
+    DOM.recoveryNominee.textContent = nominee === '0x0000000000000000000000000000000000000000' 
+        ? 'Ninguno' 
+        : shortAddress(nominee);
+    
+    // Fecha límite formateada
+    DOM.recoveryDeadline.textContent = deadline === '0' 
+        ? 'N/A' 
+        : new Date(deadline * 1000).toLocaleString();
+    
+    // Estado de aprobación
+    DOM.recoveryApproved.textContent = approved 
+        ? '✅ Aprobado' 
+        : '❌ No aprobado';
+    
+    // Tiempo restante formateado
+    if (remainingTime > 0) {
+        const days = Math.floor(remainingTime / 86400);
+        const hours = Math.floor((remainingTime % 86400) / 3600);
+        DOM.recoveryRemainingTime.textContent = `${days}d ${hours}h restantes`;
+        DOM.recoveryRemainingTime.style.color = days < 1 ? 'red' : 'inherit';
+    } else {
+        DOM.recoveryRemainingTime.textContent = deadline === '0' 
+            ? 'N/A' 
+            : 'Expirado';
+        DOM.recoveryRemainingTime.style.color = 'red';
     }
 }
 
@@ -264,12 +302,6 @@ function initContract() {
 function toggleRoleSections() {
     document.getElementById('ownerSection').style.display = isOwner ? 'block' : 'none';
     document.getElementById('auxiliarySection').style.display = isAuxiliary ? 'block' : 'none';
-}
-
-function updateRecoveryUI([nominee, deadline, approved]) {
-    DOM.recoveryNominee.textContent = nominee === '0x0' ? 'Ninguno' : shortAddress(nominee);
-    DOM.recoveryDeadline.textContent = deadline === '0' ? 'N/A' : new Date(deadline * 1000).toLocaleString();
-    DOM.recoveryApproved.textContent = approved ? '✅ Aprobado' : '❌ No aprobado';
 }
 
 // ================ UTILIDADES ================
