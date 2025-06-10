@@ -295,3 +295,114 @@ body {
     font-size: 0.9rem;
     color: var(--gray);
 }
+/* Estilos para la sección de aprobación */
+.approval-card {
+    background-color: #f8f9fa;
+    border-left: 4px solid #17a2b8;
+}
+
+.approval-card .card-header h2 {
+    color: #17a2b8;
+}
+
+.gas-estimation {
+    background-color: #e9ecef;
+    padding: 12px;
+    border-radius: 6px;
+    margin-bottom: 15px;
+}
+
+.gas-info {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.gas-info:last-child {
+    margin-bottom: 0;
+}
+
+.gas-info span:first-child {
+    font-weight: 500;
+    color: #495057;
+}
+
+.gas-info span:last-child {
+    font-family: 'Roboto Mono', monospace;
+    color: #212529;
+}
+
+.approval-info {
+    margin-top: 20px;
+    padding: 12px;
+    background-color: #e6f7ff;
+    border-radius: 6px;
+    border-left: 3px solid #1890ff;
+}
+
+/* Estilos para el panel de gas */
+.gas-panel {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 350px;
+    background: white;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    border-radius: 8px;
+    padding: 20px;
+    z-index: 1000;
+    display: none;
+}
+
+.gas-panel.show {
+    display: block;
+}
+
+.gas-panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+}
+
+.gas-panel-title {
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.gas-panel-close {
+    cursor: pointer;
+    font-size: 20px;
+}
+
+.gas-panel-body {
+    margin-bottom: 15px;
+}
+
+.gas-panel-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.gas-panel-label {
+    font-weight: 500;
+}
+
+.gas-panel-value {
+    font-family: 'Roboto Mono', monospace;
+}
+
+.gas-panel-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.gas-input {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-family: 'Roboto Mono', monospace;
+}
