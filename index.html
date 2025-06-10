@@ -51,31 +51,62 @@
             </div>
         </div>
 
-        <!-- Panel de Información del Token -->
-        <section class="info-panel">
-            <div class="info-card">
-                <div class="info-header">
-                    <h2><i class="fas fa-wallet"></i> Balance</h2>
-                    <button id="refreshBalance" class="btn-icon" title="Actualizar">
-                        <i class="fas fa-sync-alt"></i>
-                    </button>
-                </div>
-                <div class="info-value" id="tokenBalance">0.00 GO</div>
-                <div class="info-hint">Saldo disponible en tu wallet</div>
-            </div>
+        <!-- Panel de Información del Token - Versión Mejorada -->
+<section class="info-panel enhanced-info">
+    <div class="info-card highlight-card">
+        <div class="info-header">
+            <h2><i class="fas fa-wallet"></i> Balance de GO</h2>
+            <button id="refreshBalance" class="btn-icon pulse" title="Actualizar">
+                <i class="fas fa-sync-alt"></i>
+            </button>
+        </div>
+        <div class="info-value large-text" id="tokenBalance">0.00 GO</div>
+        <div class="info-hint">Saldo disponible en tu wallet</div>
+        <div class="network-info">
+            <span class="network-label">Red:</span>
+            <span class="network-value">Polygon Amoy</span>
+        </div>
+    </div>
 
-            <div class="info-card">
-                <h2><i class="fas fa-boxes"></i> Suministro Total</h2>
-                <div class="info-value" id="totalSupply">-</div>
-                <div class="info-hint">Total de GO en circulación</div>
+    <div class="info-card highlight-card">
+        <div class="info-header">
+            <h2><i class="fas fa-boxes"></i> Suministro Total</h2>
+            <div class="supply-trend">
+                <i class="fas fa-chart-line"></i>
             </div>
+        </div>
+        <div class="info-value large-text" id="totalSupply">-</div>
+        <div class="info-hint">Tokens GO en circulación</div>
+        <div class="supply-details">
+            <span class="detail-label">Decimales:</span>
+            <span class="detail-value">18</span>
+        </div>
+    </div>
 
-            <div class="info-card">
-                <h2><i class="fas fa-network-wired"></i> Estado del Contrato</h2>
-                <div class="info-value" id="contractPausedStatus">-</div>
-                <div class="info-hint">Estado actual del contrato</div>
+    <div class="info-card highlight-card status-card">
+        <div class="info-header">
+            <h2><i class="fas fa-network-wired"></i> Estado</h2>
+            <div class="status-indicator" id="contractStatusIndicator"></div>
+        </div>
+        <div class="status-container">
+            <div class="status-item">
+                <span class="status-label">Contrato:</span>
+                <span class="status-value" id="contractPausedStatus">-</span>
             </div>
-        </section>
+            <div class="status-item">
+                <span class="status-label">Tu Wallet:</span>
+                <span class="status-value" id="walletPausedStatus">-</span>
+            </div>
+        </div>
+        <div class="contract-address">
+            <span class="address-label">Contrato:</span>
+            <span class="address-value" id="contractAddressShort">0x...abcd</span>
+            <button class="btn-copy" title="Copiar dirección">
+                <i class="far fa-copy"></i>
+            </button>
+        </div>
+    </div>
+</section>
 
         <!-- Sección de Transferencias -->
         <section class="action-card">
