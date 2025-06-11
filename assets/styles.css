@@ -391,6 +391,52 @@ input[type="number"]:focus {
   transform: rotate(180deg); /* Efecto de giro al hacer hover */
 }
 
+/* Estilos para botones de copiar y feedback */
+.btn-copy {
+    background: none;
+    border: none;
+    color: #666;
+    cursor: pointer;
+    font-size: 0.9em;
+    margin-left: 5px;
+    padding: 2px 5px;
+    transition: color 0.2s;
+}
+
+.btn-copy:hover {
+    color: #333;
+}
+
+.copy-feedback {
+    display: none;
+    font-size: 0.8em;
+    color: #4CAF50;
+    margin-left: 5px;
+}
+
+.contract-address {
+    display: flex;
+    align-items: center;
+    margin-top: 10px;
+    font-size: 0.9em;
+}
+
+.address-label {
+    font-weight: bold;
+    margin-right: 5px;
+}
+
+.address-value {
+    font-family: 'Roboto Mono', monospace;
+    margin-right: 5px;
+}
+
+.wallet-info {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
 /* Grupos de botones */
 .button-group {
   display: flex;
