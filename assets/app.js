@@ -201,25 +201,15 @@ function showGasUsed(tx, usedElementId) {
 async function loadInitialData() {
     try {
         showLoader("Cargando datos...");
-        
-        // Obtener datos básicos
-        const [balance, supply, paused, walletPaused, auxiliary] = await Promise.all([
+        const [balance, supply, paused, walletPaused, auxiliary, recoveryData] = await Promise.all([
             contract.methods.balanceOf(userAddress).call(),
             contract.methods.totalSupply().call(),
             contract.methods.paused().call(),
             contract.methods.isWalletPaused(userAddress).call(),
-            contract.methods.auxiliaryOwner().call()
+            contract.methods.auxiliaryOwner().call(),
+            contract.methods.recoveryStatus().call()
         ]);
         
-        // Obtener datos de recovery de forma segura
-        let recoveryData;
-        try {
-            recoveryData = await contract.methods.recoveryStatus().call();
-        } catch (error) {
-            console.error("Error obteniendo recovery status:", error);
-            recoveryData = ['0x0', '0', false]; // Valores por defecto
-        }
-
         // Actualizar UI con los datos
         DOM.tokenBalance.textContent = `${web3.utils.fromWei(balance, 'ether')} GO`;
         DOM.totalSupply.textContent = `${web3.utils.fromWei(supply, 'ether')} GO`;
@@ -234,7 +224,7 @@ async function loadInitialData() {
         // Mostrar/ocultar funciones según roles
         toggleRoleSections();
         
-        // Actualizar datos de recovery
+        // Actualizar datos de recovery - ahora manejamos tanto objetos como arrays
         updateRecoveryUI(recoveryData);
         
     } catch (error) {
@@ -764,10 +754,18 @@ function toggleRoleSections() {
 
 function updateRecoveryUI(recoveryData) {
     try {
-        // Asegurarnos de que tenemos los datos necesarios
-        const nominee = recoveryData[0] || '0x0';
-        const deadline = recoveryData[1] || '0';
-        const approved = recoveryData[2] || false;
+        // Manejar tanto objetos como arrays
+        let nominee, deadline, approved;
+        
+        if (Array.isArray(recoveryData)) {
+            // Si es un array (formato antiguo)
+            [nominee, deadline, approved] = recoveryData;
+        } else {
+            // Si es un objeto (formato nuevo)
+            nominee = recoveryData.nominee || recoveryData[0] || '0x0';
+            deadline = recoveryData.deadline || recoveryData[1] || '0';
+            approved = recoveryData.approved || recoveryData[2] || false;
+        }
 
         DOM.recoveryNominee.textContent = nominee === '0x0' ? 'Ninguno' : shortAddress(nominee);
         DOM.recoveryDeadline.textContent = deadline === '0' ? 'N/A' : new Date(parseInt(deadline) * 1000).toLocaleString();
