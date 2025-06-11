@@ -24,6 +24,10 @@
                 
                 <div class="wallet-info" id="walletInfo" style="display:none;">
                     <span class="wallet-address" id="walletAddress"></span>
+                    <button id="copyWalletBtn" class="btn-copy" title="Copiar dirección">
+                        <i class="far fa-copy"></i>
+                    </button>
+                    <span class="copy-feedback" id="copyWalletFeedback">¡Copiado!</span>
                     <button id="disconnectWallet" class="btn-connect">
                         <i class="fas fa-plug"></i> Desconectar
                     </button>
@@ -101,9 +105,10 @@
                 <div class="contract-address">
                     <span class="address-label">Contrato:</span>
                     <span class="address-value" id="contractAddressShort">0x...abcd</span>
-                    <button class="btn-copy" title="Copiar dirección">
+                    <button class="btn-copy" title="Copiar dirección" id="copyContractBtn">
                         <i class="far fa-copy"></i>
                     </button>
+                    <span class="copy-feedback" id="copyContractFeedback">¡Copiado!</span>
                 </div>
             </div>
         </section>
@@ -619,17 +624,30 @@
         });
 
         // Copiar dirección del contrato
-        document.querySelector('.btn-copy')?.addEventListener('click', () => {
-            const address = document.querySelector('.address-value').textContent;
-            navigator.clipboard.writeText(address)
+        document.getElementById('copyContractBtn')?.addEventListener('click', () => {
+            const contractAddress = document.querySelector('.address-value').textContent;
+            navigator.clipboard.writeText(contractAddress)
                 .then(() => {
-                    const notification = document.createElement('div');
-                    notification.className = 'address-copy-feedback';
-                    notification.textContent = '¡Copiado!';
-                    document.body.appendChild(notification);
-                    
+                    const feedback = document.getElementById('copyContractFeedback');
+                    feedback.style.display = 'inline';
                     setTimeout(() => {
-                        document.body.removeChild(notification);
+                        feedback.style.display = 'none';
+                    }, 2000);
+                })
+                .catch(err => {
+                    console.error('Error al copiar: ', err);
+                });
+        });
+
+        // Copiar dirección de wallet
+        document.getElementById('copyWalletBtn')?.addEventListener('click', () => {
+            const walletAddress = document.getElementById('walletAddress').textContent;
+            navigator.clipboard.writeText(walletAddress)
+                .then(() => {
+                    const feedback = document.getElementById('copyWalletFeedback');
+                    feedback.style.display = 'inline';
+                    setTimeout(() => {
+                        feedback.style.display = 'none';
                     }, 2000);
                 })
                 .catch(err => {
