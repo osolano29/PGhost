@@ -1,51 +1,71 @@
-/* ============ ESTILOS GENERALES ============ */
+/* ============================================= */
+/* VARIABLES GLOBALES Y CONFIGURACIÓN INICIAL */
+/* ============================================= */
+
 :root {
-  --primary-color: #6c5ce7;
-  --secondary-color: #a29bfe;
-  --accent-color: #00cec9;
-  --dark-color: #1a1a2e;
-  --darker-color: #16213e;
-  --light-color: #f8f9fa;
-  --danger-color: #ff4757;
-  --success-color: #00d78e;
-  --warning-color: #ffa502;
-  --info-color: #17a2b8;
-  --text-light: #ffffff;
-  --text-muted: rgba(255, 255, 255, 0.7);
-  --border-radius: 8px;
-  --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  --transition: all 0.3s ease;
+  /* Colores principales */
+  --primary-color: #6c5ce7;       /* Color primario (morado) */
+  --secondary-color: #a29bfe;     /* Color secundario (morado claro) */
+  --accent-color: #00cec9;        /* Color de acento (turquesa) */
+  
+  /* Colores de fondo */
+  --dark-color: #1a1a2e;          /* Fondo oscuro principal */
+  --darker-color: #16213e;        /* Fondo más oscuro para tarjetas */
+  --light-color: #f8f9fa;         /* Color claro para textos */
+  
+  /* Colores de estado */
+  --danger-color: #ff4757;        /* Rojo para errores/danger */
+  --success-color: #00d78e;       /* Verde para éxito */
+  --warning-color: #ffa502;       /* Naranja para advertencias */
+  --info-color: #17a2b8;          /* Azul para información */
+  
+  /* Textos */
+  --text-light: #ffffff;          /* Texto blanco */
+  --text-muted: rgba(255, 255, 255, 0.7); /* Texto atenuado */
+  
+  /* Estilos base */
+  --border-radius: 8px;           /* Radio de bordes estándar */
+  --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1); /* Sombra estándar */
+  --transition: all 0.3s ease;    /* Transición suave para efectos */
 }
+
+/* ============================================= */
+/* RESET Y ESTILOS BASE */
+/* ============================================= */
 
 * {
   margin: 0;
   padding: 0;
-  box-sizing: border-box;
+  box-sizing: border-box; /* Modelo de caja más predecible */
 }
 
 body {
-  font-family: 'Roboto', sans-serif;
-  background-color: #0f0f23;
-  color: var(--text-light);
-  line-height: 1.6;
+  font-family: 'Roboto', sans-serif; /* Fuente principal */
+  background-color: #0f0f23; /* Color de fondo de la página */
+  color: var(--text-light); /* Color de texto principal */
+  line-height: 1.6; /* Espaciado entre líneas */
   padding: 0;
   margin: 0;
 }
 
+/* Contenedor principal centrado */
 .container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 20px;
+  max-width: 1200px; /* Ancho máximo del contenido */
+  margin: 0 auto; /* Centrado horizontal */
+  padding: 20px; /* Espaciado interno */
 }
 
-/* ============ HEADER ============ */
+/* ============================================= */
+/* HEADER Y CONEXIÓN DE WALLET */
+/* ============================================= */
+
 .header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 20px 0;
   margin-bottom: 30px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1); /* Línea divisoria sutil */
 }
 
 .header-brand h1 {
@@ -53,9 +73,10 @@ body {
   display: flex;
   align-items: center;
   gap: 10px;
-  color: var(--accent-color);
+  color: var(--accent-color); /* Color turquesa para el título */
 }
 
+/* Estilos para el estado de conexión */
 .connection-status-container {
   display: flex;
   align-items: center;
@@ -64,75 +85,64 @@ body {
 
 .connection-status-badge {
   padding: 8px 12px;
-  border-radius: 20px;
+  border-radius: 20px; /* Forma de píldora */
   font-size: 0.9rem;
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
+/* Estados de conexión */
 .connection-status-badge.connected {
-  background-color: rgba(0, 215, 142, 0.2);
-  color: var(--success-color);
+  background-color: rgba(0, 215, 142, 0.2); /* Fondo verde con transparencia */
+  color: var(--success-color); /* Texto verde */
 }
 
 .connection-status-badge.disconnected {
-  background-color: rgba(255, 71, 87, 0.2);
-  color: var(--danger-color);
+  background-color: rgba(255, 71, 87, 0.2); /* Fondo rojo con transparencia */
+  color: var(--danger-color); /* Texto rojo */
 }
 
+/* Indicador circular de estado */
 .status-indicator {
   width: 10px;
   height: 10px;
-  border-radius: 50%;
+  border-radius: 50%; /* Círculo perfecto */
 }
 
 .status-indicator.connected {
-  background-color: var(--success-color);
+  background-color: var(--success-color); /* Verde cuando está conectado */
 }
 
 .status-indicator.disconnected {
-  background-color: var(--danger-color);
+  background-color: var(--danger-color); /* Rojo cuando está desconectado */
 }
 
+/* Estilos para la información de la wallet */
 .wallet-info {
-  display: none;
+  display: none; /* Oculto por defecto */
   align-items: center;
   gap: 15px;
 }
 
 .wallet-address {
-  font-family: 'Roboto Mono', monospace;
+  font-family: 'Roboto Mono', monospace; /* Fuente monoespaciada para direcciones */
   font-size: 0.9rem;
-  color: var(--secondary-color);
+  color: var(--secondary-color); /* Color morado claro */
 }
 
-.btn-connect {
-  background: var(--primary-color);
-  color: white;
-  border: none;
-  padding: 8px 15px;
-  border-radius: var(--border-radius);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  transition: var(--transition);
-}
+/* ============================================= */
+/* PANEL DE INFORMACIÓN MEJORADO */
+/* ============================================= */
 
-.btn-connect:hover {
-  background: var(--secondary-color);
-  transform: translateY(-2px);
-}
-
-/* ============ PANEL DE INFORMACIÓN MEJORADO ============ */
 .enhanced-info {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); /* Grid responsivo */
+  gap: 20px; /* Espacio entre tarjetas */
   margin-bottom: 30px;
 }
 
+/* Tarjetas destacadas */
 .highlight-card {
   background: linear-gradient(135deg, var(--dark-color) 0%, var(--darker-color) 100%);
   border-radius: 12px;
@@ -144,11 +154,13 @@ body {
   overflow: hidden;
 }
 
+/* Efecto hover para tarjetas */
 .highlight-card:hover {
-  transform: translateY(-5px);
-  box-shadow: 0 12px 25px rgba(0, 0, 0, 0.2);
+  transform: translateY(-5px); /* Levantar ligeramente */
+  box-shadow: 0 12px 25px rgba(0, 0, 0, 0.2); /* Sombra más pronunciada */
 }
 
+/* Borde superior decorativo */
 .highlight-card::before {
   content: '';
   position: absolute;
@@ -159,6 +171,7 @@ body {
   background: linear-gradient(90deg, var(--accent-color) 0%, var(--primary-color) 100%);
 }
 
+/* Encabezado de las tarjetas de información */
 .info-header {
   display: flex;
   justify-content: space-between;
@@ -176,122 +189,26 @@ body {
   gap: 8px;
 }
 
-.info-header i {
-  color: var(--accent-color);
-}
-
+/* Textos grandes para valores importantes */
 .large-text {
   font-size: 1.8rem;
   font-weight: 700;
   color: var(--text-light);
   margin: 10px 0;
-  font-family: 'Roboto Mono', monospace;
+  font-family: 'Roboto Mono', monospace; /* Monoespaciado para números */
 }
 
+/* Textos de ayuda/información */
 .info-hint {
   font-size: 0.85rem;
   color: var(--text-muted);
   margin-bottom: 15px;
 }
 
-.network-info, .supply-details {
-  display: flex;
-  justify-content: space-between;
-  font-size: 0.85rem;
-  padding-top: 10px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-  color: var(--text-muted);
-}
+/* ============================================= */
+/* TARJETAS DE ACCIÓN Y FORMULARIOS */
+/* ============================================= */
 
-.status-card .status-container {
-  margin: 15px 0;
-}
-
-.status-item {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 10px;
-  font-size: 0.95rem;
-}
-
-.status-label {
-  color: var(--text-muted);
-}
-
-.status-value {
-  font-weight: 600;
-  color: var(--text-light);
-  font-family: 'Roboto Mono', monospace;
-}
-
-.status-badge {
-  padding: 4px 8px;
-  border-radius: 4px;
-  font-size: 0.8rem;
-  font-weight: 600;
-}
-
-.status-badge.active {
-  background-color: rgba(0, 215, 142, 0.2);
-  color: var(--success-color);
-}
-
-.status-badge.paused {
-  background-color: rgba(255, 71, 87, 0.2);
-  color: var(--danger-color);
-}
-
-.contract-address {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 0.85rem;
-  color: var(--text-muted);
-  margin-top: 15px;
-  padding-top: 10px;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.address-value {
-  font-family: 'Roboto Mono', monospace;
-  color: var(--accent-color);
-}
-
-.btn-copy {
-  background: transparent;
-  border: none;
-  color: rgba(255, 255, 255, 0.5);
-  cursor: pointer;
-  transition: color 0.2s;
-  margin-left: auto;
-}
-
-.btn-copy:hover {
-  color: var(--text-light);
-}
-
-.supply-trend i {
-  color: rgba(0, 219, 222, 0.5);
-  font-size: 1.2rem;
-}
-
-.pulse {
-  animation: pulse 2s infinite;
-}
-
-@keyframes pulse {
-  0% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.1);
-  }
-  100% {
-    transform: scale(1);
-  }
-}
-
-/* ============ TARJETAS DE ACCIÓN ============ */
 .action-card {
   background: linear-gradient(135deg, var(--dark-color) 0%, var(--darker-color) 100%);
   border-radius: var(--border-radius);
@@ -301,6 +218,7 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+/* Encabezado de tarjetas */
 .card-header {
   display: flex;
   justify-content: space-between;
@@ -315,6 +233,7 @@ body {
   gap: 10px;
 }
 
+/* Badge para funciones de admin */
 .admin-badge {
   background-color: rgba(108, 92, 231, 0.2);
   color: var(--primary-color);
@@ -324,6 +243,7 @@ body {
   font-weight: 600;
 }
 
+/* Tooltips informativos */
 .info-tooltip {
   position: relative;
   cursor: pointer;
@@ -345,11 +265,15 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+/* Mostrar tooltip al hacer hover */
 .info-tooltip:hover .tooltip-content {
   display: block;
 }
 
-/* ============ FORMULARIOS ============ */
+/* ============================================= */
+/* FORMULARIOS Y ENTRADAS */
+/* ============================================= */
+
 .form-group {
   margin-bottom: 15px;
 }
@@ -363,6 +287,7 @@ body {
   gap: 8px;
 }
 
+/* Campos de entrada */
 input[type="text"],
 input[type="number"] {
   width: 100%;
@@ -375,6 +300,7 @@ input[type="number"] {
   transition: var(--transition);
 }
 
+/* Efecto focus para inputs */
 input[type="text"]:focus,
 input[type="number"]:focus {
   outline: none;
@@ -382,6 +308,7 @@ input[type="number"]:focus {
   box-shadow: 0 0 0 2px rgba(0, 206, 201, 0.2);
 }
 
+/* Inputs con unidad (como GO) */
 .input-with-unit {
   position: relative;
 }
@@ -394,13 +321,10 @@ input[type="number"]:focus {
   color: var(--text-muted);
 }
 
-.input-hint {
-  font-size: 0.8rem;
-  color: var(--text-muted);
-  margin-top: 5px;
-}
+/* ============================================= */
+/* BOTONES Y CONTROLES */
+/* ============================================= */
 
-/* ============ BOTONES ============ */
 .btn {
   padding: 12px 20px;
   border-radius: var(--border-radius);
@@ -414,6 +338,7 @@ input[type="number"]:focus {
   gap: 8px;
 }
 
+/* Variantes de botones */
 .btn-primary {
   background-color: var(--primary-color);
   color: white;
@@ -451,11 +376,7 @@ input[type="number"]:focus {
   background-color: #00b37d;
 }
 
-.btn-danger {
-  background-color: var(--danger-color);
-  color: white;
-}
-
+/* Botones de icono */
 .btn-icon {
   background: transparent;
   border: none;
@@ -467,35 +388,66 @@ input[type="number"]:focus {
 
 .btn-icon:hover {
   color: var(--accent-color);
-  transform: rotate(180deg);
+  transform: rotate(180deg); /* Efecto de giro al hacer hover */
 }
 
+/* Grupos de botones */
 .button-group {
   display: flex;
   gap: 10px;
   margin-top: 15px;
 }
 
-/* ============ ESTIMACIÓN DE GAS ============ */
-.gas-estimation {
-  background-color: rgba(0, 0, 0, 0.3);
+/* ============================================= */
+/* SECCIÓN DE GAS Y TRANSACCIONES */
+/* ============================================= */
+
+.gas-section {
+  background-color: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
   padding: 12px;
-  border-radius: var(--border-radius);
   margin: 15px 0;
+  border-left: 3px solid var(--primary-color);
 }
 
-.gas-info {
+.gas-row {
   display: flex;
   justify-content: space-between;
   margin-bottom: 8px;
+}
+
+.gas-label {
+  color: rgba(255, 255, 255, 0.7);
   font-size: 0.9rem;
 }
 
-.gas-info:last-child {
-  margin-bottom: 0;
+.gas-value {
+  font-family: 'Roboto Mono', monospace;
+  font-weight: 600;
 }
 
-/* ============ PESTAÑAS ============ */
+.gas-buttons {
+  display: flex;
+  gap: 10px;
+  margin-top: 10px;
+}
+
+/* Botón especial para estimar gas */
+.btn-estimate {
+  background-color: rgba(108, 92, 231, 0.2);
+  color: var(--secondary-color);
+  border: none;
+  transition: var(--transition);
+}
+
+.btn-estimate:hover {
+  background-color: rgba(108, 92, 231, 0.4);
+}
+
+/* ============================================= */
+/* PESTAÑAS Y CONTENIDOS */
+/* ============================================= */
+
 .admin-tabs {
   display: flex;
   border-bottom: 1px solid rgba(255, 255, 255, 0.1);
@@ -513,10 +465,12 @@ input[type="number"]:focus {
   transition: var(--transition);
 }
 
+/* Pestaña activa */
 .tab-btn.active {
   color: var(--accent-color);
 }
 
+/* Indicador de pestaña activa */
 .tab-btn.active::after {
   content: '';
   position: absolute;
@@ -527,6 +481,7 @@ input[type="number"]:focus {
   background-color: var(--accent-color);
 }
 
+/* Contenido de pestañas */
 .tab-content {
   display: none;
 }
@@ -535,7 +490,10 @@ input[type="number"]:focus {
   display: block;
 }
 
-/* ============ SECCIÓN DE RECOVERY ============ */
+/* ============================================= */
+/* SECCIÓN DE RECOVERY */
+/* ============================================= */
+
 .recovery-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
@@ -559,6 +517,7 @@ input[type="number"]:focus {
   font-weight: 600;
 }
 
+/* Estados de recovery */
 .recovery-value.danger {
   color: var(--danger-color);
 }
@@ -567,7 +526,10 @@ input[type="number"]:focus {
   color: var(--warning-color);
 }
 
-/* ============ NOTIFICACIONES Y LOADER ============ */
+/* ============================================= */
+/* NOTIFICACIONES, LOADER Y MODALES */
+/* ============================================= */
+
 .notification {
   position: fixed;
   top: 20px;
@@ -581,10 +543,12 @@ input[type="number"]:focus {
   max-width: 350px;
 }
 
+/* Mostrar notificación */
 .notification.show {
   transform: translateX(0);
 }
 
+/* Tipos de notificación */
 .notification.success {
   background-color: var(--success-color);
   color: white;
@@ -605,6 +569,7 @@ input[type="number"]:focus {
   color: white;
 }
 
+/* Loader para transacciones */
 .loader-overlay {
   position: fixed;
   top: 0;
@@ -627,6 +592,7 @@ input[type="number"]:focus {
   width: 90%;
 }
 
+/* Animación del spinner */
 .loader-spinner {
   width: 50px;
   height: 50px;
@@ -643,13 +609,14 @@ input[type="number"]:focus {
   }
 }
 
+/* Texto secundario del loader */
 .loader-subtext {
   font-size: 0.9rem;
   color: var(--text-muted);
   margin-top: 10px;
 }
 
-/* ============ MODALES ============ */
+/* Modal de MetaMask */
 .modal {
   position: fixed;
   top: 0;
@@ -672,30 +639,30 @@ input[type="number"]:focus {
   position: relative;
 }
 
-.modal h2 {
-  margin-bottom: 15px;
-  color: var(--accent-color);
+/* Feedback al copiar dirección */
+.address-copy-feedback {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  background-color: var(--primary-color);
+  color: white;
+  padding: 10px 20px;
+  border-radius: 5px;
+  z-index: 1000;
+  animation: fadeInOut 2s ease-in-out;
 }
 
-.modal-alternative {
-  margin: 15px 0 10px;
-  color: var(--text-muted);
+@keyframes fadeInOut {
+  0% { opacity: 0; transform: translateY(10px); }
+  20% { opacity: 1; transform: translateY(0); }
+  80% { opacity: 1; transform: translateY(0); }
+  100% { opacity: 0; transform: translateY(-10px); }
 }
 
-.modal .close {
-  position: absolute;
-  top: 15px;
-  right: 15px;
-  font-size: 1.5rem;
-  cursor: pointer;
-  color: var(--text-muted);
-}
+/* ============================================= */
+/* VARIANTES DE TARJETAS ESPECIALES */
+/* ============================================= */
 
-.modal .close:hover {
-  color: var(--text-light);
-}
-
-/* ============ TARJETAS ESPECIALES ============ */
 .warning-card {
   border-left: 4px solid var(--warning-color);
 }
@@ -716,7 +683,10 @@ input[type="number"]:focus {
   border-left: 4px solid var(--accent-color);
 }
 
-/* ============ MEDIA QUERIES ============ */
+/* ============================================= */
+/* MEDIA QUERIES PARA DISPOSITIVOS MÓVILES */
+/* ============================================= */
+
 @media (max-width: 768px) {
   .header {
     flex-direction: column;
