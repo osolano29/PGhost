@@ -189,6 +189,68 @@ h1 {
     list-style-type: none;
 }
 
+/* ============ ESTILOS PARA GAS ============ */
+.gas-section {
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    padding: 12px;
+    margin: 15px 0;
+    border-left: 3px solid var(--primary-color);
+}
+
+.gas-row {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.gas-label {
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.9rem;
+}
+
+.gas-value {
+    font-family: 'Roboto Mono', monospace;
+    font-weight: 600;
+}
+
+.gas-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.btn-estimate {
+    background-color: rgba(108, 92, 231, 0.2);
+    color: var(--secondary-color);
+    border: none;
+    transition: var(--transition);
+}
+
+.btn-estimate:hover {
+    background-color: rgba(108, 92, 231, 0.4);
+}
+
+/* ============ ESTILOS PARA COPIA DE DIRECCIÓN ============ */
+.address-copy-feedback {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background-color: var(--primary-color);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 5px;
+    z-index: 1000;
+    animation: fadeInOut 2s ease-in-out;
+}
+
+@keyframes fadeInOut {
+    0% { opacity: 0; transform: translateY(10px); }
+    20% { opacity: 1; transform: translateY(0); }
+    80% { opacity: 1; transform: translateY(0); }
+    100% { opacity: 0; transform: translateY(-10px); }
+}
+
 #allowedContractsList li {
     padding: 5px 0;
     border-bottom: 1px solid #eee;
