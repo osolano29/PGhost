@@ -414,6 +414,14 @@ input[type="number"]:focus {
     margin-left: 5px;
 }
 
+.copy-feedback {
+    display: none; /* Asegura que estén ocultos inicialmente */
+    font-size: 0.8em;
+    color: #4CAF50;
+    margin-left: 5px;
+    transition: opacity 0.3s;
+}
+
 .contract-address {
     display: flex;
     align-items: center;
