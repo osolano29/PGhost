@@ -602,58 +602,59 @@
 
     <!-- Script para manejo de pestañas -->
     <script>
-        // Manejo básico de pestañas
-        document.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const tabId = btn.getAttribute('data-tab');
-                
-                // Oculta todos los contenidos
-                document.querySelectorAll('.tab-content').forEach(content => {
-                    content.classList.remove('active');
-                });
-                
-                // Desactiva todos los botones
-                document.querySelectorAll('.tab-btn').forEach(tabBtn => {
-                    tabBtn.classList.remove('active');
-                });
-                
-                // Activa el seleccionado
-                document.getElementById(tabId).classList.add('active');
-                btn.classList.add('active');
+<script>
+    // Manejo básico de pestañas
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const tabId = btn.getAttribute('data-tab');
+            
+            // Oculta todos los contenidos
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.remove('active');
             });
+            
+            // Desactiva todos los botones
+            document.querySelectorAll('.tab-btn').forEach(tabBtn => {
+                tabBtn.classList.remove('active');
+            });
+            
+            // Activa el seleccionado
+            document.getElementById(tabId).classList.add('active');
+            btn.classList.add('active');
         });
+    });
 
-        // Copiar dirección del contrato
-        document.getElementById('copyContractBtn')?.addEventListener('click', () => {
-            const contractAddress = document.querySelector('.address-value').textContent;
-            navigator.clipboard.writeText(contractAddress)
-                .then(() => {
-                    const feedback = document.getElementById('copyContractFeedback');
+    // Copiar dirección del contrato
+    document.getElementById('copyContractBtn')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        const contractAddress = document.getElementById('contractAddressShort').textContent;
+        copyToClipboard(contractAddress, 'copyContractFeedback');
+    });
+
+    // Copiar dirección de wallet
+    document.getElementById('copyWalletBtn')?.addEventListener('click', (e) => {
+        e.preventDefault();
+        const walletAddress = document.getElementById('walletAddress').textContent;
+        copyToClipboard(walletAddress, 'copyWalletFeedback');
+    });
+
+    // Función auxiliar para copiar al portapapeles
+    function copyToClipboard(text, feedbackId = null) {
+        navigator.clipboard.writeText(text)
+            .then(() => {
+                if (feedbackId && document.getElementById(feedbackId)) {
+                    const feedback = document.getElementById(feedbackId);
                     feedback.style.display = 'inline';
                     setTimeout(() => {
                         feedback.style.display = 'none';
                     }, 2000);
-                })
-                .catch(err => {
-                    console.error('Error al copiar: ', err);
-                });
-        });
-
-        // Copiar dirección de wallet
-        document.getElementById('copyWalletBtn')?.addEventListener('click', () => {
-            const walletAddress = document.getElementById('walletAddress').textContent;
-            navigator.clipboard.writeText(walletAddress)
-                .then(() => {
-                    const feedback = document.getElementById('copyWalletFeedback');
-                    feedback.style.display = 'inline';
-                    setTimeout(() => {
-                        feedback.style.display = 'none';
-                    }, 2000);
-                })
-                .catch(err => {
-                    console.error('Error al copiar: ', err);
-                });
-        });
+                }
+            })
+            .catch(err => {
+                console.error('Error al copiar: ', err);
+            });
+    }
+</script>
     </script>
 </body>
 </html>
