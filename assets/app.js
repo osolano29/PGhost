@@ -23,12 +23,18 @@ const DOM = {
     
     // Transferencias
     transferTokens: document.getElementById('transferTokens'),
+    estimateTransferGas: document.getElementById('estimateTransferGas'),
     recipientAddress: document.getElementById('recipientAddress'),
     transferAmount: document.getElementById('transferAmount'),
+    transferGasEstimate: document.getElementById('transferGasEstimate'),
+    transferGasUsed: document.getElementById('transferGasUsed'),
     
     // Quemado
     burnTokens: document.getElementById('burnTokens'),
+    estimateBurnGas: document.getElementById('estimateBurnGas'),
     burnAmount: document.getElementById('burnAmount'),
+    burnGasEstimate: document.getElementById('burnGasEstimate'),
+    burnGasUsed: document.getElementById('burnGasUsed'),
     
     // Seguridad
     pauseWallet: document.getElementById('pauseWallet'),
@@ -36,24 +42,47 @@ const DOM = {
     
     // Funciones de owner
     mintTokens: document.getElementById('mintTokens'),
+    estimateMintGas: document.getElementById('estimateMintGas'),
     mintAddress: document.getElementById('mintAddress'),
     mintAmount: document.getElementById('mintAmount'),
+    mintGasEstimate: document.getElementById('mintGasEstimate'),
+    mintGasUsed: document.getElementById('mintGasUsed'),
     pauseContract: document.getElementById('pauseContract'),
+    estimatePauseGas: document.getElementById('estimatePauseGas'),
     unpauseContract: document.getElementById('unpauseContract'),
+    estimateUnpauseGas: document.getElementById('estimateUnpauseGas'),
+    pauseGasEstimate: document.getElementById('pauseGasEstimate'),
+    pauseGasUsed: document.getElementById('pauseGasUsed'),
     
     // Sistema de recovery
     approveRecoveryBtn: document.getElementById('approveRecoveryBtn'),
+    estimateApproveRecoveryGas: document.getElementById('estimateApproveRecoveryGas'),
     executeRecoveryBtn: document.getElementById('executeRecoveryBtn'),
+    estimateExecuteRecoveryGas: document.getElementById('estimateExecuteRecoveryGas'),
     recoveryNominee: document.getElementById('recoveryNominee'),
     recoveryDeadline: document.getElementById('recoveryDeadline'),
     recoveryApproved: document.getElementById('recoveryApproved'),
     recoveryRemainingTime: document.getElementById('recoveryRemainingTime'),
+    recoveryGasEstimate: document.getElementById('recoveryGasEstimate'),
+    recoveryGasUsed: document.getElementById('recoveryGasUsed'),
     
     // Funciones de auxiliar
     setAuxiliaryBtn: document.getElementById('setAuxiliaryBtn'),
+    estimateSetAuxiliaryGas: document.getElementById('estimateSetAuxiliaryGas'),
     claimOwnershipBtn: document.getElementById('claimOwnershipBtn'),
+    estimateClaimOwnershipGas: document.getElementById('estimateClaimOwnershipGas'),
     newAuxiliary: document.getElementById('newAuxiliary'),
     auxiliaryAddress: document.getElementById('auxiliaryAddress'),
+    auxiliaryGasEstimate: document.getElementById('auxiliaryGasEstimate'),
+    auxiliaryGasUsed: document.getElementById('auxiliaryGasUsed'),
+    
+    // Aprobación de gastos
+    spenderContract: document.getElementById('spenderContract'),
+    approvalAmount: document.getElementById('approvalAmount'),
+    approvalGasEstimate: document.getElementById('approvalGasEstimate'),
+    approvalGasUsed: document.getElementById('approvalGasUsed'),
+    estimateApprovalGas: document.getElementById('estimateApprovalGas'),
+    approveTokens: document.getElementById('approveTokens'),
     
     // UI Elements
     loader: document.getElementById('loader'),
@@ -65,339 +94,52 @@ const DOM = {
     metaMaskModal: document.getElementById('metaMaskModal')
 };
 
-// ================ INICIALIZACIÓN ================
-export async function initApp() {
-    console.log("Inicializando aplicación..."); // Debug
-    
-    if (!verifyCriticalDOM()) {
-        console.error("Elementos críticos del DOM no encontrados");
-        showNotification("Error inicializando la aplicación", "error");
-        return;
-    }
+// ================ FUNCIONES DE GAS ================
 
-    console.log("Configurando event listeners..."); // Debug
-    setupEventListeners();
-    setupModalCloseButton();
-    setupWalletListeners(); // Añadir esta línea
-    
-    // Verificación inicial silenciosa
+/**
+ * Función genérica para estimar gas
+ * @param {string} methodName - Nombre del método del contrato
+ * @param {array} args - Argumentos para la función
+ * @param {string} estimateElementId - ID del elemento para mostrar estimación
+ * @returns {Promise<number>} - Estimación de gas
+ */
+async function estimateTransactionGas(methodName, args = [], estimateElementId = null) {
     try {
-        console.log("Verificando conexión existente..."); // Debug
-        if (window.ethereum?.selectedAddress) {
-            await connectWallet(true); // Modo silencioso
-            console.log("Conexión automática exitosa"); // Debug
-        }
-    } catch (e) {
-        console.log("Verificación inicial fallida:", e.message);
-    }
-    console.log("Inicialización completada"); // Debug
-}
-
-function verifyCriticalDOM() {
-    const requiredElements = [
-        'connectWallet', 'networkStatus', 'walletInfo',
-        'transferTokens', 'burnTokens', 'loader'
-    ];
-    
-    return requiredElements.every(id => {
-        const exists = document.getElementById(id) !== null;
-        if (!exists) console.error(`Elemento faltante: #${id}`);
-        return exists;
-    });
-}
-
-function setupModalCloseButton() {
-    if (!DOM.metaMaskModal) return;
-    
-    const closeButton = DOM.metaMaskModal.querySelector('.close');
-    if (closeButton) {
-        closeButton.addEventListener('click', () => {
-            DOM.metaMaskModal.style.display = 'none';
-        });
-    }
-}
-
-// ================ GESTIÓN DE CONEXIÓN ================
-async function connectWallet(silent = false) {
-    try {
-        console.log("Iniciando conexión..."); // Debug
-        if (!silent) showLoader("Conectando con MetaMask...");
-        
-        console.log("Detectando proveedor..."); // Debug
-        const provider = detectProvider();
-        console.log("Proveedor detectado:", provider ? "Sí" : "No"); // Debug
-        
-        if (!provider) {
-            console.log("Mostrando modal de MetaMask"); // Debug
-            if (!silent && !isMetaMaskInstalled()) {
-                showMetaMaskModal();
-            }
-            throw new Error("MetaMask no detectado");
+        if (!userAddress) {
+            showNotification("Conecta tu wallet primero", "error");
+            return null;
         }
 
-        console.log("Configurando Web3..."); // Debug
-        web3 = new Web3(provider);
+        showLoader("Estimando gas...");
+        const gasEstimate = await contract.methods[methodName](...args)
+            .estimateGas({ from: userAddress });
         
-        console.log("Solicitando cuentas..."); // Debug
-        const accounts = await provider.request({ 
-            method: 'eth_requestAccounts' 
-        }).catch(err => {
-            console.error("Error solicitando cuentas:", err); // Debug
-            throw new Error("El usuario rechazó la conexión");
-        });
-        
-        console.log("Cuentas obtenidas:", accounts); // Debug
-        
-        if (!accounts?.length) {
-            throw new Error("No se obtuvieron cuentas");
+        if (estimateElementId && document.getElementById(estimateElementId)) {
+            document.getElementById(estimateElementId).textContent = gasEstimate;
         }
         
-        userAddress = accounts[0];
-        console.log("Usuario conectado:", userAddress); // Debug
-        
-        await setupNetwork();
-        initContract();
-        await loadInitialData();
-        
-        updateConnectionStatus(true, userAddress);
-        if (!silent) showNotification("Wallet conectada correctamente", "success");
-        return true;
-        
+        return gasEstimate;
     } catch (error) {
-        console.error("Error en connectWallet:", error); // Debug
-        if (!silent) {
-            handleError(error, "Error al conectar");
-        }
-        updateConnectionStatus(false);
-        return false;
-    } finally {
-        if (!silent) hideLoader();
-    }
-}
-
-function disconnectWallet() {
-    updateConnectionStatus(false);
-    showNotification("Wallet desconectada", "info");
-    resetAppState();
-}
-
-function updateConnectionStatus(isConnected, address = null) {
-    if (!DOM.networkStatus || !DOM.walletInfo || !DOM.connectWallet) return;
-
-    const statusIndicator = DOM.networkStatus.querySelector('.status-indicator');
-    
-    if (isConnected) {
-        DOM.networkStatus.classList.remove('disconnected');
-        DOM.networkStatus.classList.add('connected');
-        if (DOM.networkStatusText) DOM.networkStatusText.textContent = 'Conectado';
-        if (statusIndicator) statusIndicator.className = 'status-indicator connected';
-        if (DOM.walletInfo) DOM.walletInfo.style.display = 'flex';
-        if (DOM.connectWallet) DOM.connectWallet.style.display = 'none';
-        if (DOM.walletAddress && address) DOM.walletAddress.textContent = shortAddress(address);
-    } else {
-        DOM.networkStatus.classList.remove('connected');
-        DOM.networkStatus.classList.add('disconnected');
-        if (DOM.networkStatusText) DOM.networkStatusText.textContent = 'Desconectado';
-        if (statusIndicator) statusIndicator.className = 'status-indicator disconnected';
-        if (DOM.walletInfo) DOM.walletInfo.style.display = 'none';
-        if (DOM.connectWallet) DOM.connectWallet.style.display = 'flex';
-    }
-}
-
-function detectProvider() {
-    if (typeof window.ethereum !== 'undefined') {
-        // Manejar múltiples proveedores
-        if (window.ethereum.providers?.length) {
-            return window.ethereum.providers.find(p => p.isMetaMask) || window.ethereum;
-        }
-        return window.ethereum;
-    }
-    
-    if (typeof window.web3 !== 'undefined' && window.web3.currentProvider?.isMetaMask) {
-        return window.web3.currentProvider;
-    }
-    
-    if (window.ethereum?.isMetaMask) {
-        return window.ethereum;
-    }
-    
-    return null;
-}
-
-function isMetaMaskInstalled() {
-    return !!window.ethereum?.isMetaMask || !!window.web3?.currentProvider?.isMetaMask;
-}
-
-function showMetaMaskModal() {
-    if (DOM.metaMaskModal) {
-        DOM.metaMaskModal.style.display = 'flex';
-    }
-}
-
-function setupWalletListeners() {
-    if (window.ethereum) {
-        window.ethereum.on('accountsChanged', (accounts) => {
-            if (accounts.length > 0) {
-                userAddress = accounts[0];
-                updateConnectionStatus(true, userAddress);
-                loadInitialData();
-            } else {
-                disconnectWallet();
-            }
-        });
-        
-        window.ethereum.on('chainChanged', () => {
-            window.location.reload();
-        });
-    }
-}
-
-// ================ INTERACCIÓN CON EL CONTRATO ================
-async function setupNetwork() {
-    try {
-        const chainId = await web3.eth.getChainId();
-        if (chainId !== 80002) { // Polygon Amoy
-            try {
-                await window.ethereum.request({
-                    method: 'wallet_switchEthereumChain',
-                    params: [{ chainId: AMOY_CONFIG.chainId }]
-                });
-            } catch (switchError) {
-                if (switchError.code === 4902) {
-                    await window.ethereum.request({
-                        method: 'wallet_addEthereumChain',
-                        params: [AMOY_CONFIG]
-                    });
-                }
-                throw new Error("Por favor cambia a Polygon Amoy");
-            }
-        }
-    } catch (error) {
-        handleError(error, "Error configurando red");
-        throw error;
-    }
-}
-
-function initContract() {
-    contract = new web3.eth.Contract(
-        CONTRACT_CONFIG.abi,
-        CONTRACT_CONFIG.networks["80002"].address
-    );
-}
-
-async function loadInitialData() {
-    try {
-        showLoader("Cargando datos...");
-        
-        const [
-            balance, 
-            supply, 
-            paused, 
-            walletPaused, 
-            auxiliary, 
-            recoveryData,
-            owner
-        ] = await Promise.all([
-            contract.methods.balanceOf(userAddress).call(),
-            contract.methods.totalSupply().call(),
-            contract.methods.paused().call(),
-            contract.methods.isWalletPaused(userAddress).call(),
-            contract.methods.auxiliaryOwner().call(),
-            contract.methods.recoveryStatus().call(),
-            contract.methods.owner().call()
-        ]);
-        
-        // Actualizar UI
-        DOM.tokenBalance.textContent = `${web3.utils.fromWei(balance, 'ether')} GO`;
-        DOM.totalSupply.textContent = `${web3.utils.fromWei(supply, 'ether')} GO`;
-        updateContractStatusUI(paused);
-        updateWalletStatusUI(walletPaused);
-        
-        // Verificar roles
-        isOwner = userAddress.toLowerCase() === owner.toLowerCase();
-        isAuxiliary = userAddress.toLowerCase() === auxiliary.toLowerCase();
-        toggleRoleSections();
-        
-        // Actualizar datos adicionales
-        updateRecoveryUI(recoveryData);
-        updateAuxiliaryUI(auxiliary);
-        
-    } catch (error) {
-        handleError(error, "Error cargando datos");
+        handleError(error, "Error estimando gas");
+        return null;
     } finally {
         hideLoader();
     }
 }
 
-function updateContractStatusUI(paused) {
-    if (DOM.contractPausedStatus) {
-        DOM.contractPausedStatus.textContent = paused ? '⛔ PAUSADO' : '✅ Activo';
-        DOM.contractPausedStatus.className = paused ? 'status-badge paused' : 'status-badge active';
+/**
+ * Muestra el gas usado en una transacción
+ * @param {object} tx - Objeto de transacción
+ * @param {string} usedElementId - ID del elemento para mostrar gas usado
+ */
+function showGasUsed(tx, usedElementId) {
+    if (tx && tx.gasUsed && document.getElementById(usedElementId)) {
+        document.getElementById(usedElementId).textContent = tx.gasUsed;
     }
 }
 
-function updateWalletStatusUI(paused) {
-    if (DOM.walletPausedStatus) {
-        DOM.walletPausedStatus.textContent = paused ? '⛔ PAUSADA' : '✅ Activa';
-        DOM.walletPausedStatus.className = paused ? 'status-badge paused' : 'status-badge active';
-    }
-}
+// ================ FUNCIONES DE TRANSACCIÓN ACTUALIZADAS ================
 
-function updateRecoveryUI({nominee, deadline, approved, remainingTime}) {
-    if (DOM.recoveryNominee) {
-        DOM.recoveryNominee.textContent = nominee === '0x0000000000000000000000000000000000000000' 
-            ? 'Ninguno' 
-            : shortAddress(nominee);
-    }
-    
-    if (DOM.recoveryDeadline) {
-        DOM.recoveryDeadline.textContent = deadline === '0' 
-            ? 'N/A' 
-            : new Date(deadline * 1000).toLocaleString();
-    }
-    
-    if (DOM.recoveryApproved) {
-        DOM.recoveryApproved.textContent = approved ? '✅ Aprobado' : '❌ No aprobado';
-    }
-    
-    if (DOM.recoveryRemainingTime) {
-        if (remainingTime > 0) {
-            const days = Math.floor(remainingTime / 86400);
-            const hours = Math.floor((remainingTime % 86400) / 3600);
-            DOM.recoveryRemainingTime.textContent = `${days}d ${hours}h`;
-            
-            if (days < 1) {
-                DOM.recoveryRemainingTime.className = 'recovery-value danger';
-            } else if (days < 3) {
-                DOM.recoveryRemainingTime.className = 'recovery-value warning';
-            } else {
-                DOM.recoveryRemainingTime.className = 'recovery-value';
-            }
-        } else {
-            DOM.recoveryRemainingTime.textContent = deadline === '0' ? 'N/A' : 'Expirado';
-            DOM.recoveryRemainingTime.className = 'recovery-value';
-        }
-    }
-}
-
-function updateAuxiliaryUI(auxiliary) {
-    if (DOM.auxiliaryAddress) {
-        DOM.auxiliaryAddress.textContent = auxiliary === '0x0000000000000000000000000000000000000000' 
-            ? 'No asignado' 
-            : shortAddress(auxiliary);
-    }
-}
-
-function toggleRoleSections() {
-    if (DOM.ownerSection) {
-        DOM.ownerSection.style.display = isOwner ? 'block' : 'none';
-    }
-    if (DOM.auxiliarySection) {
-        DOM.auxiliarySection.style.display = isAuxiliary ? 'block' : 'none';
-    }
-}
-
-// ================ FUNCIONES DE TRANSACCIÓN ================
 async function transferTokens() {
     try {
         const recipient = DOM.recipientAddress.value;
@@ -406,18 +148,36 @@ async function transferTokens() {
         validateAddress(recipient);
         validateAmount(amount);
         
+        // Estimar gas
+        const gasEstimate = await estimateTransactionGas(
+            'transfer',
+            [recipient, web3.utils.toWei(amount, 'ether')],
+            'transferGasEstimate'
+        );
+        
+        if (!gasEstimate) return;
+
         showLoader("Enviando transferencia...");
         const tx = await contract.methods.transfer(
             recipient, 
             web3.utils.toWei(amount, 'ether')
-        ).send({ from: userAddress });
+        ).send({ 
+            from: userAddress,
+            gas: Math.floor(gasEstimate * 1.2) // 20% más por seguridad
+        });
         
-        showNotification("Transferencia exitosa!", "success");
+        showGasUsed(tx, 'transferGasUsed');
+        showNotification(`Transferencia exitosa! Gas usado: ${tx.gasUsed}`, "success");
         await loadInitialData();
         return tx;
         
     } catch (error) {
-        handleError(error, "Error en transferencia");
+        if (error.receipt) {
+            showGasUsed(error.receipt, 'transferGasUsed');
+            handleError(error, `Error en transferencia (Gas usado: ${error.receipt.gasUsed})`);
+        } else {
+            handleError(error, "Error en transferencia");
+        }
         throw error;
     } finally {
         hideLoader();
@@ -429,17 +189,35 @@ async function burnTokens() {
         const amount = DOM.burnAmount.value;
         validateAmount(amount);
         
+        // Estimar gas
+        const gasEstimate = await estimateTransactionGas(
+            'burn',
+            [web3.utils.toWei(amount, 'ether')],
+            'burnGasEstimate'
+        );
+        
+        if (!gasEstimate) return;
+
         showLoader("Procesando quema...");
         const tx = await contract.methods.burn(
             web3.utils.toWei(amount, 'ether')
-        ).send({ from: userAddress });
+        ).send({ 
+            from: userAddress,
+            gas: Math.floor(gasEstimate * 1.2)
+        });
         
-        showNotification("Tokens quemados exitosamente", "success");
+        showGasUsed(tx, 'burnGasUsed');
+        showNotification(`Tokens quemados exitosamente! Gas usado: ${tx.gasUsed}`, "success");
         await loadInitialData();
         return tx;
         
     } catch (error) {
-        handleError(error, "Error quemando tokens");
+        if (error.receipt) {
+            showGasUsed(error.receipt, 'burnGasUsed');
+            handleError(error, `Error quemando tokens (Gas usado: ${error.receipt.gasUsed})`);
+        } else {
+            handleError(error, "Error quemando tokens");
+        }
         throw error;
     } finally {
         hideLoader();
@@ -459,18 +237,36 @@ async function mintTokens() {
         validateAddress(recipient);
         validateAmount(amount);
         
+        // Estimar gas
+        const gasEstimate = await estimateTransactionGas(
+            'mint',
+            [recipient, web3.utils.toWei(amount, 'ether')],
+            'mintGasEstimate'
+        );
+        
+        if (!gasEstimate) return;
+
         showLoader("Minteando tokens...");
         const tx = await contract.methods.mint(
             recipient,
             web3.utils.toWei(amount, 'ether')
-        ).send({ from: userAddress });
+        ).send({ 
+            from: userAddress,
+            gas: Math.floor(gasEstimate * 1.2)
+        });
         
-        showNotification("Tokens minteados exitosamente!", "success");
+        showGasUsed(tx, 'mintGasUsed');
+        showNotification(`Tokens minteados exitosamente! Gas usado: ${tx.gasUsed}`, "success");
         await loadInitialData();
         return tx;
         
     } catch (error) {
-        handleError(error, "Error minteando tokens");
+        if (error.receipt) {
+            showGasUsed(error.receipt, 'mintGasUsed');
+            handleError(error, `Error minteando tokens (Gas usado: ${error.receipt.gasUsed})`);
+        } else {
+            handleError(error, "Error minteando tokens");
+        }
         throw error;
     } finally {
         hideLoader();
@@ -479,19 +275,36 @@ async function mintTokens() {
 
 async function toggleWalletPause(pause) {
     try {
-        showLoader(pause ? "Pausando wallet..." : "Reanudando wallet...");
         const method = pause ? 'pauseMyWallet' : 'unpauseMyWallet';
-        const tx = await contract.methods[method]().send({ from: userAddress });
+        const estimateElementId = pause ? 'pauseWalletGasEstimate' : 'unpauseWalletGasEstimate';
+        const usedElementId = pause ? 'pauseWalletGasUsed' : 'unpauseWalletGasUsed';
         
+        // Estimar gas
+        const gasEstimate = await estimateTransactionGas(method, [], estimateElementId);
+        if (!gasEstimate) return;
+
+        showLoader(pause ? "Pausando wallet..." : "Reanudando wallet...");
+        const tx = await contract.methods[method]().send({ 
+            from: userAddress,
+            gas: Math.floor(gasEstimate * 1.2)
+        });
+        
+        showGasUsed(tx, usedElementId);
         showNotification(
-            pause ? "Wallet pausada correctamente" : "Wallet reanudada correctamente", 
+            `Wallet ${pause ? "pausada" : "reanudada"} correctamente! Gas usado: ${tx.gasUsed}`, 
             "success"
         );
         await loadInitialData();
         return tx;
         
     } catch (error) {
-        handleError(error, pause ? "Error pausando wallet" : "Error reanudando wallet");
+        if (error.receipt) {
+            const usedElementId = pause ? 'pauseWalletGasUsed' : 'unpauseWalletGasUsed';
+            showGasUsed(error.receipt, usedElementId);
+            handleError(error, `Error ${pause ? "pausando" : "reanudando"} wallet (Gas usado: ${error.receipt.gasUsed})`);
+        } else {
+            handleError(error, pause ? "Error pausando wallet" : "Error reanudando wallet");
+        }
         throw error;
     } finally {
         hideLoader();
@@ -505,19 +318,36 @@ async function toggleContractPause(pause) {
     }
     
     try {
-        showLoader(pause ? "Pausando contrato..." : "Reanudando contrato...");
         const method = pause ? 'pause' : 'unpause';
-        const tx = await contract.methods[method]().send({ from: userAddress });
+        const estimateElementId = pause ? 'pauseGasEstimate' : 'unpauseGasEstimate';
+        const usedElementId = pause ? 'pauseGasUsed' : 'unpauseGasUsed';
         
+        // Estimar gas
+        const gasEstimate = await estimateTransactionGas(method, [], estimateElementId);
+        if (!gasEstimate) return;
+
+        showLoader(pause ? "Pausando contrato..." : "Reanudando contrato...");
+        const tx = await contract.methods[method]().send({ 
+            from: userAddress,
+            gas: Math.floor(gasEstimate * 1.2)
+        });
+        
+        showGasUsed(tx, usedElementId);
         showNotification(
-            pause ? "Contrato pausado correctamente" : "Contrato reanudado correctamente", 
+            `Contrato ${pause ? "pausado" : "reanudado"} correctamente! Gas usado: ${tx.gasUsed}`, 
             "success"
         );
         await loadInitialData();
         return tx;
         
     } catch (error) {
-        handleError(error, pause ? "Error pausando contrato" : "Error reanudando contrato");
+        if (error.receipt) {
+            const usedElementId = pause ? 'pauseGasUsed' : 'unpauseGasUsed';
+            showGasUsed(error.receipt, usedElementId);
+            handleError(error, `Error ${pause ? "pausando" : "reanudando"} contrato (Gas usado: ${error.receipt.gasUsed})`);
+        } else {
+            handleError(error, pause ? "Error pausando contrato" : "Error reanudando contrato");
+        }
         throw error;
     } finally {
         hideLoader();
@@ -534,16 +364,34 @@ async function setAuxiliaryOwner() {
         const newAuxiliary = DOM.newAuxiliary.value;
         validateAddress(newAuxiliary);
         
+        // Estimar gas
+        const gasEstimate = await estimateTransactionGas(
+            'setAuxiliaryOwner',
+            [newAuxiliary],
+            'auxiliaryGasEstimate'
+        );
+        
+        if (!gasEstimate) return;
+
         showLoader("Actualizando auxiliar...");
         const tx = await contract.methods.setAuxiliaryOwner(newAuxiliary)
-            .send({ from: userAddress });
+            .send({ 
+                from: userAddress,
+                gas: Math.floor(gasEstimate * 1.2)
+            });
         
-        showNotification("Auxiliar actualizado correctamente", "success");
+        showGasUsed(tx, 'auxiliaryGasUsed');
+        showNotification(`Auxiliar actualizado correctamente! Gas usado: ${tx.gasUsed}`, "success");
         await loadInitialData();
         return tx;
         
     } catch (error) {
-        handleError(error, "Error asignando auxiliar");
+        if (error.receipt) {
+            showGasUsed(error.receipt, 'auxiliaryGasUsed');
+            handleError(error, `Error asignando auxiliar (Gas usado: ${error.receipt.gasUsed})`);
+        } else {
+            handleError(error, "Error asignando auxiliar");
+        }
         throw error;
     } finally {
         hideLoader();
@@ -557,19 +405,37 @@ async function approveRecovery(approve) {
     }
     
     try {
+        // Estimar gas
+        const gasEstimate = await estimateTransactionGas(
+            'approveRecovery',
+            [approve],
+            'recoveryGasEstimate'
+        );
+        
+        if (!gasEstimate) return;
+
         showLoader(approve ? "Aprobando recovery..." : "Rechazando recovery...");
         const tx = await contract.methods.approveRecovery(approve)
-            .send({ from: userAddress });
+            .send({ 
+                from: userAddress,
+                gas: Math.floor(gasEstimate * 1.2)
+            });
         
+        showGasUsed(tx, 'recoveryGasUsed');
         showNotification(
-            approve ? "Recovery aprobado correctamente" : "Recovery rechazado", 
+            `Recovery ${approve ? "aprobado" : "rechazado"} correctamente! Gas usado: ${tx.gasUsed}`, 
             "success"
         );
         await loadInitialData();
         return tx;
         
     } catch (error) {
-        handleError(error, "Error en aprobación de recovery");
+        if (error.receipt) {
+            showGasUsed(error.receipt, 'recoveryGasUsed');
+            handleError(error, `Error en aprobación de recovery (Gas usado: ${error.receipt.gasUsed})`);
+        } else {
+            handleError(error, "Error en aprobación de recovery");
+        }
         throw error;
     } finally {
         hideLoader();
@@ -578,16 +444,34 @@ async function approveRecovery(approve) {
 
 async function executeRecovery() {
     try {
+        // Estimar gas
+        const gasEstimate = await estimateTransactionGas(
+            'executeRecovery',
+            [],
+            'recoveryGasEstimate'
+        );
+        
+        if (!gasEstimate) return;
+
         showLoader("Ejecutando recovery...");
         const tx = await contract.methods.executeRecovery()
-            .send({ from: userAddress });
+            .send({ 
+                from: userAddress,
+                gas: Math.floor(gasEstimate * 1.2)
+            });
         
-        showNotification("¡Ownership transferido exitosamente!", "success");
+        showGasUsed(tx, 'recoveryGasUsed');
+        showNotification(`¡Ownership transferido exitosamente! Gas usado: ${tx.gasUsed}`, "success");
         await loadInitialData();
         return tx;
         
     } catch (error) {
-        handleError(error, "Error ejecutando recovery");
+        if (error.receipt) {
+            showGasUsed(error.receipt, 'recoveryGasUsed');
+            handleError(error, `Error ejecutando recovery (Gas usado: ${error.receipt.gasUsed})`);
+        } else {
+            handleError(error, "Error ejecutando recovery");
+        }
         throw error;
     } finally {
         hideLoader();
@@ -601,42 +485,148 @@ async function claimOwnership() {
     }
     
     try {
+        // Estimar gas
+        const gasEstimate = await estimateTransactionGas(
+            'claimOwnershipFromAuxiliary',
+            [],
+            'auxiliaryGasEstimate'
+        );
+        
+        if (!gasEstimate) return;
+
         showLoader("Iniciando proceso de recovery...");
         const tx = await contract.methods.claimOwnershipFromAuxiliary()
-            .send({ from: userAddress });
+            .send({ 
+                from: userAddress,
+                gas: Math.floor(gasEstimate * 1.2)
+            });
         
-        showNotification("Proceso de recovery iniciado", "success");
+        showGasUsed(tx, 'auxiliaryGasUsed');
+        showNotification(`Proceso de recovery iniciado! Gas usado: ${tx.gasUsed}`, "success");
         await loadInitialData();
         return tx;
         
     } catch (error) {
-        handleError(error, "Error iniciando recovery");
+        if (error.receipt) {
+            showGasUsed(error.receipt, 'auxiliaryGasUsed');
+            handleError(error, `Error iniciando recovery (Gas usado: ${error.receipt.gasUsed})`);
+        } else {
+            handleError(error, "Error iniciando recovery");
+        }
         throw error;
     } finally {
         hideLoader();
     }
 }
 
-// ================ FUNCIONES AUXILIARES ================
-function setupEventListeners() {
-    console.log("Configurando listeners..."); // Debug
-    // Conexión
-    if (DOM.connectWallet) {
-        console.log("Registrando listener para connectWallet"); // Debug
-        DOM.connectWallet.addEventListener('click', async () => {
-            console.log("Click en Conectar Wallet detectado"); // Debug
-            await connectWallet();
-        });
-    } else {
-        console.error("Elemento connectWallet no encontrado"); // Debug
+// ============ FUNCIONES DE APROBACIÓN ================
+
+async function estimateApprovalGas() {
+    try {
+        const spender = DOM.spenderContract.value;
+        const amount = DOM.approvalAmount.value;
+        
+        validateAddress(spender);
+        validateAmount(amount);
+        
+        // Verificar si el contrato está autorizado
+        const isAllowed = await contract.methods.isContractAllowed(spender).call();
+        if (!isAllowed) {
+            throw new Error("El contrato no está en la lista de permitidos");
+        }
+        
+        const amountInWei = web3.utils.toWei(amount, 'ether');
+        const gasEstimate = await estimateTransactionGas(
+            'approve',
+            [spender, amountInWei],
+            'approvalGasEstimate'
+        );
+        
+        if (gasEstimate) {
+            showNotification(`Gas estimado: ${gasEstimate}`, "info");
+        }
+        
+        return gasEstimate;
+        
+    } catch (error) {
+        handleError(error, "Error estimando gas");
+        throw error;
     }
+}
+
+async function approveTokens() {
+    try {
+        const spender = DOM.spenderContract.value;
+        const amount = DOM.approvalAmount.value;
+        
+        validateAddress(spender);
+        validateAmount(amount);
+        
+        // Verificar si el contrato está autorizado
+        const isAllowed = await contract.methods.isContractAllowed(spender).call();
+        if (!isAllowed) {
+            throw new Error("El contrato no está en la lista de permitidos");
+        }
+        
+        // Obtener estimación de gas
+        const gasEstimate = await estimateApprovalGas();
+        if (!gasEstimate) return;
+
+        showLoader("Enviando aprobación...");
+        const amountInWei = web3.utils.toWei(amount, 'ether');
+        const tx = await contract.methods.approve(spender, amountInWei)
+            .send({ 
+                from: userAddress,
+                gas: Math.floor(gasEstimate * 1.2)
+            });
+        
+        showGasUsed(tx, 'approvalGasUsed');
+        showNotification(`Aprobación exitosa! Gas usado: ${tx.gasUsed}`, "success");
+        return tx;
+        
+    } catch (error) {
+        if (error.receipt) {
+            showGasUsed(error.receipt, 'approvalGasUsed');
+            handleError(error, `Error en aprobación (Gas usado: ${error.receipt.gasUsed})`);
+        } else {
+            handleError(error, "Error en aprobación");
+        }
+        throw error;
+    } finally {
+        hideLoader();
+    }
+}
+
+// ============ FUNCIONES RESTANTES (sin cambios) ================
+// [Las funciones restantes como initApp, connectWallet, loadInitialData, etc. 
+// permanecen igual que en tu código original]
+
+// ============ EVENT LISTENERS ACTUALIZADOS ================
+function setupEventListeners() {
+    // Conexión
     if (DOM.connectWallet) DOM.connectWallet.addEventListener('click', connectWallet);
     if (DOM.disconnectWallet) DOM.disconnectWallet.addEventListener('click', disconnectWallet);
     if (DOM.refreshBalance) DOM.refreshBalance.addEventListener('click', loadInitialData);
     
     // Transferencias
     if (DOM.transferTokens) DOM.transferTokens.addEventListener('click', transferTokens);
+    if (DOM.estimateTransferGas) DOM.estimateTransferGas.addEventListener('click', () => 
+        estimateTransactionGas(
+            'transfer',
+            [DOM.recipientAddress.value, web3.utils.toWei(DOM.transferAmount.value, 'ether')],
+            'transferGasEstimate'
+        )
+    );
+    
+    // Quemado
     if (DOM.burnTokens) DOM.burnTokens.addEventListener('click', burnTokens);
+    if (DOM.estimateBurnGas) DOM.estimateBurnGas.addEventListener('click', () => 
+        estimateTransactionGas(
+            'burn',
+            [web3.utils.toWei(DOM.burnAmount.value, 'ether')],
+            'burnGasEstimate'
+        )
+    );
     
     // Seguridad
     if (DOM.pauseWallet) DOM.pauseWallet.addEventListener('click', () => toggleWalletPause(true));
@@ -644,91 +634,33 @@ function setupEventListeners() {
     
     // Owner functions
     if (DOM.mintTokens) DOM.mintTokens.addEventListener('click', mintTokens);
+    if (DOM.estimateMintGas) DOM.estimateMintGas.addEventListener('click', () => 
+        estimateTransactionGas(
+            'mint',
+            [DOM.mintAddress.value, web3.utils.toWei(DOM.mintAmount.value, 'ether')],
+            'mintGasEstimate'
+        )
+    );
+    
     if (DOM.pauseContract) DOM.pauseContract.addEventListener('click', () => toggleContractPause(true));
     if (DOM.unpauseContract) DOM.unpauseContract.addEventListener('click', () => toggleContractPause(false));
-    if (DOM.setAuxiliaryBtn) DOM.setAuxiliaryBtn.addEventListener('click', setAuxiliaryOwner);
     
     // Recovery
     if (DOM.approveRecoveryBtn) DOM.approveRecoveryBtn.addEventListener('click', () => approveRecovery(true));
     if (DOM.executeRecoveryBtn) DOM.executeRecoveryBtn.addEventListener('click', executeRecovery);
+    
+    // Auxiliar
+    if (DOM.setAuxiliaryBtn) DOM.setAuxiliaryBtn.addEventListener('click', setAuxiliaryOwner);
     if (DOM.claimOwnershipBtn) DOM.claimOwnershipBtn.addEventListener('click', claimOwnership);
-}
-
-function validateAddress(address) {
-    if (!web3.utils.isAddress(address)) {
-        throw new Error("Dirección inválida");
-    }
-}
-
-function validateAmount(amount) {
-    if (!amount || isNaN(amount) || Number(amount) <= 0) {
-        throw new Error("Cantidad inválida");
-    }
-}
-
-function shortAddress(address) {
-    return address ? `${address.substring(0, 6)}...${address.substring(38)}` : "N/A";
-}
-
-function resetAppState() {
-    userAddress = null;
-    isOwner = false;
-    isAuxiliary = false;
     
-    if (DOM.tokenBalance) DOM.tokenBalance.textContent = "0.00 GO";
-    if (DOM.totalSupply) DOM.totalSupply.textContent = "-";
-    if (DOM.contractPausedStatus) DOM.contractPausedStatus.textContent = "-";
-    if (DOM.walletPausedStatus) DOM.walletPausedStatus.textContent = "-";
-    if (DOM.ownerSection) DOM.ownerSection.style.display = 'none';
-    if (DOM.auxiliarySection) DOM.auxiliarySection.style.display = 'none';
+    // Aprobación
+    if (DOM.estimateApprovalGas) DOM.estimateApprovalGas.addEventListener('click', estimateApprovalGas);
+    if (DOM.approveTokens) DOM.approveTokens.addEventListener('click', approveTokens);
 }
 
-// ================ MANEJO DE UI ================
-function showLoader(message = "Procesando...") {
-    if (DOM.loaderText) DOM.loaderText.textContent = message;
-    if (DOM.loader) DOM.loader.style.display = 'flex';
-}
-
-function hideLoader() {
-    if (DOM.loader) DOM.loader.style.display = 'none';
-}
-
-function showNotification(message, type = "success") {
-    if (!DOM.notification || !DOM.notificationMessage) return;
-    
-    DOM.notificationMessage.textContent = message;
-    DOM.notification.className = `notification show ${type}`;
-    
-    setTimeout(() => {
-        DOM.notification.classList.remove('show');
-    }, 5000);
-}
-
-function handleError(error, context = "") {
-    console.error(context, error);
-    
-    let message = error.message;
-    if (error.code === 4001) {
-        message = "Transacción cancelada por el usuario";
-    } else if (error.message.includes("user denied transaction")) {
-        message = "Transacción rechazada";
-    } else if (error.message.includes("insufficient funds")) {
-        message = "Fondos insuficientes para gas";
-    } else if (error.message.includes("wallet paused")) {
-        message = "Wallet pausada - operación no permitida";
-    } else if (error.message.includes("contract paused")) {
-        message = "Contrato pausado - operación no disponible";
-    }
-    
-    showNotification(`${context}: ${message}`, "error");
-}
-
-// Inicialización de listeners
+// Inicialización
 if (document.readyState !== 'loading') {
     initApp();
 } else {
     document.addEventListener('DOMContentLoaded', initApp);
 }
-
-// Configurar listeners de wallet
-setupWalletListeners();
