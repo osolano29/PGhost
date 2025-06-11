@@ -3,52 +3,150 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GhostToken (GO) - Plataforma Completa</title>
+    <title>GhostToken (GO) - Administración Completa</title>
     <link rel="stylesheet" href="./assets/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        /* Estilos adicionales para los nuevos elementos de gas */
+        .gas-section {
+            background-color: rgba(0, 0, 0, 0.2);
+            border-radius: 8px;
+            padding: 12px;
+            margin: 15px 0;
+            border-left: 3px solid #6c5ce7;
+        }
+        
+        .gas-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+        
+        .gas-label {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 0.9rem;
+        }
+        
+        .gas-value {
+            font-family: 'Roboto Mono', monospace;
+            font-weight: 600;
+        }
+        
+        .gas-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .btn-estimate {
+            background-color: rgba(108, 92, 231, 0.2);
+            color: #a29bfe;
+            border: none;
+        }
+        
+        .btn-estimate:hover {
+            background-color: rgba(108, 92, 231, 0.4);
+        }
+    </style>
 </head>
 <body>
     <div class="container">
-        <!-- Header con Estado de Conexión -->
+        <!-- Header Mejorado con Estado de Conexión Unificado -->
         <header class="header">
             <div class="header-brand">
                 <h1><i class="fas fa-ghost"></i> GhostToken (GO)</h1>
-                <p class="network-badge" id="networkIndicator">🔴 Sin conexión</p>
             </div>
-            <div class="wallet-connect">
-                <div id="walletInfo" class="wallet-info">
-                    <span id="walletAddress">No conectado</span>
-                    <span id="walletStatus" class="status-dot"></span>
+            
+            <div class="connection-status-container">
+                <div class="connection-status-badge disconnected" id="networkStatus">
+                    <span class="status-indicator disconnected"></span>
+                    <span id="networkStatusText">Desconectado</span>
                 </div>
+                
+                <div class="wallet-info" id="walletInfo" style="display:none;">
+                    <span class="wallet-address" id="walletAddress"></span>
+                    <button id="disconnectWallet" class="btn-connect">
+                        <i class="fas fa-plug"></i> Desconectar
+                    </button>
+                </div>
+                
                 <button id="connectWallet" class="btn-connect">
                     <i class="fas fa-plug"></i> Conectar Wallet
                 </button>
             </div>
         </header>
 
-        <!-- Panel de Información del Token -->
-        <section class="info-panel">
-            <div class="info-card">
+        <!-- Loader Global -->
+        <div id="loader" class="loader-overlay">
+            <div class="loader-content">
+                <div class="loader-spinner"></div>
+                <p id="loaderText">Procesando transacción...</p>
+                <p class="loader-subtext">Por favor espera y no cierres esta página</p>
+            </div>
+        </div>
+
+        <!-- Notificación Flotante -->
+        <div id="notification" class="notification">
+            <div class="notification-content">
+                <span id="notificationMessage"></span>
+            </div>
+        </div>
+
+        <!-- Panel de Información del Token Mejorado -->
+        <section class="info-panel enhanced-info">
+            <div class="info-card highlight-card">
                 <div class="info-header">
-                    <h2><i class="fas fa-wallet"></i> Balance</h2>
-                    <button id="refreshBalance" class="btn-icon" title="Actualizar">
+                    <h2><i class="fas fa-wallet"></i> Balance de GO</h2>
+                    <button id="refreshBalance" class="btn-icon pulse" title="Actualizar">
                         <i class="fas fa-sync-alt"></i>
                     </button>
                 </div>
-                <div class="info-value" id="tokenBalance">0.00 GO</div>
+                <div class="info-value large-text" id="tokenBalance">0.00 GO</div>
                 <div class="info-hint">Saldo disponible en tu wallet</div>
+                <div class="network-info">
+                    <span class="network-label">Red:</span>
+                    <span class="network-value">Polygon Amoy</span>
+                </div>
             </div>
 
-            <div class="info-card">
-                <h2><i class="fas fa-boxes"></i> Suministro Total</h2>
-                <div class="info-value" id="totalSupply">-</div>
-                <div class="info-hint">Total de GO en circulación</div>
+            <div class="info-card highlight-card">
+                <div class="info-header">
+                    <h2><i class="fas fa-boxes"></i> Suministro Total</h2>
+                    <div class="supply-trend">
+                        <i class="fas fa-chart-line"></i>
+                    </div>
+                </div>
+                <div class="info-value large-text" id="totalSupply">-</div>
+                <div class="info-hint">Tokens GO en circulación</div>
+                <div class="supply-details">
+                    <span class="detail-label">Decimales:</span>
+                    <span class="detail-value">18</span>
+                </div>
             </div>
 
-            <div class="info-card">
-                <h2><i class="fas fa-network-wired"></i> Red</h2>
-                <div class="info-value" id="networkInfo">Polygon Amoy</div>
-                <div class="info-hint">Testnet de Polygon</div>
+            <div class="info-card highlight-card status-card">
+                <div class="info-header">
+                    <h2><i class="fas fa-network-wired"></i> Estado</h2>
+                    <div class="status-indicator" id="contractStatusIndicator"></div>
+                </div>
+                <div class="status-container">
+                    <div class="status-item">
+                        <span class="status-label">Contrato:</span>
+                        <span class="status-value" id="contractPausedStatus">-</span>
+                    </div>
+                    <div class="status-item">
+                        <span class="status-label">Tu Wallet:</span>
+                        <span class="status-value" id="walletPausedStatus">-</span>
+                    </div>
+                </div>
+                <div class="contract-address">
+                    <span class="address-label">Contrato:</span>
+                    <span class="address-value" id="contractAddressShort">0x...abcd</span>
+                    <button class="btn-copy" title="Copiar dirección">
+                        <i class="far fa-copy"></i>
+                    </button>
+                </div>
             </div>
         </section>
 
@@ -84,9 +182,24 @@
                 <div class="input-hint">1 GO = 10<sup>18</sup> unidades</div>
             </div>
 
-            <button id="transferTokens" class="btn-primary">
-                <i class="fas fa-paper-plane"></i> Enviar Transferencia
-            </button>
+            <div class="gas-section">
+                <div class="gas-row">
+                    <span class="gas-label">Gas estimado:</span>
+                    <span class="gas-value" id="transferGasEstimate">-</span>
+                </div>
+                <div class="gas-row">
+                    <span class="gas-label">Gas usado:</span>
+                    <span class="gas-value" id="transferGasUsed">-</span>
+                </div>
+                <div class="gas-buttons">
+                    <button id="estimateTransferGas" class="btn-secondary btn-estimate">
+                        <i class="fas fa-calculator"></i> Estimar Gas
+                    </button>
+                    <button id="transferTokens" class="btn-primary">
+                        <i class="fas fa-paper-plane"></i> Enviar Transferencia
+                    </button>
+                </div>
+            </div>
 
             <div class="transaction-tips">
                 <p><i class="fas fa-exclamation-triangle"></i> <strong>Importante:</strong></p>
@@ -94,6 +207,67 @@
                     <li>Las transacciones son irreversibles</li>
                     <li>Requieren MATIC para pagar gas fees</li>
                     <li>Pueden tardar unos segundos en completarse</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Sección de Aprobación para Contratos Autorizados -->
+        <section class="action-card approval-card">
+            <div class="card-header">
+                <h2><i class="fas fa-handshake"></i> Aprobar Gastos</h2>
+                <div class="info-tooltip">
+                    <i class="fas fa-info-circle"></i>
+                    <div class="tooltip-content">
+                        Permite a un contrato autorizado gastar tus tokens GO.
+                        <strong>Solo para contratos previamente autorizados por el owner.</strong>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label for="spenderContract">
+                    <i class="fas fa-file-contract"></i> Contrato Autorizado
+                </label>
+                <input type="text" id="spenderContract" placeholder="0x...">
+                <div class="input-hint">Debe estar en la lista de contratos permitidos</div>
+            </div>
+
+            <div class="form-group">
+                <label for="approvalAmount">
+                    <i class="fas fa-coins"></i> Cantidad a Aprobar
+                </label>
+                <div class="input-with-unit">
+                    <input type="number" id="approvalAmount" placeholder="0.00" min="0" step="0.000001">
+                    <span class="unit">GO</span>
+                </div>
+                <div class="input-hint">0 = revocar aprobación, MAX = 2^256-1</div>
+            </div>
+
+            <div class="gas-section">
+                <div class="gas-row">
+                    <span class="gas-label">Gas estimado:</span>
+                    <span class="gas-value" id="approvalGasEstimate">-</span>
+                </div>
+                <div class="gas-row">
+                    <span class="gas-label">Gas usado:</span>
+                    <span class="gas-value" id="approvalGasUsed">-</span>
+                </div>
+                <div class="gas-buttons">
+                    <button id="estimateApprovalGas" class="btn-secondary btn-estimate">
+                        <i class="fas fa-calculator"></i> Estimar Gas
+                    </button>
+                    <button id="approveTokens" class="btn-primary">
+                        <i class="fas fa-check-circle"></i> Aprobar Gastos
+                    </button>
+                </div>
+            </div>
+
+            <div class="approval-info">
+                <p><i class="fas fa-info-circle"></i> <strong>¿Qué es approve?</strong></p>
+                <ul>
+                    <li>Permite que otro contrato gaste tus tokens</li>
+                    <li>Necesario para interactuar con DApps</li>
+                    <li>Revisa siempre el contrato antes de aprobar</li>
                 </ul>
             </div>
         </section>
@@ -122,9 +296,24 @@
                 <div class="input-hint">Esta acción no se puede deshacer</div>
             </div>
 
-            <button id="burnTokens" class="btn-warning">
-                <i class="fas fa-fire"></i> Quemar Tokens Permanentemente
-            </button>
+            <div class="gas-section">
+                <div class="gas-row">
+                    <span class="gas-label">Gas estimado:</span>
+                    <span class="gas-value" id="burnGasEstimate">-</span>
+                </div>
+                <div class="gas-row">
+                    <span class="gas-label">Gas usado:</span>
+                    <span class="gas-value" id="burnGasUsed">-</span>
+                </div>
+                <div class="gas-buttons">
+                    <button id="estimateBurnGas" class="btn-secondary btn-estimate">
+                        <i class="fas fa-calculator"></i> Estimar Gas
+                    </button>
+                    <button id="burnTokens" class="btn-warning">
+                        <i class="fas fa-fire"></i> Quemar Tokens
+                    </button>
+                </div>
+            </div>
 
             <div class="burn-warning">
                 <i class="fas fa-radiation-alt"></i>
@@ -137,7 +326,7 @@
             </div>
         </section>
 
-        <!-- Sección de Seguridad -->
+        <!-- Sección de Seguridad de Wallet -->
         <section class="action-card security-card">
             <div class="card-header">
                 <h2><i class="fas fa-shield-alt"></i> Seguridad de Wallet</h2>
@@ -152,12 +341,27 @@
 
             <div class="security-status">
                 <div class="status-item">
-                    <span>Estado actual:</span>
-                    <span id="walletPausedStatus" class="status-badge">Cargando...</span>
+                    <span>Estado de tu Wallet:</span>
+                    <span id="walletPausedStatus" class="status-badge">-</span>
                 </div>
-                <div class="status-item">
-                    <span>Contrato:</span>
-                    <span id="contractPausedStatus" class="status-badge">Cargando...</span>
+            </div>
+
+            <div class="gas-section">
+                <div class="gas-row">
+                    <span class="gas-label">Gas estimado (Pausar):</span>
+                    <span class="gas-value" id="pauseWalletGasEstimate">-</span>
+                </div>
+                <div class="gas-row">
+                    <span class="gas-label">Gas usado (Pausar):</span>
+                    <span class="gas-value" id="pauseWalletGasUsed">-</span>
+                </div>
+                <div class="gas-row">
+                    <span class="gas-label">Gas estimado (Reanudar):</span>
+                    <span class="gas-value" id="unpauseWalletGasEstimate">-</span>
+                </div>
+                <div class="gas-row">
+                    <span class="gas-label">Gas usado (Reanudar):</span>
+                    <span class="gas-value" id="unpauseWalletGasUsed">-</span>
                 </div>
             </div>
 
@@ -218,9 +422,24 @@
                     </div>
                 </div>
 
-                <button id="mintTokens" class="btn-primary">
-                    <i class="fas fa-plus-circle"></i> Crear Nuevos Tokens
-                </button>
+                <div class="gas-section">
+                    <div class="gas-row">
+                        <span class="gas-label">Gas estimado:</span>
+                        <span class="gas-value" id="mintGasEstimate">-</span>
+                    </div>
+                    <div class="gas-row">
+                        <span class="gas-label">Gas usado:</span>
+                        <span class="gas-value" id="mintGasUsed">-</span>
+                    </div>
+                    <div class="gas-buttons">
+                        <button id="estimateMintGas" class="btn-secondary btn-estimate">
+                            <i class="fas fa-calculator"></i> Estimar Gas
+                        </button>
+                        <button id="mintTokens" class="btn-primary">
+                            <i class="fas fa-plus-circle"></i> Crear Nuevos Tokens
+                        </button>
+                    </div>
+                </div>
 
                 <div class="admin-info">
                     <p><i class="fas fa-info-circle"></i> El minting:</p>
@@ -243,6 +462,25 @@
                     </button>
                 </div>
 
+                <div class="gas-section">
+                    <div class="gas-row">
+                        <span class="gas-label">Gas estimado (Pausar):</span>
+                        <span class="gas-value" id="pauseGasEstimate">-</span>
+                    </div>
+                    <div class="gas-row">
+                        <span class="gas-label">Gas usado (Pausar):</span>
+                        <span class="gas-value" id="pauseGasUsed">-</span>
+                    </div>
+                    <div class="gas-row">
+                        <span class="gas-label">Gas estimado (Reanudar):</span>
+                        <span class="gas-value" id="unpauseGasEstimate">-</span>
+                    </div>
+                    <div class="gas-row">
+                        <span class="gas-label">Gas usado (Reanudar):</span>
+                        <span class="gas-value" id="unpauseGasUsed">-</span>
+                    </div>
+                </div>
+
                 <div class="admin-warning">
                     <i class="fas fa-exclamation-triangle"></i>
                     <p><strong>Pausar el contrato:</strong></p>
@@ -256,24 +494,52 @@
 
             <!-- Pestaña Recovery -->
             <div id="recovery-tab" class="tab-content">
-                <div class="recovery-status">
-                    <div class="status-item">
-                        <span>Nominado Actual:</span>
-                        <span id="recoveryNominee">Ninguno</span>
+                <div class="recovery-grid">
+                    <div class="recovery-item">
+                        <span class="recovery-label">Nominado Actual:</span>
+                        <span class="recovery-value" id="recoveryNominee">Ninguno</span>
                     </div>
-                    <div class="status-item">
-                        <span>Plazo:</span>
-                        <span id="recoveryDeadline">-</span>
+                    <div class="recovery-item">
+                        <span class="recovery-label">Plazo:</span>
+                        <span class="recovery-value" id="recoveryDeadline">-</span>
                     </div>
-                    <div class="status-item">
-                        <span>Aprobado:</span>
-                        <span id="recoveryApproved">-</span>
+                    <div class="recovery-item">
+                        <span class="recovery-label">Aprobado:</span>
+                        <span class="recovery-value" id="recoveryApproved">-</span>
+                    </div>
+                    <div class="recovery-item">
+                        <span class="recovery-label">Tiempo Restante:</span>
+                        <span class="recovery-value" id="recoveryRemainingTime">-</span>
                     </div>
                 </div>
 
-                <button id="approveRecovery" class="btn-secondary">
-                    <i class="fas fa-check-circle"></i> Gestionar Recovery
-                </button>
+                <div class="gas-section">
+                    <div class="gas-row">
+                        <span class="gas-label">Gas estimado (Aprobar):</span>
+                        <span class="gas-value" id="recoveryGasEstimate">-</span>
+                    </div>
+                    <div class="gas-row">
+                        <span class="gas-label">Gas usado (Aprobar):</span>
+                        <span class="gas-value" id="recoveryGasUsed">-</span>
+                    </div>
+                    <div class="gas-row">
+                        <span class="gas-label">Gas estimado (Ejecutar):</span>
+                        <span class="gas-value" id="executeRecoveryGasEstimate">-</span>
+                    </div>
+                    <div class="gas-row">
+                        <span class="gas-label">Gas usado (Ejecutar):</span>
+                        <span class="gas-value" id="executeRecoveryGasUsed">-</span>
+                    </div>
+                </div>
+
+                <div class="button-group">
+                    <button id="approveRecoveryBtn" class="btn-secondary">
+                        <i class="fas fa-check-circle"></i> Aprobar Recovery
+                    </button>
+                    <button id="executeRecoveryBtn" class="btn-warning">
+                        <i class="fas fa-user-shield"></i> Ejecutar Recovery
+                    </button>
+                </div>
 
                 <div class="recovery-info">
                     <p><i class="fas fa-info-circle"></i> El proceso de recovery:</p>
@@ -306,11 +572,30 @@
                 <span id="auxiliaryAddress">No asignado</span>
             </div>
 
+            <div class="gas-section">
+                <div class="gas-row">
+                    <span class="gas-label">Gas estimado (Asignar):</span>
+                    <span class="gas-value" id="auxiliaryGasEstimate">-</span>
+                </div>
+                <div class="gas-row">
+                    <span class="gas-label">Gas usado (Asignar):</span>
+                    <span class="gas-value" id="auxiliaryGasUsed">-</span>
+                </div>
+                <div class="gas-row">
+                    <span class="gas-label">Gas estimado (Reclamar):</span>
+                    <span class="gas-value" id="claimOwnershipGasEstimate">-</span>
+                </div>
+                <div class="gas-row">
+                    <span class="gas-label">Gas usado (Reclamar):</span>
+                    <span class="gas-value" id="claimOwnershipGasUsed">-</span>
+                </div>
+            </div>
+
             <div class="button-group">
-                <button id="setAuxiliary" class="btn-secondary">
+                <button id="setAuxiliaryBtn" class="btn-secondary">
                     <i class="fas fa-save"></i> Actualizar Auxiliar
                 </button>
-                <button id="claimOwnership" class="btn-warning">
+                <button id="claimOwnershipBtn" class="btn-warning">
                     <i class="fas fa-user-lock"></i> Iniciar Recovery
                 </button>
             </div>
@@ -324,21 +609,25 @@
                 </ul>
             </div>
         </section>
+    </div>
 
-        <!-- Loader Global -->
-        <div id="loader" class="loader-overlay">
-            <div class="loader-content">
-                <div class="loader-spinner"></div>
-                <p id="loaderText">Procesando transacción...</p>
-                <p class="loader-subtext">Por favor espera y no cierres esta página</p>
-            </div>
-        </div>
-
-        <!-- Notificación Flotante -->
-        <div id="notification" class="notification">
-            <div class="notification-content">
-                <span id="notificationMessage"></span>
-            </div>
+    <!-- Modal para MetaMask -->
+    <div id="metaMaskModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>MetaMask no detectado</h2>
+            <p>Para usar esta DApp necesitas instalar MetaMask.</p>
+            <a href="https://metamask.io/" target="_blank" class="btn-primary">
+                Instalar MetaMask
+            </a>
+            <p class="modal-alternative">
+                Si ya lo tienes instalado, asegúrate de:
+            </p>
+            <ul>
+                <li>Estar usando un navegador compatible</li>
+                <li>Tener la extensión activada</li>
+                <li>Actualizar a la última versión</li>
+            </ul>
         </div>
     </div>
 
@@ -369,6 +658,32 @@
                 document.getElementById(tabId).classList.add('active');
                 btn.classList.add('active');
             });
+        });
+
+        // Copiar dirección del contrato
+        document.querySelector('.btn-copy')?.addEventListener('click', () => {
+            const address = document.querySelector('.address-value').textContent;
+            navigator.clipboard.writeText(address)
+                .then(() => {
+                    const notification = document.createElement('div');
+                    notification.textContent = '¡Copiado!';
+                    notification.style.position = 'fixed';
+                    notification.style.bottom = '20px';
+                    notification.style.right = '20px';
+                    notification.style.backgroundColor = '#6c5ce7';
+                    notification.style.color = 'white';
+                    notification.style.padding = '10px 20px';
+                    notification.style.borderRadius = '5px';
+                    notification.style.zIndex = '1000';
+                    document.body.appendChild(notification);
+                    
+                    setTimeout(() => {
+                        document.body.removeChild(notification);
+                    }, 2000);
+                })
+                .catch(err => {
+                    console.error('Error al copiar: ', err);
+                });
         });
     </script>
 </body>
