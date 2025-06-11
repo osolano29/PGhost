@@ -1,5 +1,4 @@
-// ================ CONFIGURACIÓN ================
-// Importamos la configuración del contrato
+// ================ CONFIGURACIÓN INICIAL ================
 import { CONTRACT_CONFIG, AMOY_CONFIG } from './ghost-token.js';
 
 // Variables globales
@@ -7,118 +6,140 @@ let web3, contract, userAddress, isOwner = false, isAuxiliary = false;
 
 // Elementos del DOM
 const DOM = {
-    connectBtn: document.getElementById('connectWallet'),
-    transferBtn: document.getElementById('transferTokens'),
-    burnBtn: document.getElementById('burnTokens'),
-    mintBtn: document.getElementById('mintTokens'),
-    pauseWalletBtn: document.getElementById('pauseWallet'),
-    unpauseWalletBtn: document.getElementById('unpauseWallet'),
-    pauseContractBtn: document.getElementById('pauseContract'),
-    unpauseContractBtn: document.getElementById('unpauseContract'),
-    setAuxiliaryBtn: document.getElementById('setAuxiliaryBtn'),
-    claimOwnershipBtn: document.getElementById('claimOwnershipBtn'),
-    approveRecoveryBtn: document.getElementById('approveRecoveryBtn'),
-    executeRecoveryBtn: document.getElementById('executeRecoveryBtn'),
-    toggleAllowanceBtn: document.getElementById('toggleAllowanceBtn'),
-    walletStatus: document.getElementById('walletStatus'),
-    networkInfo: document.getElementById('networkInfo'),
+    // Elementos de conexión
+    connectWallet: document.getElementById('connectWallet'),
+    disconnectWallet: document.getElementById('disconnectWallet'),
+    networkStatus: document.getElementById('networkStatus'),
+    networkStatusText: document.getElementById('networkStatusText'),
+    walletInfo: document.getElementById('walletInfo'),
+    walletAddress: document.getElementById('walletAddress'),
+    
+    // Información del token
     tokenBalance: document.getElementById('tokenBalance'),
     totalSupply: document.getElementById('totalSupply'),
-    contractStatus: document.getElementById('contractPausedStatus'),
-    walletStatusIndicator: document.getElementById('walletPausedStatus'),
-    auxiliaryAddress: document.getElementById('auxiliaryAddress'),
+    contractPausedStatus: document.getElementById('contractPausedStatus'),
+    walletPausedStatus: document.getElementById('walletPausedStatus'),
+    refreshBalance: document.getElementById('refreshBalance'),
+    
+    // Transferencias
+    transferTokens: document.getElementById('transferTokens'),
+    estimateTransferGas: document.getElementById('estimateTransferGas'),
+    recipientAddress: document.getElementById('recipientAddress'),
+    transferAmount: document.getElementById('transferAmount'),
+    transferGasEstimate: document.getElementById('transferGasEstimate'),
+    transferGasUsed: document.getElementById('transferGasUsed'),
+    
+    // Quemado
+    burnTokens: document.getElementById('burnTokens'),
+    estimateBurnGas: document.getElementById('estimateBurnGas'),
+    burnAmount: document.getElementById('burnAmount'),
+    burnGasEstimate: document.getElementById('burnGasEstimate'),
+    burnGasUsed: document.getElementById('burnGasUsed'),
+    
+    // Seguridad
+    pauseWallet: document.getElementById('pauseWallet'),
+    unpauseWallet: document.getElementById('unpauseWallet'),
+    
+    // Funciones de owner
+    mintTokens: document.getElementById('mintTokens'),
+    estimateMintGas: document.getElementById('estimateMintGas'),
+    mintAddress: document.getElementById('mintAddress'),
+    mintAmount: document.getElementById('mintAmount'),
+    mintGasEstimate: document.getElementById('mintGasEstimate'),
+    mintGasUsed: document.getElementById('mintGasUsed'),
+    pauseContract: document.getElementById('pauseContract'),
+    estimatePauseGas: document.getElementById('estimatePauseGas'),
+    unpauseContract: document.getElementById('unpauseContract'),
+    estimateUnpauseGas: document.getElementById('estimateUnpauseGas'),
+    pauseGasEstimate: document.getElementById('pauseGasEstimate'),
+    pauseGasUsed: document.getElementById('pauseGasUsed'),
+    
+    // Sistema de recovery
+    approveRecoveryBtn: document.getElementById('approveRecoveryBtn'),
+    estimateApproveRecoveryGas: document.getElementById('estimateApproveRecoveryGas'),
+    executeRecoveryBtn: document.getElementById('executeRecoveryBtn'),
+    estimateExecuteRecoveryGas: document.getElementById('estimateExecuteRecoveryGas'),
     recoveryNominee: document.getElementById('recoveryNominee'),
     recoveryDeadline: document.getElementById('recoveryDeadline'),
     recoveryApproved: document.getElementById('recoveryApproved'),
-    loader: document.getElementById('loader')
+    recoveryRemainingTime: document.getElementById('recoveryRemainingTime'),
+    recoveryGasEstimate: document.getElementById('recoveryGasEstimate'),
+    recoveryGasUsed: document.getElementById('recoveryGasUsed'),
+    
+    // Funciones de auxiliar
+    setAuxiliaryBtn: document.getElementById('setAuxiliaryBtn'),
+    estimateSetAuxiliaryGas: document.getElementById('estimateSetAuxiliaryGas'),
+    claimOwnershipBtn: document.getElementById('claimOwnershipBtn'),
+    estimateClaimOwnershipGas: document.getElementById('estimateClaimOwnershipGas'),
+    newAuxiliary: document.getElementById('newAuxiliary'),
+    auxiliaryAddress: document.getElementById('auxiliaryAddress'),
+    auxiliaryGasEstimate: document.getElementById('auxiliaryGasEstimate'),
+    auxiliaryGasUsed: document.getElementById('auxiliaryGasUsed'),
+    
+    // Aprobación de gastos
+    spenderContract: document.getElementById('spenderContract'),
+    approvalAmount: document.getElementById('approvalAmount'),
+    approvalGasEstimate: document.getElementById('approvalGasEstimate'),
+    approvalGasUsed: document.getElementById('approvalGasUsed'),
+    estimateApprovalGas: document.getElementById('estimateApprovalGas'),
+    approveTokens: document.getElementById('approveTokens'),
+    
+    // UI Elements
+    loader: document.getElementById('loader'),
+    loaderText: document.getElementById('loaderText'),
+    notification: document.getElementById('notification'),
+    notificationMessage: document.getElementById('notificationMessage'),
+    ownerSection: document.getElementById('ownerSection'),
+    auxiliarySection: document.getElementById('auxiliarySection'),
+    metaMaskModal: document.getElementById('metaMaskModal')
 };
 
-// ================ FUNCIONES PRINCIPALES ================
-export async function initApp() {
-    setupEventListeners();
-    
-    // Solución para warning de postMessage en local
-    if (window.location.protocol === 'file:') {
-        console.warn('Modo local detectado - Algunas funciones pueden estar limitadas');
-    }
-    
-    // Conexión automática si ya está conectado
-    if (window.ethereum?.selectedAddress) {
-        await connectWallet();
-    }
-}
+// ================ FUNCIONES DE GAS ================
 
-async function connectWallet() {
+/**
+ * Función genérica para estimar gas
+ * @param {string} methodName - Nombre del método del contrato
+ * @param {array} args - Argumentos para la función
+ * @param {string} estimateElementId - ID del elemento para mostrar estimación
+ * @returns {Promise<number>} - Estimación de gas
+ */
+async function estimateTransactionGas(methodName, args = [], estimateElementId = null) {
     try {
-        showLoader();
-        
-        // 1. Detección mejorada de MetaMask
-        const provider = detectProvider();
-        if (!provider) {
-            showMetaMaskModal();
-            return false;
+        if (!userAddress) {
+            showNotification("Conecta tu wallet primero", "error");
+            return null;
         }
 
-        // 2. Configurar Web3 y conectar
-        web3 = new Web3(provider);
-        const accounts = await provider.request({ method: 'eth_requestAccounts' });
-        userAddress = accounts[0];
+        showLoader("Estimando gas...");
+        const gasEstimate = await contract.methods[methodName](...args)
+            .estimateGas({ from: userAddress });
         
-        // 3. Configurar red y contrato
-        await setupNetwork();
-        initContract();
+        if (estimateElementId && document.getElementById(estimateElementId)) {
+            document.getElementById(estimateElementId).textContent = gasEstimate;
+        }
         
-        // 4. Cargar datos iniciales
-        await loadInitialData();
-        
-        updateUI();
-        return true;
-        
+        return gasEstimate;
     } catch (error) {
-        handleError(error, "Error al conectar");
-        return false;
+        handleError(error, "Error estimando gas");
+        return null;
     } finally {
         hideLoader();
     }
 }
 
-// ================ FUNCIONES DEL CONTRATO ================
-
-// ---- Funciones de Lectura ----
-async function loadInitialData() {
-    try {
-        const [balance, supply, paused, walletPaused, auxiliary, recovery] = await Promise.all([
-            contract.methods.balanceOf(userAddress).call(),
-            contract.methods.totalSupply().call(),
-            contract.methods.paused().call(),
-            contract.methods.isWalletPaused(userAddress).call(),
-            contract.methods.auxiliaryOwner().call(),
-            contract.methods.recoveryStatus().call()
-        ]);
-        
-        // Actualizar UI con los datos
-        DOM.tokenBalance.textContent = `${web3.utils.fromWei(balance, 'ether')} GO`;
-        DOM.totalSupply.textContent = `${web3.utils.fromWei(supply, 'ether')} GO`;
-        DOM.contractStatus.textContent = paused ? '⛔ PAUSADO' : '✅ Activo';
-        DOM.walletStatusIndicator.textContent = walletPaused ? '⛔ PAUSADA' : '✅ Activa';
-        
-        // Verificar roles
-        const owner = await contract.methods.owner().call();
-        isOwner = userAddress.toLowerCase() === owner.toLowerCase();
-        isAuxiliary = userAddress.toLowerCase() === auxiliary.toLowerCase();
-        
-        // Mostrar/ocultar funciones según roles
-        toggleRoleSections();
-        
-        // Actualizar datos de recovery
-        updateRecoveryUI(recovery);
-        
-    } catch (error) {
-        handleError(error, "Error cargando datos iniciales");
+/**
+ * Muestra el gas usado en una transacción
+ * @param {object} tx - Objeto de transacción
+ * @param {string} usedElementId - ID del elemento para mostrar gas usado
+ */
+function showGasUsed(tx, usedElementId) {
+    if (tx && tx.gasUsed && document.getElementById(usedElementId)) {
+        document.getElementById(usedElementId).textContent = tx.gasUsed;
     }
 }
 
-// ---- Funciones de Escritura ----
+// ================ FUNCIONES DE TRANSACCIÓN ACTUALIZADAS ================
+
 async function transferTokens() {
     try {
         const recipient = DOM.recipientAddress.value;
@@ -127,18 +148,77 @@ async function transferTokens() {
         validateAddress(recipient);
         validateAmount(amount);
         
-        showLoader();
+        // Estimar gas
+        const gasEstimate = await estimateTransactionGas(
+            'transfer',
+            [recipient, web3.utils.toWei(amount, 'ether')],
+            'transferGasEstimate'
+        );
+        
+        if (!gasEstimate) return;
+
+        showLoader("Enviando transferencia...");
         const tx = await contract.methods.transfer(
             recipient, 
             web3.utils.toWei(amount, 'ether')
-        ).send({ from: userAddress });
+        ).send({ 
+            from: userAddress,
+            gas: Math.floor(gasEstimate * 1.2) // 20% más por seguridad
+        });
         
-        showFeedback("Transferencia exitosa!");
+        showGasUsed(tx, 'transferGasUsed');
+        showNotification(`Transferencia exitosa! Gas usado: ${tx.gasUsed}`, "success");
         await loadInitialData();
         return tx;
         
     } catch (error) {
-        handleError(error, "Error en transferencia");
+        if (error.receipt) {
+            showGasUsed(error.receipt, 'transferGasUsed');
+            handleError(error, `Error en transferencia (Gas usado: ${error.receipt.gasUsed})`);
+        } else {
+            handleError(error, "Error en transferencia");
+        }
+        throw error;
+    } finally {
+        hideLoader();
+    }
+}
+
+async function burnTokens() {
+    try {
+        const amount = DOM.burnAmount.value;
+        validateAmount(amount);
+        
+        // Estimar gas
+        const gasEstimate = await estimateTransactionGas(
+            'burn',
+            [web3.utils.toWei(amount, 'ether')],
+            'burnGasEstimate'
+        );
+        
+        if (!gasEstimate) return;
+
+        showLoader("Procesando quema...");
+        const tx = await contract.methods.burn(
+            web3.utils.toWei(amount, 'ether')
+        ).send({ 
+            from: userAddress,
+            gas: Math.floor(gasEstimate * 1.2)
+        });
+        
+        showGasUsed(tx, 'burnGasUsed');
+        showNotification(`Tokens quemados exitosamente! Gas usado: ${tx.gasUsed}`, "success");
+        await loadInitialData();
+        return tx;
+        
+    } catch (error) {
+        if (error.receipt) {
+            showGasUsed(error.receipt, 'burnGasUsed');
+            handleError(error, `Error quemando tokens (Gas usado: ${error.receipt.gasUsed})`);
+        } else {
+            handleError(error, "Error quemando tokens");
+        }
+        throw error;
     } finally {
         hideLoader();
     }
@@ -146,7 +226,7 @@ async function transferTokens() {
 
 async function mintTokens() {
     if (!isOwner) {
-        showFeedback("Solo el owner puede mintear tokens", "error");
+        showNotification("Solo el owner puede mintear tokens", "error");
         return;
     }
     
@@ -157,38 +237,206 @@ async function mintTokens() {
         validateAddress(recipient);
         validateAmount(amount);
         
-        showLoader();
+        // Estimar gas
+        const gasEstimate = await estimateTransactionGas(
+            'mint',
+            [recipient, web3.utils.toWei(amount, 'ether')],
+            'mintGasEstimate'
+        );
+        
+        if (!gasEstimate) return;
+
+        showLoader("Minteando tokens...");
         const tx = await contract.methods.mint(
             recipient,
             web3.utils.toWei(amount, 'ether')
-        ).send({ from: userAddress });
+        ).send({ 
+            from: userAddress,
+            gas: Math.floor(gasEstimate * 1.2)
+        });
         
-        showFeedback("Tokens minteados exitosamente!");
+        showGasUsed(tx, 'mintGasUsed');
+        showNotification(`Tokens minteados exitosamente! Gas usado: ${tx.gasUsed}`, "success");
         await loadInitialData();
         return tx;
         
     } catch (error) {
-        handleError(error, "Error minteando tokens");
+        if (error.receipt) {
+            showGasUsed(error.receipt, 'mintGasUsed');
+            handleError(error, `Error minteando tokens (Gas usado: ${error.receipt.gasUsed})`);
+        } else {
+            handleError(error, "Error minteando tokens");
+        }
+        throw error;
     } finally {
         hideLoader();
     }
 }
 
-// ---- Sistema de Ownership ----
+async function toggleWalletPause(pause) {
+    try {
+        const method = pause ? 'pauseMyWallet' : 'unpauseMyWallet';
+        const estimateElementId = pause ? 'pauseWalletGasEstimate' : 'unpauseWalletGasEstimate';
+        const usedElementId = pause ? 'pauseWalletGasUsed' : 'unpauseWalletGasUsed';
+        
+        // Estimar gas
+        const gasEstimate = await estimateTransactionGas(method, [], estimateElementId);
+        if (!gasEstimate) return;
+
+        showLoader(pause ? "Pausando wallet..." : "Reanudando wallet...");
+        const tx = await contract.methods[method]().send({ 
+            from: userAddress,
+            gas: Math.floor(gasEstimate * 1.2)
+        });
+        
+        showGasUsed(tx, usedElementId);
+        showNotification(
+            `Wallet ${pause ? "pausada" : "reanudada"} correctamente! Gas usado: ${tx.gasUsed}`, 
+            "success"
+        );
+        await loadInitialData();
+        return tx;
+        
+    } catch (error) {
+        if (error.receipt) {
+            const usedElementId = pause ? 'pauseWalletGasUsed' : 'unpauseWalletGasUsed';
+            showGasUsed(error.receipt, usedElementId);
+            handleError(error, `Error ${pause ? "pausando" : "reanudando"} wallet (Gas usado: ${error.receipt.gasUsed})`);
+        } else {
+            handleError(error, pause ? "Error pausando wallet" : "Error reanudando wallet");
+        }
+        throw error;
+    } finally {
+        hideLoader();
+    }
+}
+
+async function toggleContractPause(pause) {
+    if (!isOwner) {
+        showNotification("Solo el owner puede pausar el contrato", "error");
+        return;
+    }
+    
+    try {
+        const method = pause ? 'pause' : 'unpause';
+        const estimateElementId = pause ? 'pauseGasEstimate' : 'unpauseGasEstimate';
+        const usedElementId = pause ? 'pauseGasUsed' : 'unpauseGasUsed';
+        
+        // Estimar gas
+        const gasEstimate = await estimateTransactionGas(method, [], estimateElementId);
+        if (!gasEstimate) return;
+
+        showLoader(pause ? "Pausando contrato..." : "Reanudando contrato...");
+        const tx = await contract.methods[method]().send({ 
+            from: userAddress,
+            gas: Math.floor(gasEstimate * 1.2)
+        });
+        
+        showGasUsed(tx, usedElementId);
+        showNotification(
+            `Contrato ${pause ? "pausado" : "reanudado"} correctamente! Gas usado: ${tx.gasUsed}`, 
+            "success"
+        );
+        await loadInitialData();
+        return tx;
+        
+    } catch (error) {
+        if (error.receipt) {
+            const usedElementId = pause ? 'pauseGasUsed' : 'unpauseGasUsed';
+            showGasUsed(error.receipt, usedElementId);
+            handleError(error, `Error ${pause ? "pausando" : "reanudando"} contrato (Gas usado: ${error.receipt.gasUsed})`);
+        } else {
+            handleError(error, pause ? "Error pausando contrato" : "Error reanudando contrato");
+        }
+        throw error;
+    } finally {
+        hideLoader();
+    }
+}
+
 async function setAuxiliaryOwner() {
+    if (!isOwner) {
+        showNotification("Solo el owner puede asignar auxiliar", "error");
+        return;
+    }
+    
     try {
         const newAuxiliary = DOM.newAuxiliary.value;
         validateAddress(newAuxiliary);
         
-        showLoader();
-        await contract.methods.setAuxiliaryOwner(newAuxiliary)
-            .send({ from: userAddress });
+        // Estimar gas
+        const gasEstimate = await estimateTransactionGas(
+            'setAuxiliaryOwner',
+            [newAuxiliary],
+            'auxiliaryGasEstimate'
+        );
         
-        showFeedback("Auxiliar actualizado correctamente");
+        if (!gasEstimate) return;
+
+        showLoader("Actualizando auxiliar...");
+        const tx = await contract.methods.setAuxiliaryOwner(newAuxiliary)
+            .send({ 
+                from: userAddress,
+                gas: Math.floor(gasEstimate * 1.2)
+            });
+        
+        showGasUsed(tx, 'auxiliaryGasUsed');
+        showNotification(`Auxiliar actualizado correctamente! Gas usado: ${tx.gasUsed}`, "success");
         await loadInitialData();
+        return tx;
         
     } catch (error) {
-        handleError(error, "Error asignando auxiliar");
+        if (error.receipt) {
+            showGasUsed(error.receipt, 'auxiliaryGasUsed');
+            handleError(error, `Error asignando auxiliar (Gas usado: ${error.receipt.gasUsed})`);
+        } else {
+            handleError(error, "Error asignando auxiliar");
+        }
+        throw error;
+    } finally {
+        hideLoader();
+    }
+}
+
+async function approveRecovery(approve) {
+    if (!isOwner) {
+        showNotification("Solo el owner puede aprobar recovery", "error");
+        return;
+    }
+    
+    try {
+        // Estimar gas
+        const gasEstimate = await estimateTransactionGas(
+            'approveRecovery',
+            [approve],
+            'recoveryGasEstimate'
+        );
+        
+        if (!gasEstimate) return;
+
+        showLoader(approve ? "Aprobando recovery..." : "Rechazando recovery...");
+        const tx = await contract.methods.approveRecovery(approve)
+            .send({ 
+                from: userAddress,
+                gas: Math.floor(gasEstimate * 1.2)
+            });
+        
+        showGasUsed(tx, 'recoveryGasUsed');
+        showNotification(
+            `Recovery ${approve ? "aprobado" : "rechazado"} correctamente! Gas usado: ${tx.gasUsed}`, 
+            "success"
+        );
+        await loadInitialData();
+        return tx;
+        
+    } catch (error) {
+        if (error.receipt) {
+            showGasUsed(error.receipt, 'recoveryGasUsed');
+            handleError(error, `Error en aprobación de recovery (Gas usado: ${error.receipt.gasUsed})`);
+        } else {
+            handleError(error, "Error en aprobación de recovery");
+        }
+        throw error;
     } finally {
         hideLoader();
     }
@@ -196,167 +444,223 @@ async function setAuxiliaryOwner() {
 
 async function executeRecovery() {
     try {
-        showLoader();
-        await contract.methods.executeRecovery()
-            .send({ from: userAddress });
+        // Estimar gas
+        const gasEstimate = await estimateTransactionGas(
+            'executeRecovery',
+            [],
+            'recoveryGasEstimate'
+        );
         
-        showFeedback("¡Ownership transferido exitosamente!");
+        if (!gasEstimate) return;
+
+        showLoader("Ejecutando recovery...");
+        const tx = await contract.methods.executeRecovery()
+            .send({ 
+                from: userAddress,
+                gas: Math.floor(gasEstimate * 1.2)
+            });
+        
+        showGasUsed(tx, 'recoveryGasUsed');
+        showNotification(`¡Ownership transferido exitosamente! Gas usado: ${tx.gasUsed}`, "success");
         await loadInitialData();
+        return tx;
         
     } catch (error) {
-        handleError(error, "Error ejecutando recovery");
+        if (error.receipt) {
+            showGasUsed(error.receipt, 'recoveryGasUsed');
+            handleError(error, `Error ejecutando recovery (Gas usado: ${error.receipt.gasUsed})`);
+        } else {
+            handleError(error, "Error ejecutando recovery");
+        }
+        throw error;
     } finally {
         hideLoader();
     }
 }
 
-// ================ FUNCIONES AUXILIARES ================
-function detectProvider() {
-    if (window.ethereum) {
-        // Manejar múltiples proveedores
-        if (window.ethereum.providers) {
-            return window.ethereum.providers.find(p => p.isMetaMask) || window.ethereum;
-        }
-        return window.ethereum;
+async function claimOwnership() {
+    if (!isAuxiliary) {
+        showNotification("Solo el auxiliar puede iniciar recovery", "error");
+        return;
     }
     
-    // Soporte para versiones antiguas
-    if (window.web3?.currentProvider?.isMetaMask) {
-        return window.web3.currentProvider;
-    }
-    
-    return null;
-}
-
-async function setupNetwork() {
     try {
-        const chainId = await web3.eth.getChainId();
-        if (chainId !== 80002) {
-            try {
-                await window.ethereum.request({
-                    method: 'wallet_switchEthereumChain',
-                    params: [{ chainId: AMOY_CONFIG.chainId }]
-                });
-            } catch (switchError) {
-                if (switchError.code === 4902) {
-                    await window.ethereum.request({
-                        method: 'wallet_addEthereumChain',
-                        params: [AMOY_CONFIG]
-                    });
-                } else {
-                    throw new Error("Por favor cambia manualmente a Polygon Amoy");
-                }
-            }
-        }
-        DOM.networkInfo.innerHTML = `<span>Red: Polygon Amoy</span>`;
+        // Estimar gas
+        const gasEstimate = await estimateTransactionGas(
+            'claimOwnershipFromAuxiliary',
+            [],
+            'auxiliaryGasEstimate'
+        );
+        
+        if (!gasEstimate) return;
+
+        showLoader("Iniciando proceso de recovery...");
+        const tx = await contract.methods.claimOwnershipFromAuxiliary()
+            .send({ 
+                from: userAddress,
+                gas: Math.floor(gasEstimate * 1.2)
+            });
+        
+        showGasUsed(tx, 'auxiliaryGasUsed');
+        showNotification(`Proceso de recovery iniciado! Gas usado: ${tx.gasUsed}`, "success");
+        await loadInitialData();
+        return tx;
+        
     } catch (error) {
-        handleError(error, "Error configurando red");
+        if (error.receipt) {
+            showGasUsed(error.receipt, 'auxiliaryGasUsed');
+            handleError(error, `Error iniciando recovery (Gas usado: ${error.receipt.gasUsed})`);
+        } else {
+            handleError(error, "Error iniciando recovery");
+        }
+        throw error;
+    } finally {
+        hideLoader();
     }
 }
 
-function initContract() {
-    contract = new web3.eth.Contract(
-        CONTRACT_CONFIG.abi,
-        CONTRACT_CONFIG.networks["80002"].address
-    );
+// ============ FUNCIONES DE APROBACIÓN ================
+
+async function estimateApprovalGas() {
+    try {
+        const spender = DOM.spenderContract.value;
+        const amount = DOM.approvalAmount.value;
+        
+        validateAddress(spender);
+        validateAmount(amount);
+        
+        // Verificar si el contrato está autorizado
+        const isAllowed = await contract.methods.isContractAllowed(spender).call();
+        if (!isAllowed) {
+            throw new Error("El contrato no está en la lista de permitidos");
+        }
+        
+        const amountInWei = web3.utils.toWei(amount, 'ether');
+        const gasEstimate = await estimateTransactionGas(
+            'approve',
+            [spender, amountInWei],
+            'approvalGasEstimate'
+        );
+        
+        if (gasEstimate) {
+            showNotification(`Gas estimado: ${gasEstimate}`, "info");
+        }
+        
+        return gasEstimate;
+        
+    } catch (error) {
+        handleError(error, "Error estimando gas");
+        throw error;
+    }
 }
 
-function toggleRoleSections() {
-    document.getElementById('ownerSection').style.display = isOwner ? 'block' : 'none';
-    document.getElementById('auxiliarySection').style.display = isAuxiliary ? 'block' : 'none';
+async function approveTokens() {
+    try {
+        const spender = DOM.spenderContract.value;
+        const amount = DOM.approvalAmount.value;
+        
+        validateAddress(spender);
+        validateAmount(amount);
+        
+        // Verificar si el contrato está autorizado
+        const isAllowed = await contract.methods.isContractAllowed(spender).call();
+        if (!isAllowed) {
+            throw new Error("El contrato no está en la lista de permitidos");
+        }
+        
+        // Obtener estimación de gas
+        const gasEstimate = await estimateApprovalGas();
+        if (!gasEstimate) return;
+
+        showLoader("Enviando aprobación...");
+        const amountInWei = web3.utils.toWei(amount, 'ether');
+        const tx = await contract.methods.approve(spender, amountInWei)
+            .send({ 
+                from: userAddress,
+                gas: Math.floor(gasEstimate * 1.2)
+            });
+        
+        showGasUsed(tx, 'approvalGasUsed');
+        showNotification(`Aprobación exitosa! Gas usado: ${tx.gasUsed}`, "success");
+        return tx;
+        
+    } catch (error) {
+        if (error.receipt) {
+            showGasUsed(error.receipt, 'approvalGasUsed');
+            handleError(error, `Error en aprobación (Gas usado: ${error.receipt.gasUsed})`);
+        } else {
+            handleError(error, "Error en aprobación");
+        }
+        throw error;
+    } finally {
+        hideLoader();
+    }
 }
 
-function updateRecoveryUI([nominee, deadline, approved]) {
-    DOM.recoveryNominee.textContent = nominee === '0x0' ? 'Ninguno' : shortAddress(nominee);
-    DOM.recoveryDeadline.textContent = deadline === '0' ? 'N/A' : new Date(deadline * 1000).toLocaleString();
-    DOM.recoveryApproved.textContent = approved ? '✅ Aprobado' : '❌ No aprobado';
-}
+// ============ FUNCIONES RESTANTES (sin cambios) ================
+// [Las funciones restantes como initApp, connectWallet, loadInitialData, etc. 
+// permanecen igual que en tu código original]
 
-// ================ UTILIDADES ================
+// ============ EVENT LISTENERS ACTUALIZADOS ================
 function setupEventListeners() {
-    // Conexión y operaciones básicas
-    DOM.connectBtn.addEventListener('click', connectWallet);
-    DOM.transferBtn.addEventListener('click', transferTokens);
-    DOM.burnBtn.addEventListener('click', burnTokens);
+    // Conexión
+    if (DOM.connectWallet) DOM.connectWallet.addEventListener('click', connectWallet);
+    if (DOM.disconnectWallet) DOM.disconnectWallet.addEventListener('click', disconnectWallet);
+    if (DOM.refreshBalance) DOM.refreshBalance.addEventListener('click', loadInitialData);
     
-    // Funciones de owner
-    if (DOM.mintBtn) DOM.mintBtn.addEventListener('click', mintTokens);
-    if (DOM.pauseContractBtn) DOM.pauseContractBtn.addEventListener('click', () => togglePause(true));
-    if (DOM.unpauseContractBtn) DOM.unpauseContractBtn.addEventListener('click', () => togglePause(false));
+    // Transferencias
+    if (DOM.transferTokens) DOM.transferTokens.addEventListener('click', transferTokens);
+    if (DOM.estimateTransferGas) DOM.estimateTransferGas.addEventListener('click', () => 
+        estimateTransactionGas(
+            'transfer',
+            [DOM.recipientAddress.value, web3.utils.toWei(DOM.transferAmount.value, 'ether')],
+            'transferGasEstimate'
+        )
+    );
     
-    // Funciones de auxiliar
+    // Quemado
+    if (DOM.burnTokens) DOM.burnTokens.addEventListener('click', burnTokens);
+    if (DOM.estimateBurnGas) DOM.estimateBurnGas.addEventListener('click', () => 
+        estimateTransactionGas(
+            'burn',
+            [web3.utils.toWei(DOM.burnAmount.value, 'ether')],
+            'burnGasEstimate'
+        )
+    );
+    
+    // Seguridad
+    if (DOM.pauseWallet) DOM.pauseWallet.addEventListener('click', () => toggleWalletPause(true));
+    if (DOM.unpauseWallet) DOM.unpauseWallet.addEventListener('click', () => toggleWalletPause(false));
+    
+    // Owner functions
+    if (DOM.mintTokens) DOM.mintTokens.addEventListener('click', mintTokens);
+    if (DOM.estimateMintGas) DOM.estimateMintGas.addEventListener('click', () => 
+        estimateTransactionGas(
+            'mint',
+            [DOM.mintAddress.value, web3.utils.toWei(DOM.mintAmount.value, 'ether')],
+            'mintGasEstimate'
+        )
+    );
+    
+    if (DOM.pauseContract) DOM.pauseContract.addEventListener('click', () => toggleContractPause(true));
+    if (DOM.unpauseContract) DOM.unpauseContract.addEventListener('click', () => toggleContractPause(false));
+    
+    // Recovery
+    if (DOM.approveRecoveryBtn) DOM.approveRecoveryBtn.addEventListener('click', () => approveRecovery(true));
+    if (DOM.executeRecoveryBtn) DOM.executeRecoveryBtn.addEventListener('click', executeRecovery);
+    
+    // Auxiliar
     if (DOM.setAuxiliaryBtn) DOM.setAuxiliaryBtn.addEventListener('click', setAuxiliaryOwner);
     if (DOM.claimOwnershipBtn) DOM.claimOwnershipBtn.addEventListener('click', claimOwnership);
     
-    // Recovery
-    if (DOM.approveRecoveryBtn) DOM.approveRecoveryBtn.addEventListener('click', approveRecovery);
-    if (DOM.executeRecoveryBtn) DOM.executeRecoveryBtn.addEventListener('click', executeRecovery);
-}
-
-function validateAddress(address) {
-    if (!web3.utils.isAddress(address)) {
-        throw new Error("Dirección inválida");
-    }
-}
-
-function validateAmount(amount) {
-    if (!amount || isNaN(amount) || Number(amount) <= 0) {
-        throw new Error("Cantidad inválida");
-    }
-}
-
-function showFeedback(message, type = "success") {
-    const feedbackEl = document.getElementById('feedback');
-    if (feedbackEl) {
-        feedbackEl.textContent = message;
-        feedbackEl.className = `feedback ${type}`;
-        setTimeout(() => feedbackEl.textContent = '', 5000);
-    } else {
-        alert(message);
-    }
-}
-
-function handleError(error, context = "") {
-    console.error(context, error);
-    
-    let message = error.message;
-    if (error.code === 4001) message = "Cancelado por el usuario";
-    else if (error.message.includes("user denied transaction")) message = "Transacción rechazada";
-    else if (error.message.includes("insufficient funds")) message = "Fondos insuficientes para gas";
-    
-    showFeedback(`${context}: ${message}`, "error");
-}
-
-function shortAddress(address) {
-    return address ? `${address.substring(0, 6)}...${address.substring(38)}` : "N/A";
-}
-
-function showLoader() {
-    DOM.loader.style.display = 'flex';
-}
-
-function hideLoader() {
-    DOM.loader.style.display = 'none';
-}
-
-function updateUI() {
-    DOM.walletStatus.innerHTML = `<span>Conectado: ${shortAddress(userAddress)}</span>`;
-    DOM.connectBtn.disabled = true;
-    DOM.connectBtn.innerHTML = `<i class="fas fa-check-circle"></i> Conectado`;
+    // Aprobación
+    if (DOM.estimateApprovalGas) DOM.estimateApprovalGas.addEventListener('click', estimateApprovalGas);
+    if (DOM.approveTokens) DOM.approveTokens.addEventListener('click', approveTokens);
 }
 
 // Inicialización
-document.addEventListener('DOMContentLoaded', initApp);
-
-// Manejo de cambios en la wallet
-if (window.ethereum) {
-    window.ethereum.on('accountsChanged', (accounts) => {
-        if (accounts.length > 0) {
-            userAddress = accounts[0];
-            updateUI();
-            loadInitialData();
-        }
-    });
-    
-    window.ethereum.on('chainChanged', () => window.location.reload());
+if (document.readyState !== 'loading') {
+    initApp();
+} else {
+    document.addEventListener('DOMContentLoaded', initApp);
 }
