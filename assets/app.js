@@ -201,15 +201,25 @@ function showGasUsed(tx, usedElementId) {
 async function loadInitialData() {
     try {
         showLoader("Cargando datos...");
-        const [balance, supply, paused, walletPaused, auxiliary, recovery] = await Promise.all([
+        
+        // Obtener datos básicos
+        const [balance, supply, paused, walletPaused, auxiliary] = await Promise.all([
             contract.methods.balanceOf(userAddress).call(),
             contract.methods.totalSupply().call(),
             contract.methods.paused().call(),
             contract.methods.isWalletPaused(userAddress).call(),
-            contract.methods.auxiliaryOwner().call(),
-            contract.methods.recoveryStatus().call()
+            contract.methods.auxiliaryOwner().call()
         ]);
         
+        // Obtener datos de recovery de forma segura
+        let recoveryData;
+        try {
+            recoveryData = await contract.methods.recoveryStatus().call();
+        } catch (error) {
+            console.error("Error obteniendo recovery status:", error);
+            recoveryData = ['0x0', '0', false]; // Valores por defecto
+        }
+
         // Actualizar UI con los datos
         DOM.tokenBalance.textContent = `${web3.utils.fromWei(balance, 'ether')} GO`;
         DOM.totalSupply.textContent = `${web3.utils.fromWei(supply, 'ether')} GO`;
@@ -225,7 +235,7 @@ async function loadInitialData() {
         toggleRoleSections();
         
         // Actualizar datos de recovery
-        updateRecoveryUI(recovery);
+        updateRecoveryUI(recoveryData);
         
     } catch (error) {
         handleError(error, "Error cargando datos iniciales");
@@ -752,18 +762,32 @@ function toggleRoleSections() {
     DOM.auxiliarySection.style.display = isAuxiliary ? 'block' : 'none';
 }
 
-function updateRecoveryUI([nominee, deadline, approved]) {
-    DOM.recoveryNominee.textContent = nominee === '0x0' ? 'Ninguno' : shortAddress(nominee);
-    DOM.recoveryDeadline.textContent = deadline === '0' ? 'N/A' : new Date(deadline * 1000).toLocaleString();
-    DOM.recoveryApproved.textContent = approved ? '✅ Aprobado' : '❌ No aprobado';
-    
-    // Calcular tiempo restante si hay un deadline activo
-    if (deadline !== '0') {
-        const remaining = Math.max(0, deadline - Math.floor(Date.now() / 1000));
-        const hours = Math.floor(remaining / 3600);
-        const minutes = Math.floor((remaining % 3600) / 60);
-        DOM.recoveryRemainingTime.textContent = `${hours}h ${minutes}m`;
-    } else {
+function updateRecoveryUI(recoveryData) {
+    try {
+        // Asegurarnos de que tenemos los datos necesarios
+        const nominee = recoveryData[0] || '0x0';
+        const deadline = recoveryData[1] || '0';
+        const approved = recoveryData[2] || false;
+
+        DOM.recoveryNominee.textContent = nominee === '0x0' ? 'Ninguno' : shortAddress(nominee);
+        DOM.recoveryDeadline.textContent = deadline === '0' ? 'N/A' : new Date(parseInt(deadline) * 1000).toLocaleString();
+        DOM.recoveryApproved.textContent = approved ? '✅ Aprobado' : '❌ No aprobado';
+        
+        // Calcular tiempo restante si hay un deadline activo
+        if (deadline !== '0') {
+            const remaining = Math.max(0, parseInt(deadline) - Math.floor(Date.now() / 1000));
+            const hours = Math.floor(remaining / 3600);
+            const minutes = Math.floor((remaining % 3600) / 60);
+            DOM.recoveryRemainingTime.textContent = `${hours}h ${minutes}m`;
+        } else {
+            DOM.recoveryRemainingTime.textContent = 'N/A';
+        }
+    } catch (error) {
+        console.error("Error actualizando UI de recovery:", error);
+        // Establecer valores por defecto si hay error
+        DOM.recoveryNominee.textContent = 'Ninguno';
+        DOM.recoveryDeadline.textContent = 'N/A';
+        DOM.recoveryApproved.textContent = '❌ No aprobado';
         DOM.recoveryRemainingTime.textContent = 'N/A';
     }
 }
