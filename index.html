@@ -1,5 +1,7 @@
 <!DOCTYPE html>
 <html lang="es">
+<!DOCTYPE html>
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,48 +9,7 @@
     <link rel="stylesheet" href="./assets/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
-    <style>
-        /* Estilos adicionales para los nuevos elementos de gas */
-        .gas-section {
-            background-color: rgba(0, 0, 0, 0.2);
-            border-radius: 8px;
-            padding: 12px;
-            margin: 15px 0;
-            border-left: 3px solid #6c5ce7;
-        }
-        
-        .gas-row {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 8px;
-        }
-        
-        .gas-label {
-            color: rgba(255, 255, 255, 0.7);
-            font-size: 0.9rem;
-        }
-        
-        .gas-value {
-            font-family: 'Roboto Mono', monospace;
-            font-weight: 600;
-        }
-        
-        .gas-buttons {
-            display: flex;
-            gap: 10px;
-            margin-top: 10px;
-        }
-        
-        .btn-estimate {
-            background-color: rgba(108, 92, 231, 0.2);
-            color: #a29bfe;
-            border: none;
-        }
-        
-        .btn-estimate:hover {
-            background-color: rgba(108, 92, 231, 0.4);
-        }
-    </style>
+    <!-- Se han eliminado los estilos <style> internos -->
 </head>
 <body>
     <div class="container">
@@ -666,15 +627,8 @@
             navigator.clipboard.writeText(address)
                 .then(() => {
                     const notification = document.createElement('div');
+                    notification.className = 'address-copy-feedback';
                     notification.textContent = '¡Copiado!';
-                    notification.style.position = 'fixed';
-                    notification.style.bottom = '20px';
-                    notification.style.right = '20px';
-                    notification.style.backgroundColor = '#6c5ce7';
-                    notification.style.color = 'white';
-                    notification.style.padding = '10px 20px';
-                    notification.style.borderRadius = '5px';
-                    notification.style.zIndex = '1000';
                     document.body.appendChild(notification);
                     
                     setTimeout(() => {
