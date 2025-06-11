@@ -942,11 +942,13 @@ function copyToClipboard(text, feedbackId = null) {
                 setTimeout(() => {
                     feedback.style.display = 'none';
                 }, 2000);
+            } else {
+                showNotification("¡Copiado al portapapeles!", "success");
             }
         })
         .catch(err => {
             console.error('Error al copiar: ', err);
-            showNotification("Error al copiar al portapapeles", "error");
+            showNotification("Error al copiar al portapeles", "error");
         });
 }
 
