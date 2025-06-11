@@ -890,9 +890,20 @@ function hideLoader() {
     }
 }
 
+// En la función updateUI()
 function updateUI() {
     if (userAddress) {
+        // Actualizar dirección de wallet
         DOM.walletAddress.textContent = shortAddress(userAddress);
+        
+        // Configurar el evento de copiado para la wallet
+        if (document.getElementById('copyWalletBtn')) {
+            document.getElementById('copyWalletBtn').onclick = (e) => {
+                e.preventDefault();
+                copyToClipboard(userAddress, 'copyWalletFeedback');
+            };
+        }
+
         DOM.walletInfo.style.display = 'block';
         DOM.connectWallet.disabled = true;
         DOM.connectWallet.textContent = 'Conectado';
@@ -903,8 +914,40 @@ function updateUI() {
         DOM.connectWallet.textContent = 'Conectar Wallet';
         DOM.disconnectWallet.style.display = 'none';
     }
+
+    // Actualizar dirección del contrato
+    if (contract && contract.options.address) {
+        const contractAddress = contract.options.address;
+        document.getElementById('contractAddressShort').textContent = shortAddress(contractAddress);
+        
+        // Configurar el evento de copiado para el contrato
+        if (document.getElementById('copyContractBtn')) {
+            document.getElementById('copyContractBtn').onclick = (e) => {
+                e.preventDefault();
+                copyToClipboard(contractAddress, 'copyContractFeedback');
+            };
+        }
+    }
     
     toggleRoleSections();
+}
+
+// Añadir esta función si no existe
+function copyToClipboard(text, feedbackId = null) {
+    navigator.clipboard.writeText(text)
+        .then(() => {
+            if (feedbackId && document.getElementById(feedbackId)) {
+                const feedback = document.getElementById(feedbackId);
+                feedback.style.display = 'inline';
+                setTimeout(() => {
+                    feedback.style.display = 'none';
+                }, 2000);
+            }
+        })
+        .catch(err => {
+            console.error('Error al copiar: ', err);
+            showNotification("Error al copiar al portapapeles", "error");
+        });
 }
 
 // Inicialización
