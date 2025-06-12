@@ -858,7 +858,7 @@ export const AMOY_CONFIG = {
   chainName: 'Polygon Amoy Testnet',
   nativeCurrency: {
     name: 'MATIC',
-    symbol: 'MATIC',
+    symbol: 'POL',
     decimals: 18
   },
   rpcUrls: ['https://rpc-amoy.polygon.technology/'],
