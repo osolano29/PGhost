@@ -154,7 +154,7 @@ async function connectWallet() {
 }
 
 async function verifyNetwork() {
-    const expectedChainId = '0x13881'; // Polygon Amoy Testnet (80001 en decimal)
+    const expectedChainId = '0x13882'; // Polygon Amoy Testnet (80001 en decimal)
     
     try {
         const currentChainId = await window.ethereum.request({ method: 'eth_chainId' });
