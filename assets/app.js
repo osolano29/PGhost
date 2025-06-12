@@ -154,31 +154,43 @@ async function connectWallet() {
 }
 
 async function verifyNetwork() {
-    const expectedChainId = '0x13882'; // Polygon Amoy Testnet (80001 en decimal)
-    
     try {
         const currentChainId = await window.ethereum.request({ method: 'eth_chainId' });
         
-        if (currentChainId !== expectedChainId) {
+        if (currentChainId !== AMOY_CONFIG.chainId) {
             try {
+                // Intentar cambiar a la red
                 await window.ethereum.request({
                     method: 'wallet_switchEthereumChain',
-                    params: [{ chainId: expectedChainId }]
+                    params: [{ chainId: AMOY_CONFIG.chainId }]
                 });
             } catch (switchError) {
-                // Si la red no está agregada, la añadimos
+                // Si la red no está agregada (error 4902)
                 if (switchError.code === 4902) {
-                    await window.ethereum.request({
-                        method: 'wallet_addEthereumChain',
-                        params: [AMOY_CONFIG]
-                    });
+                    try {
+                        // Agregar la red a MetaMask
+                        await window.ethereum.request({
+                            method: 'wallet_addEthereumChain',
+                            params: [AMOY_CONFIG]
+                        });
+                        
+                        // Intentar cambiar nuevamente después de agregar
+                        await window.ethereum.request({
+                            method: 'wallet_switchEthereumChain',
+                            params: [{ chainId: AMOY_CONFIG.chainId }]
+                        });
+                    } catch (addError) {
+                        console.error("Error agregando la red:", addError);
+                        throw new Error(`Por favor agrega manualmente la red Polygon Amoy a MetaMask. Chain ID: ${AMOY_CONFIG.chainId}`);
+                    }
                 } else {
-                    throw new Error("Por favor cambia manualmente a Polygon Amoy");
+                    throw switchError;
                 }
             }
         }
     } catch (error) {
-        throw new Error(`Error verificando la red: ${error.message}`);
+        console.error("Error verificando la red:", error);
+        throw new Error(`No se pudo conectar a Polygon Amoy: ${error.message}`);
     }
 }
 
@@ -281,10 +293,7 @@ async function transferTokens() {
         
         validateAddress(recipient);
         validateAmount(amount);
-
-
-        
-        
+    
         // Estimar gas
         const gasEstimate = await estimateTransactionGas(
             'transfer',
@@ -791,7 +800,8 @@ function initContract() {
 
 function toggleRoleSections() {
     DOM.ownerSection.style.display = isOwner ? 'block' : 'none';
-    DOM.auxiliarySection.style.display = isAuxiliary ? 'block' : 'none';
+    //DOM.auxiliarySection.style.display = isAuxiliary ? 'block' : 'none';
+    DOM.auxiliarySection.style.display = !isOwner ? 'block' : 'none';
 }
 
 function updateRecoveryUI(recoveryData) {
