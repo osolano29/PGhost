@@ -113,20 +113,30 @@ async function connectWallet() {
     try {
         showLoader("Conectando wallet...");
         
-        // 1. Detección mejorada de MetaMask
+        // 1. Detección de MetaMask si esta instalada
         const provider = detectProvider();
         if (!provider) {
             showMetaMaskModal();
             return false;
         }
-
+        // 2. Verificar conexión a la red correcta
+        await verifyNetwork();
         // 2. Configurar Web3 y conectar
         web3 = new Web3(provider);
         const accounts = await provider.request({ method: 'eth_requestAccounts' });
-        userAddress = accounts[0];
+
+        // Verificar si el usuario canceló la conexión
+        if (!accounts || accounts.length === 0) {
+            throw new Error("El usuario canceló la conexión");
+        }
+        userAddress = accounts[0];        
+        // 4. Inicializar contrato
+        initContract();
         
         // 3. Configurar red y contrato
-        await setupNetwork();
+        //await setupNetwork();
+        
+        //4. Inicializar contrato
         initContract();
         
         // 4. Cargar datos iniciales
@@ -140,6 +150,35 @@ async function connectWallet() {
         return false;
     } finally {
         hideLoader();
+    }
+}
+
+async function verifyNetwork() {
+    const expectedChainId = '0x13881'; // Polygon Amoy Testnet (80001 en decimal)
+    
+    try {
+        const currentChainId = await window.ethereum.request({ method: 'eth_chainId' });
+        
+        if (currentChainId !== expectedChainId) {
+            try {
+                await window.ethereum.request({
+                    method: 'wallet_switchEthereumChain',
+                    params: [{ chainId: expectedChainId }]
+                });
+            } catch (switchError) {
+                // Si la red no está agregada, la añadimos
+                if (switchError.code === 4902) {
+                    await window.ethereum.request({
+                        method: 'wallet_addEthereumChain',
+                        params: [AMOY_CONFIG]
+                    });
+                } else {
+                    throw new Error("Por favor cambia manualmente a Polygon Amoy");
+                }
+            }
+        }
+    } catch (error) {
+        throw new Error(`Error verificando la red: ${error.message}`);
     }
 }
 
@@ -242,6 +281,9 @@ async function transferTokens() {
         
         validateAddress(recipient);
         validateAmount(amount);
+
+
+        
         
         // Estimar gas
         const gasEstimate = await estimateTransactionGas(
@@ -880,17 +922,36 @@ function showNotification(message, type = "success") {
 function handleError(error, context = "") {
     console.error(context, error);
     
-    let message = error.message;
-    if (error.code === 4001) message = "Cancelado por el usuario";
-    else if (error.message.includes("user denied transaction")) message = "Transacción rechazada";
-    else if (error.message.includes("insufficient funds")) message = "Fondos insuficientes para gas";
-    else if (error.message.includes("execution reverted")) {
-        // Extraer el mensaje de revert del error
+    let message = "Error desconocido";
+    
+    // Manejo específico de errores RPC
+    if (error.code === 4001) {
+        message = "Cancelado por el usuario";
+    } else if (error.code === -32603) { // Internal JSON-RPC error
+        if (error.data && error.data.message) {
+            message = `Error interno: ${error.data.message}`;
+        } else {
+            message = "Error interno en la conexión con la blockchain";
+        }
+    } else if (error.message.includes("insufficient funds")) {
+        message = "Fondos insuficientes para pagar el gas";
+    } else if (error.message.includes("execution reverted")) {
         const revertMsg = error.message.match(/reason string: '(.+?)'/);
-        message = revertMsg ? revertMsg[1] : "Error en el contrato";
+        message = revertMsg ? `Error en el contrato: ${revertMsg[1]}` : "Error en el contrato";
+    } else if (error.message.includes("Network Error")) {
+        message = "Problema de conexión con la red";
+    } else {
+        message = error.message || "Error desconocido";
     }
     
     showNotification(`${context}: ${message}`, "error");
+    
+    // Mostrar sugerencias específicas para ciertos errores
+    if (message.includes("insufficient funds")) {
+        showNotification("Por favor deposita MATIC en tu wallet para pagar las tarifas de gas", "info");
+    } else if (message.includes("Network Error")) {
+        showNotification("Verifica tu conexión a internet o intenta cambiar de red RPC", "info");
+    }
 }
 
 function shortAddress(address) {
