@@ -1,15 +1,7 @@
 // Datos del contrato GhostToken (GO)
 export const CONTRACT_CONFIG = {
   abi: [
-    {
-      "inputs": [
-        {"internalType": "string","name": "tokenName","type": "string"},
-        {"internalType": "string","name": "tokenSymbol","type": "string"}
-      ],
-      "stateMutability": "nonpayable",
-      "type": "constructor"
-    },
-    {
+	{
 		"inputs": [
 			{
 				"internalType": "address",
@@ -844,11 +836,11 @@ export const CONTRACT_CONFIG = {
 		],
 		"stateMutability": "view",
 		"type": "function"
-	}// ... Pega aquí TODO el ABI de tu contrato
-  ],
+	}
+],
   networks: {
     "80002": { // Polygon Amoy
-      address: "0x86515211ca4BaD6bF76dE30c86cB5D972b8be95C" // Tu dirección de contrato en Amoy
+      address: "0x2D24323675832f461D7c46FFD5F121A6bbb7f28c" // Tu dirección de contrato en Amoy
     }
   }
 };
