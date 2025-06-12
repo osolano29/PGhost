@@ -854,7 +854,7 @@ export const CONTRACT_CONFIG = {
 };
 
 export const AMOY_CONFIG = {
-  chainId: '0x13882', // 80002 en hexadecimal
+  chainId: '0x13881', //'0x13882', // 80002 en hexadecimal
   chainName: 'Polygon Amoy Testnet',
   nativeCurrency: {
     name: 'MATIC',
