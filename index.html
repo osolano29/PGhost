@@ -275,9 +275,11 @@
     <script src="https://cdn.jsdelivr.net/npm/web3@1.8.0/dist/web3.min.js"></script>
     
     <!-- Configuración del contrato -->
-    <script src="./assets/ghost-token.js"></script>
+    <script type="module" src="./assets/ghost-token.js"></script>
     
     <!-- Nuestra aplicación como módulo -->
     <script type="module" src="./assets/app.js"></script>
+    <!-- Polyfill para navegadores antiguos -->
+    <script nomodule src="https://cdn.jsdelivr.net/npm/es-module-shims@1.7.0/dist/es-module-shims.min.js"></script>
 </body>
 </html>
