@@ -283,6 +283,37 @@ export const CONTRACT_CONFIG = {
 		"type": "event"
 	},
 	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "address",
+				"name": "caller",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "bool",
+				"name": "isOwner",
+				"type": "bool"
+			},
+			{
+				"indexed": false,
+				"internalType": "bool",
+				"name": "isContractCall",
+				"type": "bool"
+			},
+			{
+				"indexed": false,
+				"internalType": "bool",
+				"name": "isAllowedContract",
+				"type": "bool"
+			}
+		],
+		"name": "DebugMintAccess",
+		"type": "event"
+	},
+	{
 		"inputs": [],
 		"name": "executeRecovery",
 		"outputs": [],
@@ -840,7 +871,7 @@ export const CONTRACT_CONFIG = {
 ],
   networks: {
     "80002": { // Polygon Amoy
-      address: "0xe52Ff53111BE862637336B932234cA74Ef521F5A" // Tu dirección de contrato en Amoy
+      address: "0x384E055e56BB83E95cc78caEb084a9Bee3b9AD7C" // Tu dirección de contrato en Amoy
     }
   }
 };
