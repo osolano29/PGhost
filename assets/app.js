@@ -148,6 +148,29 @@ async function connectWallet() {
     }
 }
 
+// ====== NUEVA FUNCIÓN DISCONNECT WALLET ======
+async function disconnectWallet() {
+    try {
+        // Limpiar estado
+        userAddress = null;
+        isOwner = false;
+        isAuxiliary = false;
+        
+        // Resetear UI
+        updateUI();
+        
+        // Cerrar conexión si es posible
+        if (window.ethereum && window.ethereum.close) {
+            await window.ethereum.close();
+        }
+        
+        showNotification("Wallet desconectada", "info");
+    } catch (error) {
+        console.error("Error al desconectar:", error);
+        showNotification("Error al desconectar", "error");
+    }
+}
+
 // ================ FUNCIONES DEL CONTRATO ================
 async function loadInitialData() {
     try {
