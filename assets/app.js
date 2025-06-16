@@ -118,6 +118,26 @@ export async function initApp() {
   }    
 }
 
+function detectProvider() {
+    if (typeof window.ethereum !== 'undefined') {
+        // Manejar múltiples proveedores
+        if (window.ethereum.providers?.length) {
+            return window.ethereum.providers.find(p => p.isMetaMask) || window.ethereum;
+        }
+        return window.ethereum;
+    }
+    
+    if (typeof window.web3 !== 'undefined' && window.web3.currentProvider?.isMetaMask) {
+        return window.web3.currentProvider;
+    }
+    
+    if (window.ethereum?.isMetaMask) {
+        return window.ethereum;
+    }
+    
+    return null;
+}
+
 async function connectWallet() {
     try {
         utils.showLoader("Conectando wallet...");
@@ -169,6 +189,81 @@ async function disconnectWallet() {
         console.error("Error al desconectar:", error);
         showNotification("Error al desconectar", "error");
     }
+}
+
+function showMetaMaskModal() {
+    if (DOM.metaMaskModal) {
+        DOM.metaMaskModal.style.display = 'block'; //'flex';
+        
+        // Agregar evento para cerrar el modal
+        const closeBtn = DOM.metaMaskModal.querySelector('.close');
+        if (closeBtn) {
+            closeBtn.addEventListener('click', () => {
+                DOM.metaMaskModal.style.display = 'none';
+            });
+        }
+    }
+}
+async function setupNetwork() {
+    try {
+        await window.ethereum.request({
+            method: 'wallet_switchEthereumChain',
+            params: [{ chainId: AMOY_CONFIG.chainId }],
+        });
+    } catch (switchError) {
+        // Si la red no está agregada, intentar agregarla
+        if (switchError.code === 4902) {
+            try {
+                await window.ethereum.request({
+                    method: 'wallet_addEthereumChain',
+                    params: [AMOY_CONFIG],
+                });
+            } catch (addError) {
+                throw new Error("No se pudo agregar la red Polygon Amoy");
+            }
+        } else {
+            throw switchError;
+        }
+    }
+}
+
+function initContract() {
+    contract = new web3.eth.Contract(
+        CONTRACT_CONFIG.abi,
+        CONTRACT_CONFIG.address
+    );
+    
+    // Configurar la dirección corta del contrato
+    if (DOM.contractAddressShort) {
+        DOM.contractAddressShort.title = CONTRACT_CONFIG.address;
+        DOM.contractAddressShort.dataset.fullAddress = CONTRACT_CONFIG.address;
+    }
+}
+
+function showNotification(message, type = "info") {
+    if (!DOM.notification || !DOM.notificationMessage) return;
+    
+    DOM.notificationMessage.textContent = message;
+    DOM.notification.className = `notification ${type}`;
+    DOM.notification.style.display = 'block';
+    
+    setTimeout(() => {
+        DOM.notification.style.display = 'none';
+    }, 5000);
+}
+
+function handleError(error, context = "") {
+    console.error(context, error);
+    let message = error.message || "Error desconocido";
+    
+    // Simplificar mensajes de error de MetaMask
+    if (message.includes("User denied")) {
+        message = "Transacción cancelada por el usuario";
+    } else if (message.includes("insufficient funds")) {
+        message = "Fondos insuficientes para la transacción";
+    }
+    
+    showNotification(`${context}: ${message}`, "error");
 }
 
 // ================ FUNCIONES DEL CONTRATO ================
