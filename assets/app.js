@@ -4,6 +4,28 @@ import { CONTRACT_CONFIG, AMOY_CONFIG } from './ghost-token.js';
 // Variables globales
 let web3, contract, userAddress, isOwner = false, isAuxiliary = false;
 
+// ================ UTILIDADES ================
+// Añadir al inicio del archivo
+const utils = {
+    showLoader: (message = "") => {
+        DOM.loader.style.display = 'flex';
+        if (message && DOM.loaderText) {
+            DOM.loaderText.textContent = message;
+        }
+    },
+    hideLoader: () => {
+        DOM.loader.style.display = 'none';
+    },
+    toWei: (amount) => {
+        if (!web3) throw new Error("Web3 no está inicializado");
+        return web3.utils.toWei(amount.toString(), 'ether');
+    },
+    fromWei: (amount) => {
+        if (!web3) throw new Error("Web3 no está inicializado");
+        return web3.utils.fromWei(amount.toString(), 'ether');
+    }
+};
+
 // Elementos del DOM
 const DOM = {
     // Conexión
@@ -90,7 +112,7 @@ export async function initApp() {
 
 async function connectWallet() {
     try {
-        showLoader("Conectando wallet...");
+        utils.showLoader("Conectando wallet...");
         
         const provider = detectProvider();
         if (!provider) {
@@ -114,7 +136,7 @@ async function connectWallet() {
         handleError(error, "Error al conectar");
         return false;
     } finally {
-        hideLoader();
+        utils.hideLoader();
     }
 }
 
@@ -289,13 +311,26 @@ function updateUI() {
 }
 
 function setupEventListeners() {
+    // Verificar existencia de elementos antes de añadir listeners
+    const elementsToCheck = [
+        'connectWallet', 'disconnectWallet', 'copyWalletAddress', 
+        'copyContractAddress', 'transferTokens', 'estimateTransferGas',
+        'mintTokens', 'estimateMintGas'
+    ];
+
+    elementsToCheck.forEach(id => {
+        if (!DOM[id]) {
+            console.error(`Elemento no encontrado: ${id}`);
+        }
+    });
+    
     // Conexión
-    DOM.connectBtn.addEventListener('click', connectWallet);
-    DOM.disconnectBtn.addEventListener('click', disconnectWallet);
+    DOM.connectBtn?.addEventListener('click', connectWallet);
+    DOM.disconnectBtn?.addEventListener('click', disconnectWallet);
     DOM.refreshBalance.addEventListener('click', loadInitialData);
     
     // Copiar direcciones
-    DOM.copyWalletAddress.addEventListener('click', () => {
+    DOM.copyWalletAddress?.addEventListener('click', () => {
         navigator.clipboard.writeText(userAddress)
             .then(() => showNotification("¡Dirección copiada!", "success"))
             .catch(err => console.error('Error al copiar:', err));
@@ -309,18 +344,18 @@ function setupEventListeners() {
     });
     
     // Transferencias
-    DOM.transferBtn.addEventListener('click', transferTokens);
-    DOM.estimateTransferGas.addEventListener('click', () => 
+    DOM.transferBtn?.addEventListener('click', transferTokens);
+    DOM.estimateTransferGas?.addEventListener('click', () => {
         estimateTransactionGas(
             'transfer',
             [DOM.recipientAddress.value, toWei(DOM.transferAmount.value)],
             'transferGasEstimate'
-        )
-    );
+        );
+    });
     
     // Mint
-    DOM.mintBtn.addEventListener('click', mintTokens);
-    DOM.estimateMintGas.addEventListener('click', () => {
+    DOM.mintBtn?.addEventListener('click', mintTokens);
+    DOM.estimateMintGas?.addEventListener('click', () => {
         if (!validateMintInputs()) return;
         estimateTransactionGas(
             'mint',
@@ -329,18 +364,35 @@ function setupEventListeners() {
         );
     });
     
-    // Configuración de Gas
-    document.querySelectorAll('.gas-config-btn').forEach(btn => {
-        btn.addEventListener('click', () => DOM.gasConfigPanel.style.display = 'block');
-    });
-    
-    DOM.closeGasConfig.addEventListener('click', () => DOM.gasConfigPanel.style.display = 'none');
-    DOM.applyGasConfig.addEventListener('click', applyGasConfig);
-    
-    // Pestañas
-    document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.addEventListener('click', switchTab);
-    });
+     // Configuración de Gas (versión mejorada con validación)
+    const gasConfigButtons = document.querySelectorAll('.gas-config-btn');
+    if (gasConfigButtons.length > 0) {
+        gasConfigButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                if (DOM.gasConfigPanel) {
+                    DOM.gasConfigPanel.style.display = 'block';
+                }
+            });
+        });
+    }
+
+    if (DOM.closeGasConfig && DOM.gasConfigPanel) {
+        DOM.closeGasConfig.addEventListener('click', () => {
+            DOM.gasConfigPanel.style.display = 'none';
+        });
+    }
+
+    if (DOM.applyGasConfig) {
+        DOM.applyGasConfig.addEventListener('click', applyGasConfig);
+    }
+
+    // Pestañas (versión segura)
+    const tabButtons = document.querySelectorAll('.tab-btn');
+    if (tabButtons.length > 0) {
+        tabButtons.forEach(btn => {
+            btn.addEventListener('click', switchTab);
+        });
+    }
 }
 
 function applyGasConfig() {
