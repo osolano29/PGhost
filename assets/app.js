@@ -570,20 +570,29 @@ async function setupNetwork() {
 }
 
 function initContract() {
+    // 1. Verificar que la configuración existe
     if (!CONTRACT_CONFIG.networks["80002"]?.address) {
         throw new Error("Dirección del contrato no configurada para Amoy");
     }
     
+    // 2. Crear instancia del contrato
     contract = new web3.eth.Contract(
         CONTRACT_CONFIG.abi,
         CONTRACT_CONFIG.networks["80002"].address
     );
     
-    // Mostrar versión abreviada en UI
+    // 3. Mostrar versión abreviada en UI
     DOM.contractAddressShort.textContent = shortAddress(CONTRACT_CONFIG.networks["80002"].address);
     
-    // Guardar dirección completa en dataset
+    // 4. Guardar dirección completa en dataset (para copiar)
     DOM.contractAddressShort.dataset.fullAddress = CONTRACT_CONFIG.networks["80002"].address;
+    
+    // 5. Añadir tooltip (NUEVA LÍNEA - aquí va el código que preguntas)
+    DOM.contractAddressShort.title = CONTRACT_CONFIG.networks["80002"].address;
+    
+    // También puedes añadir estos atributos para mejor UX:
+    DOM.contractAddressShort.style.cursor = "pointer";
+    DOM.contractAddressShort.classList.add("tooltip-element");
 }
 
 function showMetaMaskModal() {
