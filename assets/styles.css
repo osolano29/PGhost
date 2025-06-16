@@ -265,6 +265,25 @@ body {
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
+.tooltip-element {
+    position: relative;
+}
+
+.tooltip-element:hover::after {
+    content: attr(title);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #333;
+    color: #fff;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 14px;
+    white-space: nowrap;
+    z-index: 100;
+}
+
 /* Mostrar tooltip al hacer hover */
 .info-tooltip:hover .tooltip-content {
   display: block;
