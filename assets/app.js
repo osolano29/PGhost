@@ -7,20 +7,24 @@ let web3, contract, userAddress, isOwner = false, isAuxiliary = false;
 // ================ UTILIDADES ================
 // Añadir al inicio del archivo
 const utils = {
-    showLoader: (message = "") => {
-        DOM.loader.style.display = 'flex';
-        if (message && DOM.loaderText) {
-            DOM.loaderText.textContent = message;
+    utils.showLoader: function(message = "") {
+        if (DOM.loader) {
+            DOM.loader.style.display = 'flex';
+            if (message && DOM.loaderText) {
+                DOM.loaderText.textContent = message;
+            }
         }
     },
-    hideLoader: () => {
-        DOM.loader.style.display = 'none';
+    hideLoader: function() {
+        if (DOM.loader) {
+            DOM.loader.style.display = 'none';
+        }
     },
-    toWei: (amount) => {
+    toWei: function(amount) {
         if (!web3) throw new Error("Web3 no está inicializado");
         return web3.utils.toWei(amount.toString(), 'ether');
     },
-    fromWei: (amount) => {
+    fromWei: function(amount) {
         if (!web3) throw new Error("Web3 no está inicializado");
         return web3.utils.fromWei(amount.toString(), 'ether');
     }
@@ -98,7 +102,8 @@ const DOM = {
 };
 
 // ================ FUNCIONES PRINCIPALES ================
-export async function initApp() {
+async function initApp() {
+  try{  
     setupEventListeners();
     
     if (window.location.protocol === 'file:') {
@@ -108,6 +113,9 @@ export async function initApp() {
     if (window.ethereum?.selectedAddress) {
         await connectWallet();
     }
+  } catch (error) {
+        console.error("Error inicializando la app:", error);
+  }    
 }
 
 async function connectWallet() {
@@ -143,7 +151,7 @@ async function connectWallet() {
 // ================ FUNCIONES DEL CONTRATO ================
 async function loadInitialData() {
     try {
-        showLoader("Cargando datos...");
+        utils.showLoader("Cargando datos...");
         
         const [balance, supply, paused, walletPaused, auxiliary] = await Promise.all([
             contract.methods.balanceOf(userAddress).call(),
@@ -168,7 +176,7 @@ async function loadInitialData() {
     } catch (error) {
         handleError(error, "Error cargando datos iniciales");
     } finally {
-        hideLoader();
+        utils.hideLoader();
     }
 }
 
@@ -195,7 +203,7 @@ async function estimateTransactionGas(methodName, args = [], estimateElementId =
         handleError(error, "Error estimando gas");
         return null;
     } finally {
-        hideLoader();
+        utils.hideLoader();
     }
 }
 
@@ -231,7 +239,7 @@ async function mintTokens() {
         
         if (!gasEstimate) return;
 
-        showLoader("Minteando tokens...");
+        utils.showLoader("Minteando tokens...");
         const tx = await contract.methods.mint(recipient, toWei(amount))
             .send({ 
                 from: userAddress, 
@@ -251,7 +259,7 @@ async function mintTokens() {
             handleError(error, "Error minteando tokens");
         }
     } finally {
-        hideLoader();
+        utils.hideLoader();
     }
 }
 
