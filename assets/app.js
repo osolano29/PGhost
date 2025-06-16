@@ -7,7 +7,7 @@ let web3, contract, userAddress, isOwner = false, isAuxiliary = false;
 // ================ UTILIDADES ================
 // Añadir al inicio del archivo
 const utils = {
-    utils.showLoader: function(message = "") {
+    showLoader: (message = "") {
         if (DOM.loader) {
             DOM.loader.style.display = 'flex';
             if (message && DOM.loaderText) {
@@ -15,16 +15,16 @@ const utils = {
             }
         }
     },
-    hideLoader: function() {
+    hideLoader: () {
         if (DOM.loader) {
             DOM.loader.style.display = 'none';
         }
     },
-    toWei: function(amount) {
+    toWei: (amount) {
         if (!web3) throw new Error("Web3 no está inicializado");
         return web3.utils.toWei(amount.toString(), 'ether');
     },
-    fromWei: function(amount) {
+    fromWei: (amount) {
         if (!web3) throw new Error("Web3 no está inicializado");
         return web3.utils.fromWei(amount.toString(), 'ether');
     }
@@ -102,7 +102,7 @@ const DOM = {
 };
 
 // ================ FUNCIONES PRINCIPALES ================
-async function initApp() {
+export async function initApp() {
   try{  
     setupEventListeners();
     
@@ -425,9 +425,9 @@ function switchTab(e) {
     e.currentTarget.classList.add('active');
 }
 
-// Inicialización
-if (document.readyState !== 'loading') {
-    initApp();
-} else {
-    document.addEventListener('DOMContentLoaded', initApp);
+// Inicialización para módulos ES6 (Versión definitiva)
+if (import.meta.url === document.currentScript?.src) {
+    initApp().catch(error => {
+        console.error("Error inicializando la aplicación:", error);
+    });
 }
