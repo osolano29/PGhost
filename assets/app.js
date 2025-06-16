@@ -570,6 +570,10 @@ async function setupNetwork() {
 }
 
 function initContract() {
+    if (!CONTRACT_CONFIG.networks["80002"]?.address) {
+        throw new Error("Dirección del contrato no configurada para Amoy");
+    }
+    
     contract = new web3.eth.Contract(
         CONTRACT_CONFIG.abi,
         CONTRACT_CONFIG.networks["80002"].address
@@ -610,17 +614,25 @@ function setupEventListeners() {
             });
     });
     // Copiar dirección completa del contrato
-    DOM.copyContractAddress.addEventListener('click', () => {
-        const fullAddress = DOM.contractAddressShort.dataset.fullAddress;
-        navigator.clipboard.writeText(fullAddress)
-            .then(() => {
-                showNotification("¡Dirección completa copiada!", "success");
-            })
-            .catch(err => {
-                console.error('Error al copiar:', err);
-                showNotification("Error al copiar dirección", "error");
-            });
-    });
+DOM.copyContractAddress.addEventListener('click', () => {
+    // Obtener la dirección completa de CONTRACT_CONFIG si no está en dataset
+    const fullAddress = DOM.contractAddressShort.dataset.fullAddress || 
+                       CONTRACT_CONFIG.networks["80002"].address;
+    
+    if (!fullAddress) {
+        showNotification("Dirección del contrato no disponible", "error");
+        return;
+    }
+
+    navigator.clipboard.writeText(fullAddress)
+        .then(() => {
+            showNotification("¡Dirección completa copiada!", "success");
+        })
+        .catch(err => {
+            console.error('Error al copiar:', err);
+            showNotification("Error al copiar dirección", "error");
+        });
+});
     
     // Transferencias
     DOM.transferBtn.addEventListener('click', transferTokens);
