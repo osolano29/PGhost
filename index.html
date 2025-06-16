@@ -24,6 +24,9 @@
                 
                 <div class="wallet-info" id="walletInfo" style="display:none;">
                     <span class="wallet-address" id="walletAddress"></span>
+                    <button id="copyWalletAddress" class="btn-icon" title="Copiar dirección">
+                        <i class="far fa-copy"></i>
+                    </button>
                     <button id="disconnectWallet" class="btn-connect">
                         <i class="fas fa-plug"></i> Desconectar
                     </button>
@@ -341,6 +344,14 @@
             <a href="https://metamask.io/" target="_blank" class="btn-primary">
                 Instalar MetaMask
             </a>
+            <p class="modal-alternative">
+                Si ya lo tienes instalado, asegúrate de:
+            </p>
+            <ul>
+                <li>Estar usando un navegador compatible</li>
+                <li>Tener la extensión activada</li>
+                <li>Actualizar a la última versión</li>
+            </ul>
         </div>
     </div>
 
@@ -350,24 +361,21 @@
     <!-- Nuestra aplicación como módulo -->
     <script type="module" src="./assets/app.js"></script>
 
-    <!-- Script para manejo de pestañas -->
+    <!-- Script para manejo de pestañas y copiado -->
     <script>
         // Manejo básico de pestañas
         document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 const tabId = btn.getAttribute('data-tab');
                 
-                // Oculta todos los contenidos
                 document.querySelectorAll('.tab-content').forEach(content => {
                     content.classList.remove('active');
                 });
                 
-                // Desactiva todos los botones
                 document.querySelectorAll('.tab-btn').forEach(tabBtn => {
                     tabBtn.classList.remove('active');
                 });
                 
-                // Activa el seleccionado
                 document.getElementById(tabId).classList.add('active');
                 btn.classList.add('active');
             });
@@ -386,9 +394,6 @@
                     setTimeout(() => {
                         document.body.removeChild(notification);
                     }, 2000);
-                })
-                .catch(err => {
-                    console.error('Error al copiar: ', err);
                 });
         });
 
