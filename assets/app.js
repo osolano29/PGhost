@@ -7,7 +7,7 @@ let web3, contract, userAddress, isOwner = false, isAuxiliary = false;
 // ================ UTILIDADES ================
 // Añadir al inicio del archivo
 const utils = {
-    showLoader: (message = "") {
+    showLoader(message = "") {
         if (DOM.loader) {
             DOM.loader.style.display = 'flex';
             if (message && DOM.loaderText) {
@@ -15,16 +15,16 @@ const utils = {
             }
         }
     },
-    hideLoader: () {
+    hideLoader() {
         if (DOM.loader) {
             DOM.loader.style.display = 'none';
         }
     },
-    toWei: (amount) {
+    toWei(amount) {
         if (!web3) throw new Error("Web3 no está inicializado");
         return web3.utils.toWei(amount.toString(), 'ether');
     },
-    fromWei: (amount) {
+    fromWei(amount) {
         if (!web3) throw new Error("Web3 no está inicializado");
         return web3.utils.fromWei(amount.toString(), 'ether');
     }
