@@ -13,6 +13,7 @@ const DOM = {
     walletInfo: document.getElementById('walletInfo'),
     walletAddress: document.getElementById('walletAddress'),
     networkStatus: document.getElementById('networkStatus'),
+    copyWalletAddress: document.getElementById('copyWalletAddress'),
     
     // Tokens
     tokenBalance: document.getElementById('tokenBalance'),
@@ -82,14 +83,15 @@ async function connectWallet() {
         showLoader("Conectando wallet...");
         
         // 1. Detección de MetaMask
-        if (!window.ethereum) {
+        const provider = detectProvider();
+        if (!provider) {
             showMetaMaskModal();
             return false;
         }
 
         // 2. Configurar Web3 y conectar
-        web3 = new Web3(window.ethereum);
-        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
+        web3 = new Web3(provider);
+        const accounts = await provider.request({ method: 'eth_requestAccounts' });
         userAddress = accounts[0];
         
         // 3. Configurar red y contrato
@@ -587,6 +589,18 @@ function setupEventListeners() {
     DOM.connectBtn.addEventListener('click', connectWallet);
     DOM.disconnectBtn.addEventListener('click', disconnectWallet);
     DOM.refreshBalance.addEventListener('click', loadInitialData);
+    
+    // Copiar dirección de wallet
+    DOM.copyWalletAddress.addEventListener('click', () => {
+        navigator.clipboard.writeText(userAddress)
+            .then(() => {
+                showNotification("¡Dirección copiada al portapapeles!", "success");
+            })
+            .catch(err => {
+                console.error('Error al copiar: ', err);
+                showNotification("Error al copiar la dirección", "error");
+            });
+    });
     
     // Transferencias
     DOM.transferBtn.addEventListener('click', transferTokens);
