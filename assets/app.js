@@ -570,15 +570,16 @@ async function setupNetwork() {
 }
 
 function initContract() {
-    const contractAddress = CONTRACT_CONFIG.networks["80002"].address;
     contract = new web3.eth.Contract(
         CONTRACT_CONFIG.abi,
-        contractAddress
+        CONTRACT_CONFIG.networks["80002"].address
     );
     
-    // Mostrar versión abreviada en UI pero mantener completa para copiar
-    DOM.contractAddressShort.textContent = shortAddress(contractAddress);
+    // Mostrar versión abreviada en UI
+    DOM.contractAddressShort.textContent = shortAddress(CONTRACT_CONFIG.networks["80002"].address);
     
+    // Guardar dirección completa en dataset
+    DOM.contractAddressShort.dataset.fullAddress = CONTRACT_CONFIG.networks["80002"].address;
 }
 
 function showMetaMaskModal() {
@@ -606,6 +607,18 @@ function setupEventListeners() {
             .catch(err => {
                 console.error('Error al copiar: ', err);
                 showNotification("Error al copiar la dirección", "error");
+            });
+    });
+    // Copiar dirección completa del contrato
+    DOM.copyContractAddress.addEventListener('click', () => {
+        const fullAddress = DOM.contractAddressShort.dataset.fullAddress;
+        navigator.clipboard.writeText(fullAddress)
+            .then(() => {
+                showNotification("¡Dirección completa copiada!", "success");
+            })
+            .catch(err => {
+                console.error('Error al copiar:', err);
+                showNotification("Error al copiar dirección", "error");
             });
     });
     
@@ -649,21 +662,6 @@ function setupEventListeners() {
     // Auxiliar
     DOM.setAuxiliaryBtn.addEventListener('click', setAuxiliaryOwner);
     DOM.claimOwnershipBtn.addEventListener('click', claimOwnership);
-    
-    // Copiar dirección completa del contrato
-    if (DOM.copyContractAddress) {
-        DOM.copyContractAddress.addEventListener('click', () => {
-            const contractAddress = CONTRACT_CONFIG.networks["80002"].address;
-            navigator.clipboard.writeText(contractAddress)
-                .then(() => {
-                    showNotification("¡Dirección del contrato copiada!", "success");
-                })
-                .catch(err => {
-                    console.error('Error al copiar:', err);
-                    showNotification("Error al copiar dirección", "error");
-                });
-        });
-    }
 }
 
 // Inicialización
