@@ -14,6 +14,8 @@ const DOM = {
     walletAddress: document.getElementById('walletAddress'),
     networkStatus: document.getElementById('networkStatus'),
     copyWalletAddress: document.getElementById('copyWalletAddress'),
+    copyContractAddress: document.getElementById('copyContractAddress'),
+    contractAddressShort: document.getElementById('contractAddressShort'),
     
     // Tokens
     tokenBalance: document.getElementById('tokenBalance'),
@@ -568,10 +570,15 @@ async function setupNetwork() {
 }
 
 function initContract() {
+    const contractAddress = CONTRACT_CONFIG.networks["80002"].address;
     contract = new web3.eth.Contract(
         CONTRACT_CONFIG.abi,
-        CONTRACT_CONFIG.networks["80002"].address
+        contractAddress
     );
+    
+    // Mostrar versión abreviada en UI pero mantener completa para copiar
+    DOM.contractAddressShort.textContent = shortAddress(contractAddress);
+    
 }
 
 function showMetaMaskModal() {
@@ -642,6 +649,21 @@ function setupEventListeners() {
     // Auxiliar
     DOM.setAuxiliaryBtn.addEventListener('click', setAuxiliaryOwner);
     DOM.claimOwnershipBtn.addEventListener('click', claimOwnership);
+    
+    // Copiar dirección completa del contrato
+    if (DOM.copyContractAddress) {
+        DOM.copyContractAddress.addEventListener('click', () => {
+            const contractAddress = CONTRACT_CONFIG.networks["80002"].address;
+            navigator.clipboard.writeText(contractAddress)
+                .then(() => {
+                    showNotification("¡Dirección del contrato copiada!", "success");
+                })
+                .catch(err => {
+                    console.error('Error al copiar:', err);
+                    showNotification("Error al copiar dirección", "error");
+                });
+        });
+    }
 }
 
 // Inicialización
