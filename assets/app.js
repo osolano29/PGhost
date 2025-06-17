@@ -150,6 +150,9 @@ async function connectWallet() {
 
         web3 = new Web3(provider);
         const accounts = await provider.request({ method: 'eth_requestAccounts' });
+        if (!accounts || accounts.length === 0) {
+            throw new Error("No se encontraron cuentas");
+        }
         userAddress = accounts[0];
         
         await setupNetwork();
@@ -206,28 +209,40 @@ function showMetaMaskModal() {
 }
 async function setupNetwork() {
     try {
-        await window.ethereum.request({
-            method: 'wallet_switchEthereumChain',
-            params: [{ chainId: AMOY_CONFIG.chainId }],
-        });
-    } catch (switchError) {
-        // Si la red no está agregada, intentar agregarla
-        if (switchError.code === 4902) {
+        // Verifica si estamos en la red correcta (Polygon Amoy)
+        const chainId = await web3.eth.getChainId();
+        if (chainId.toString() !== AMOY_CONFIG.chainId) {
             try {
                 await window.ethereum.request({
-                    method: 'wallet_addEthereumChain',
-                    params: [AMOY_CONFIG],
+                    method: 'wallet_switchEthereumChain',
+                    params: [{ chainId: AMOY_CONFIG.chainId }],
                 });
-            } catch (addError) {
-                throw new Error("No se pudo agregar la red Polygon Amoy");
+            } catch (switchError) {
+                // Si la red no está agregada, intentar agregarla
+                if (switchError.code === 4902) {
+                    try {
+                        await window.ethereum.request({
+                            method: 'wallet_addEthereumChain',
+                            params: [AMOY_CONFIG],
+                        });
+                    } catch (addError) {
+                        throw new Error("No se pudo agregar la red Polygon Amoy");
+                    }
+                } else {
+                    throw switchError;
+                }
             }
-        } else {
-            throw switchError;
         }
+    } catch (error) {
+        console.error("Error configurando la red:", error);
+        throw error;
     }
 }
 
 function initContract() {
+    if (!web3) {
+        throw new Error("Web3 no está inicializado");
+    }
     contract = new web3.eth.Contract(
         CONTRACT_CONFIG.abi,
         CONTRACT_CONFIG.address
@@ -451,8 +466,12 @@ function setupEventListeners() {
     });
     
     // Conexión
-    DOM.connectBtn?.addEventListener('click', connectWallet);
-    DOM.disconnectBtn?.addEventListener('click', disconnectWallet);
+    if (DOM.connectBtn) {
+        DOM.connectBtn.addEventListener('click', connectWallet);
+    }
+    if (DOM.disconnectBtn) {
+        DOM.disconnectBtn.addEventListener('click', disconnectWallet);
+    }
     DOM.refreshBalance.addEventListener('click', loadInitialData);
     
     // Copiar direcciones
