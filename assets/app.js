@@ -323,7 +323,7 @@ async function estimateTransactionGas(methodName, args = [], estimateElementId =
             return null;
         }
 
-        showLoader("Estimando gas...");
+        utils.showLoader("Estimando gas...");
         const gasEstimate = await contract.methods[methodName](...args)
             .estimateGas({ from: userAddress, ...gasOptions });
         
