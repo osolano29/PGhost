@@ -525,7 +525,7 @@ function toggleRoleSections() {
     if (isAuxiliary) {
         DOM.auxiliarySection.style.display = 'block';
     } else {
-        DOM.auxiliarySection?.style.display = 'none';
+        DOM.auxiliarySection.style.display = 'none';
     }
 }
 
