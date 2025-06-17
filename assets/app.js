@@ -420,6 +420,70 @@ function validateMintInputs() {
     return isValid;
 }
 
+async function transferTokens() {
+    try {
+        if (!validateTransferInputs()) return;
+        
+        const recipient = DOM.recipientAddress.value;
+        const amount = DOM.transferAmount.value;
+        const gasOptions = getGasOptions();
+        
+        const gasEstimate = await estimateTransactionGas(
+            'transfer',
+            [recipient, toWei(amount)],
+            'transferGasEstimate'
+        );
+        
+        if (!gasEstimate) return;
+
+        utils.showLoader("Enviando transferencia...");
+        const tx = await contract.methods.transfer(recipient, toWei(amount))
+            .send({ 
+                from: userAddress, 
+                gas: Math.floor(gasEstimate * 1.2),
+                ...gasOptions
+            });
+        
+        showGasUsed(tx, 'transferGasUsed');
+        showNotification(`Transferencia exitosa! Gas usado: ${tx.gasUsed}`, "success");
+        await loadInitialData();
+        
+    } catch (error) {
+        if (error.receipt) {
+            showGasUsed(error.receipt, 'transferGasUsed');
+            handleError(error, `Error en transferencia (Gas usado: ${error.receipt.gasUsed})`);
+        } else {
+            handleError(error, "Error en transferencia");
+        }
+    } finally {
+        utils.hideLoader();
+    }
+}
+
+function validateTransferInputs() {
+    let isValid = true;
+    
+    if (!DOM.recipientAddress.value || !web3.utils.isAddress(DOM.recipientAddress.value)) {
+        DOM.recipientAddress.classList.add('input-error');
+        isValid = false;
+    } else {
+        DOM.recipientAddress.classList.remove('input-error');
+    }
+    
+    if (!DOM.transferAmount.value || Number(DOM.transferAmount.value) <= 0) {
+        DOM.transferAmount.classList.add('input-error');
+        isValid = false;
+    } else {
+        DOM.transferAmount.classList.remove('input-error');
+    }
+    
+    if (!isValid) {
+        showNotification("Corrige los campos marcados", "error");
+    }
+    
+    return isValid;
+}
+
 // ================ UTILIDADES ================
 function toWei(amount) {
     return web3.utils.toWei(amount.toString(), 'ether');
@@ -449,6 +513,20 @@ function updateUI() {
         DOM.disconnectBtn.style.display = 'none';
     }
     toggleRoleSections();
+}
+
+function toggleRoleSections() {
+    if (isOwner) {
+        DOM.ownerSection.style.display = 'block';
+    } else {
+        DOM.ownerSection.style.display = 'none';
+    }
+    
+    if (isAuxiliary) {
+        DOM.auxiliarySection?.style.display = 'block';
+    } else {
+        DOM.auxiliarySection?.style.display = 'none';
+    }
 }
 
 function setupEventListeners() {
@@ -550,6 +628,12 @@ function applyGasConfig() {
     DOM.gasConfigPanel.style.display = 'none';
 }
 
+function showGasUsed(txReceipt, elementId) {
+    if (txReceipt.gasUsed && DOM[elementId]) {
+        DOM[elementId].textContent = txReceipt.gasUsed;
+    }
+}
+
 function switchTab(e) {
     const tabId = e.currentTarget.getAttribute('data-tab');
     document.querySelectorAll('.tab-content').forEach(content => {
@@ -563,8 +647,31 @@ function switchTab(e) {
 }
 
 // Inicialización para módulos ES6 (Versión definitiva)
-if (import.meta.url === document.currentScript?.src) {
-    initApp().catch(error => {
-        console.error("Error inicializando la aplicación:", error);
-    });
-}
+document.addEventListener('DOMContentLoaded', () => {
+    // Verificar si es el script principal (evita doble ejecución si es importado)
+    if (import.meta.url !== document.currentScript?.src) return;
+    
+    // Verificar si MetaMask está instalado
+    if (typeof window.ethereum === 'undefined') {
+        console.warn('MetaMask no está instalado');
+        showMetaMaskModal();
+        return; // Salir temprano si no hay provider
+    }
+
+    // Inicializar la aplicación con manejo de errores
+    initApp()
+        .then(() => console.debug('Aplicación inicializada correctamente'))
+        .catch(error => {
+            console.error("Error inicializando la aplicación:", error);
+            handleError(error, "Error al iniciar la aplicación");
+        });
+});
+
+// Exporta las funciones necesarias para testing o uso externo
+export {
+    connectWallet,
+    disconnectWallet,
+    transferTokens,
+    mintTokens,
+    initApp
+};
