@@ -523,7 +523,7 @@ function toggleRoleSections() {
     }
     
     if (isAuxiliary) {
-        DOM.auxiliarySection?.style.display = 'block';
+        DOM.auxiliarySection.style.display = 'block';
     } else {
         DOM.auxiliarySection?.style.display = 'none';
     }
