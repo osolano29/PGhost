@@ -353,20 +353,6 @@ const handleCSPError = (error) => {
     handleError(error, "Error en la aplicación");
   }
 };
-
-const isBrowserCompatible = () => {
-  try {
-    // Pruebas seguras de funcionalidades requeridas
-    return (
-      typeof Web3 === 'function' &&
-      typeof window.ethereum === 'object' &&
-      'request' in window.ethereum &&
-      !navigator.userAgent.match(/PhantomJS/i)
-    );
-  } catch (e) {
-    return false;
-  }
-};
 // fin seguras
 
 function initContract() {
