@@ -119,6 +119,7 @@ export async function initApp() {
 }
 
 function detectProvider() {
+  try { 
     if (typeof window.ethereum !== 'undefined') {
         // Manejar múltiples proveedores
         if (window.ethereum.providers?.length) {
@@ -134,8 +135,13 @@ function detectProvider() {
     if (window.ethereum?.isMetaMask) {
         return window.ethereum;
     }
-    
+  } catch(error) { 
+     console.error("Error detectando provider:", error);
+     if (error.message.includes("Content Security Policy")) {
+         showNotification("Error de seguridad: Configuración de CSP bloqueada", "error");
+     }
     return null;
+  }
 }
 
 async function connectWallet() {
