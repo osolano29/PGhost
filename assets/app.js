@@ -551,8 +551,8 @@ async function mintTokens() {
         const tx = await contract.methods.mint(recipient, toWei(amount))
             .send({ 
                 from: userAddress, 
-                gas: Math.floor(gasEstimate * 1.2),
-                ...gasOptions
+                gas: Math.floor(gasEstimate * 1.2)
+                //...gasOptions
             });
         
         showGasUsed(tx, 'mintGasUsed');
