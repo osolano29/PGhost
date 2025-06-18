@@ -1,5 +1,6 @@
 // ================ CONFIGURACIÓN ================
 import { CONTRACT_CONFIG, AMOY_CONFIG } from './ghost-token.js';
+import { getContractConfigSafe, AMOY_CONFIG } from './ghost-token.js';
 
 // Variables globales
 let web3, contract, userAddress, isOwner = false, isAuxiliary = false;
@@ -324,13 +325,16 @@ async function setupNetwork() {
 // ================ FUNCIÓN SEGURA PARA INICIALIZAR CONTRATO ================
 const initContractSafe = async () => {
   try {
-    // Validación previa
+    const safeConfig = getContractConfigSafe();
+      // Validación previa
     if (!web3 || !web3.eth) throw new Error("Web3 no está disponible");
     
     // Creación segura de la instancia del contrato
     contract = new web3.eth.Contract(
-      CONTRACT_CONFIG.abi,
-      CONTRACT_CONFIG.networks["80002"].address,
+      safeConfig.abi,
+      safeConfig.networks["80002"].address,
+      /*CONTRACT_CONFIG.abi,
+      CONTRACT_CONFIG.networks["80002"].address,*/
       {
         handleRevert: true,
         dataInputFill: 'allow'
