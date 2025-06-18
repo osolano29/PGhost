@@ -20,6 +20,9 @@ const utils = {
             DOM.loader.style.display = 'none';
         }
     },
+    /*compareAddresses = (addr1, addr2) => {
+        return addr1 && addr2 && addr1.toLowerCase() === addr2.toLowerCase();
+    },*/
     toWei(amount) {
         if (!web3) throw new Error("Web3 no está inicializado");
         return web3.utils.toWei(amount.toString(), 'ether');
@@ -155,16 +158,23 @@ async function connectWallet() {
         }
 
         web3 = new Web3(provider);
-        const accounts = await provider.request({ method: 'eth_requestAccounts' });
+        // Solicita cuentas de forma moderna (EIP-1102)
+        const accounts = await provider.request({ 
+            method: 'eth_requestAccounts',
+            params: [{ eth_chainId: AMOY_CONFIG.chainId }] // Especifica la cadena
+        });
         if (!accounts || accounts.length === 0) {
             throw new Error("No se encontraron cuentas");
         }
         userAddress = accounts[0];
         
         await setupNetwork();
-        initContract();
+        //initContract();
+        // Inicialización segura del contrato
+        if (!initContract()) {
+            throw new Error("No se pudo inicializar el contrato");
+        }
         await loadInitialData();
-        
         updateUI();
         showNotification("¡Conectado correctamente!", "success");
         return true;
@@ -246,19 +256,72 @@ async function setupNetwork() {
 }
 
 function initContract() {
+  try {
     if (!web3) {
         throw new Error("Web3 no está inicializado");
     }
     contract = new web3.eth.Contract(
         CONTRACT_CONFIG.abi,
-        CONTRACT_CONFIG.address
+        //CONTRACT_CONFIG.address
+        CONTRACT_CONFIG.networks["80002"].address,
+        {
+           // Opciones adicionales para mayor seguridad
+           dataInputFill: 'allow', // Evita procesamiento peligroso
+           transactionPollingTimeout: 180000 // 3 minutos
+        }
     );
-    
+    // Verificación de que el contrato se inicializó correctamente
+    if (!contract || !contract.methods) {
+        throw new Error("El contrato no se inicializó correctamente");
+    }
+    // Configura manejadores seguros de eventos
+    configureContractEventHandlers();
+      
     // Configurar la dirección corta del contrato
     if (DOM.contractAddressShort) {
         DOM.contractAddressShort.title = CONTRACT_CONFIG.address;
         DOM.contractAddressShort.dataset.fullAddress = CONTRACT_CONFIG.address;
     }
+    console.log("Contrato inicializado con éxito");
+    return true;  
+  } catch (error) {
+    // Manejo específico de errores de CSP
+     if (error.message.includes("Content Security Policy") || 
+         error.message.includes("eval") || 
+         error.message.includes("Function")) {
+            console.error("Error de CSP:", error);
+            showNotification("Error de configuración de seguridad. Actualiza tu navegador o verifica las políticas de contenido.", "error");
+     } else {
+            handleError(error, "Error inicializando contrato");
+     }
+        return false;
+  }
+}
+function configureContractEventHandlers() {
+    if (!contract) return;
+    // Manejadores de eventos seguros (sin eval)
+    const eventHandlers = {
+        'Transfer': (event) => {
+            console.log("Evento Transfer:", event);
+            if (event.returnValues.from === userAddress || 
+                event.returnValues.to === userAddress) {
+                updateTokenBalance();
+            }
+        },
+        'Approval': (event) => {
+            console.log("Evento Approval:", event);
+        },
+        // Agrega más manejadores según sea necesario
+    };
+
+    // Suscribe los eventos de forma segura
+    Object.keys(eventHandlers).forEach(eventName => {
+        contract.events[eventName]()
+            .on('data', eventHandlers[eventName])
+            .on('error', err => {
+                console.error(`Error en evento ${eventName}:`, err);
+            });
+    });
 }
 
 function showNotification(message, type = "info") {
@@ -291,7 +354,11 @@ function handleError(error, context = "") {
 async function loadInitialData() {
     try {
         utils.showLoader("Cargando datos...");
-        
+        // Verificación adicional de seguridad
+        if (!contract || !contract.methods) {
+            throw new Error("El contrato no está disponible");
+        }
+        // Usa Promise.all para llamadas seguras
         const [balance, supply, paused, walletPaused, auxiliary] = await Promise.all([
             contract.methods.balanceOf(userAddress).call(),
             contract.methods.totalSupply().call(),
@@ -304,12 +371,14 @@ async function loadInitialData() {
         DOM.totalSupply.textContent = `${fromWei(supply)} GO`;
         DOM.contractStatus.textContent = paused ? '⛔ PAUSADO' : '✅ Activo';
         DOM.walletStatusIndicator.textContent = walletPaused ? '⛔ PAUSADA' : '✅ Activa';
-        DOM.auxiliaryAddress.textContent = auxiliary === '0x0000000000000000000000000000000000000000' ? 'No asignado' : shortAddress(auxiliary);
-        
+        DOM.auxiliaryAddress.textContent = auxiliary === '0x0000000000000000000000000000000000000000' ? 
+            'No asignado' : utils.shortAddress(auxiliary);
+        // Verificación de roles segura
         const owner = await contract.methods.owner().call();
         isOwner = userAddress.toLowerCase() === owner.toLowerCase();
         isAuxiliary = userAddress.toLowerCase() === auxiliary.toLowerCase();
-        
+        /*isOwner = utils.compareAddresses(userAddress, owner);
+        isAuxiliary = utils.compareAddresses(userAddress, auxiliary);*/
         toggleRoleSections();
         
     } catch (error) {
