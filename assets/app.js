@@ -105,8 +105,13 @@ const DOM = {
 };
 
 // ================ FUNCIONES PRINCIPALES ================
-export async function initApp() {
+const initApp = async () => {
   try{  
+      // Verificar compatibilidad del navegador
+    if (!isBrowserCompatible()) {
+        showBrowserWarning();
+        return;
+    }
     setupEventListeners();
     
     if (window.location.protocol === 'file:') {
@@ -117,7 +122,8 @@ export async function initApp() {
         await connectWallet();
     }
   } catch (error) {
-        console.error("Error inicializando la app:", error);
+        //console.error("Error inicializando la app:", error);
+        handleCSPError(error);
   }    
 }
 
@@ -147,40 +153,100 @@ function detectProvider() {
   }
 }
 
-async function connectWallet() {
+//nueva safe *****************
+const detectProviderSafe = async () => {
+  try {
+    if (window.ethereum) {
+      // Verificación adicional para MetaMask
+      if (window.ethereum.isMetaMask) {
+        await window.ethereum.request({ method: 'eth_chainId' });
+      }
+      return window.ethereum;
+    }
+    
+    showMetaMaskModal();
+    return null;
+  } catch (error) {
+    handleCSPError(error);
+    return null;
+  }
+};
+
+const handleCSPError = (error) => {
+  console.error("Error de seguridad:", error);
+  
+  // Detección de errores relacionados con CSP
+  if (/Content Security Policy|eval|Function/i.test(error.message)) {
+    showNotification(`
+      Error de seguridad: 
+      Por favor actualiza tu navegador o desactiva extensiones que puedan interferir
+    `, "error");
+  } else {
+    handleError(error, "Error en la aplicación");
+  }
+};
+
+const isBrowserCompatible = () => {
+  try {
+    // Pruebas seguras de funcionalidades requeridas
+    return (
+      typeof Web3 === 'function' &&
+      typeof window.ethereum === 'object' &&
+      'request' in window.ethereum &&
+      !navigator.userAgent.match(/PhantomJS/i)
+    );
+  } catch (e) {
+    return false;
+  }
+};
+// Comprueba si el script se está ejecutando como módulo
+if (typeof document !== 'undefined') {
+  document.addEventListener('DOMContentLoaded', () => {
+    initApp().catch(handleCSPError);
+  });
+}
+//*********
+
+const connectWallet = async () => {
     try {
         utils.showLoader("Conectando wallet...");
         
-        const provider = detectProvider();
+        /*const provider = detectProvider();
         if (!provider) {
             showMetaMaskModal();
             return false;
-        }
+        }*/
+        // Detección segura del provider
+        const provider = await detectProviderSafe();
+        if (!provider) return false;
 
+       // Inicialización segura de Web3
         web3 = new Web3(provider);
+        
         // Solicita cuentas de forma moderna (EIP-1102)
         const accounts = await provider.request({ 
             method: 'eth_requestAccounts',
             params: [{ eth_chainId: AMOY_CONFIG.chainId }] // Especifica la cadena
-        });
+        }).catch(handleCSPError);
+        
         if (!accounts || accounts.length === 0) {
             throw new Error("No se encontraron cuentas");
         }
         userAddress = accounts[0];
         
         await setupNetwork();
-        //initContract();
-        // Inicialización segura del contrato
-        if (!initContract()) {
+       /* if (!initContract()) {
             throw new Error("No se pudo inicializar el contrato");
-        }
+        }*/
+        await initContractSafe();
         await loadInitialData();
         updateUI();
         showNotification("¡Conectado correctamente!", "success");
         return true;
         
     } catch (error) {
-        handleError(error, "Error al conectar");
+        //handleError(error, "Error al conectar");
+        handleCSPError(error);
         return false;
     } finally {
         utils.hideLoader();
@@ -254,6 +320,84 @@ async function setupNetwork() {
         throw error;
     }
 }
+
+// ================ FUNCIÓN SEGURA PARA INICIALIZAR CONTRATO ================
+const initContractSafe = async () => {
+  try {
+    // Validación previa
+    if (!web3 || !web3.eth) throw new Error("Web3 no está disponible");
+    
+    // Creación segura de la instancia del contrato
+    contract = new web3.eth.Contract(
+      CONTRACT_CONFIG.abi,
+      CONTRACT_CONFIG.networks["80002"].address,
+      {
+        handleRevert: true,
+        dataInputFill: 'allow'
+      }
+    );
+
+    // Verificación de que los métodos están disponibles
+    if (!contract.methods || !contract.methods.balanceOf) {
+      throw new Error("Los métodos del contrato no están disponibles");
+    }
+
+    return true;
+  } catch (error) {
+    handleCSPError(error);
+    return false;
+  }
+};
+
+// nuevas seguras
+// ================ FUNCIÓN SEGURA PARA INICIALIZAR CONTRATO ================
+// ================ FUNCIONES AUXILIARES SEGURAS ================
+const detectProviderSafe = async () => {
+  try {
+    if (window.ethereum) {
+      // Verificación adicional para MetaMask
+      if (window.ethereum.isMetaMask) {
+        await window.ethereum.request({ method: 'eth_chainId' });
+      }
+      return window.ethereum;
+    }
+    
+    showMetaMaskModal();
+    return null;
+  } catch (error) {
+    handleCSPError(error);
+    return null;
+  }
+};
+
+const handleCSPError = (error) => {
+  console.error("Error de seguridad:", error);
+  
+  // Detección de errores relacionados con CSP
+  if (/Content Security Policy|eval|Function/i.test(error.message)) {
+    showNotification(`
+      Error de seguridad: 
+      Por favor actualiza tu navegador o desactiva extensiones que puedan interferir
+    `, "error");
+  } else {
+    handleError(error, "Error en la aplicación");
+  }
+};
+
+const isBrowserCompatible = () => {
+  try {
+    // Pruebas seguras de funcionalidades requeridas
+    return (
+      typeof Web3 === 'function' &&
+      typeof window.ethereum === 'object' &&
+      'request' in window.ethereum &&
+      !navigator.userAgent.match(/PhantomJS/i)
+    );
+  } catch (e) {
+    return false;
+  }
+};
+// fin seguras
 
 function initContract() {
   try {
