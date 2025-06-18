@@ -1,37 +1,3 @@
-// Datos del contrato GhostToken (GO)
-export const CONTRACT_CONFIG = {
-  abi: FULL_ABI,
-  networks: {
-    "80002": { // Polygon Amoy
-      address: "0x384E055e56BB83E95cc78caEb084a9Bee3b9AD7C" // Tu dirección de contrato en Amoy
-    }
-  }
-};
-
-export const AMOY_CONFIG = {
-  chainId: '0x13882', // 80002 en hexadecimal
-  chainName: 'Polygon Amoy Testnet',
-  nativeCurrency: {
-    name: 'MATIC',
-    symbol: 'POL',
-    decimals: 18
-  },
-  rpcUrls: ['https://rpc-amoy.polygon.technology/'],
-  blockExplorerUrls: ['https://amoy.polygonscan.com/']
-};
-
-// Añade al final del archivo
-export const getContractConfigSafe = () => ({
-  abi: FULL_ABI,
-  networks: { 
-      "80002": { // Polygon Amoy
-         address: "0x384E055e56BB83E95cc78caEb084a9Bee3b9AD7C" // Tu dirección de contrato en Amoy
-       }
-  }
-  //safeMode: true,
-  //version: "1.0.0-secure"
-});
-
 const FULL_ABI = [
 	{
 		"inputs": [
@@ -901,3 +867,37 @@ const FULL_ABI = [
 		"type": "function"
 	}
 ];
+
+// Datos del contrato GhostToken (GO)
+export const CONTRACT_CONFIG = {
+  abi: FULL_ABI,
+  networks: {
+    "80002": { // Polygon Amoy
+      address: "0x384E055e56BB83E95cc78caEb084a9Bee3b9AD7C" // Tu dirección de contrato en Amoy
+    }
+  }
+};
+
+export const AMOY_CONFIG = {
+  chainId: '0x13882', // 80002 en hexadecimal
+  chainName: 'Polygon Amoy Testnet',
+  nativeCurrency: {
+    name: 'MATIC',
+    symbol: 'POL',
+    decimals: 18
+  },
+  rpcUrls: ['https://rpc-amoy.polygon.technology/'],
+  blockExplorerUrls: ['https://amoy.polygonscan.com/']
+};
+
+// Añade al final del archivo
+export const getContractConfigSafe = () => ({
+  abi: FULL_ABI,
+  networks: { 
+      "80002": { // Polygon Amoy
+         address: "0x384E055e56BB83E95cc78caEb084a9Bee3b9AD7C" // Tu dirección de contrato en Amoy
+       }
+  }
+  //safeMode: true,
+  //version: "1.0.0-secure"
+});
