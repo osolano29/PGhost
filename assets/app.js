@@ -668,10 +668,10 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // Exporta las funciones necesarias para testing o uso externo
-export {
+/*export {
     connectWallet,
     disconnectWallet,
     transferTokens,
     mintTokens
     //initApp
-};
+};*/
