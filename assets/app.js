@@ -672,6 +672,6 @@ export {
     connectWallet,
     disconnectWallet,
     transferTokens,
-    mintTokens,
+    mintTokens
     //initApp
 };
