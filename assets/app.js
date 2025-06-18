@@ -153,20 +153,6 @@ function detectProvider() {
   }
 }
 
-const handleCSPError = (error) => {
-  console.error("Error de seguridad:", error);
-  
-  // Detección de errores relacionados con CSP
-  if (/Content Security Policy|eval|Function/i.test(error.message)) {
-    showNotification(`
-      Error de seguridad: 
-      Por favor actualiza tu navegador o desactiva extensiones que puedan interferir
-    `, "error");
-  } else {
-    handleError(error, "Error en la aplicación");
-  }
-};
-
 const isBrowserCompatible = () => {
   try {
     // Pruebas seguras de funcionalidades requeridas
