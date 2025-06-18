@@ -57,7 +57,7 @@
             </div>
         </div>
 
-        <!-- Panel de Gas configurable -->
+        <!-- Panel de Gas configurable - Mejorado con funcionalidades de index_Funcional -->
         <section id="gasConfigPanel" class="gas-config-panel" style="display: none;">
             <div class="gas-config-header">
                 <h3><i class="fas fa-gas-pump"></i> Configuración de Gas</h3>
@@ -76,6 +76,32 @@
                     <label for="customGasLimit"><i class="fas fa-tachometer-alt"></i> Límite de Gas</label>
                     <input type="number" id="customGasLimit" placeholder="Auto">
                 </div>
+                
+                <!-- Añadido de index_Funcional -->
+                <div class="gas-config-item">
+                    <label><i class="fas fa-sliders-h"></i> Velocidad</label>
+                    <div class="speed-buttons">
+                        <button class="speed-btn" data-speed="slow">Lento</button>
+                        <button class="speed-btn active" data-speed="medium">Medio</button>
+                        <button class="speed-btn" data-speed="fast">Rápido</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Añadido de index_Funcional -->
+            <div class="gas-feedback">
+                <div class="gas-feedback-item">
+                    <span class="gas-label">Estimado:</span>
+                    <span id="gasEstimatedValue">-</span>
+                </div>
+                <div class="gas-feedback-item">
+                    <span class="gas-label">Configurado:</span>
+                    <span id="gasConfiguredValue">-</span>
+                </div>
+                <div class="gas-feedback-item">
+                    <span class="gas-label">Usado:</span>
+                    <span id="gasUsedValue">-</span>
+                </div>
             </div>
             
             <button id="applyGasConfig" class="btn-primary">
@@ -83,7 +109,7 @@
             </button>
         </section>
 
-        <!-- Panel de Información -->
+        <!-- Panel de Información - Manteniendo diseño de Index_Actual -->
         <section class="info-panel enhanced-info">
             <div class="info-card highlight-card">
                 <div class="info-header">
@@ -140,7 +166,7 @@
             </div>
         </section>
 
-        <!-- Sección de Transferencias -->
+        <!-- Sección de Transferencias - Mejorada con elementos de index_Funcional -->
         <section class="action-card" id="transferSection">
             <div class="card-header">
                 <h2><i class="fas fa-exchange-alt"></i> Transferir GO</h2>
@@ -151,7 +177,7 @@
                         <strong>Verifica dos veces la dirección antes de enviar.</strong>
                     </div>
                 </div>
-                <button class="gas-config-btn btn-icon">
+                <button id="configureGasTransfer" class="btn-icon gas-config-btn">
                     <i class="fas fa-gas-pump"></i> Configurar Gas
                 </button>
             </div>
@@ -182,8 +208,16 @@
                         <span class="gas-value" id="transferGasEstimate">-</span>
                     </div>
                     <div class="gas-row">
+                        <span class="gas-label">Gas configurado:</span>
+                        <span class="gas-value" id="transferGasConfigured">-</span>
+                    </div>
+                    <div class="gas-row">
                         <span class="gas-label">Gas usado:</span>
                         <span class="gas-value" id="transferGasUsed">-</span>
+                    </div>
+                    <div class="gas-row">
+                        <span class="gas-label">Costo estimado:</span>
+                        <span class="gas-value" id="transferGasCostEstimate">- POL</span>
                     </div>
                 </div>
                 <div class="gas-buttons">
@@ -195,10 +229,221 @@
                     </button>
                 </div>
             </div>
+
+            <!-- Añadido de index_Funcional -->
+            <div class="transaction-tips">
+                <p><i class="fas fa-exclamation-triangle"></i> <strong>Importante:</strong></p>
+                <ul>
+                    <li>Las transacciones son irreversibles</li>
+                    <li>Requieren POL para pagar gas fees</li>
+                    <li>Pueden tardar unos segundos en completarse</li>
+                </ul>
+            </div>
         </section>
 
-        <!-- Sección de Mint (Owner) -->
-        <section class="action-card admin-card" id="ownerSection" style="display: none;">
+        <!-- Sección de Aprobación para Contratos Autorizados - De index_Funcional -->
+        <section class="action-card approval-card">
+            <div class="card-header">
+                <h2><i class="fas fa-handshake"></i> Aprobar Gastos</h2>
+                <div class="info-tooltip">
+                    <i class="fas fa-info-circle"></i>
+                    <div class="tooltip-content">
+                        Permite a un contrato autorizado gastar tus tokens GO.
+                        <strong>Solo para contratos previamente autorizados por el owner.</strong>
+                    </div>
+                </div>
+                <button id="configureGasApproval" class="btn-icon gas-config-btn">
+                    <i class="fas fa-gas-pump"></i> Configurar Gas
+                </button>
+            </div>
+            
+            <div class="form-group">
+                <label for="spenderContract">
+                    <i class="fas fa-file-contract"></i> Contrato Autorizado
+                </label>
+                <input type="text" id="spenderContract" placeholder="0x..." pattern="^0x[a-fA-F0-9]{40}$">
+                <div class="input-hint">Debe estar en la lista de contratos permitidos</div>
+            </div>
+
+            <div class="form-group">
+                <label for="approvalAmount">
+                    <i class="fas fa-coins"></i> Cantidad a Aprobar
+                </label>
+                <div class="input-with-unit">
+                    <input type="number" id="approvalAmount" placeholder="0.00" min="0" step="0.000001">
+                    <span class="unit">GO</span>
+                </div>
+                <div class="input-hint">0 = revocar aprobación, MAX = 2^256-1</div>
+            </div>
+
+            <div class="gas-section enhanced">
+                <div class="gas-comparison">
+                    <div class="gas-row">
+                        <span class="gas-label">Gas estimado:</span>
+                        <span class="gas-value" id="approvalGasEstimate">-</span>
+                    </div>
+                    <div class="gas-row">
+                        <span class="gas-label">Gas configurado:</span>
+                        <span class="gas-value" id="approvalGasConfigured">-</span>
+                    </div>
+                    <div class="gas-row">
+                        <span class="gas-label">Gas usado:</span>
+                        <span class="gas-value" id="approvalGasUsed">-</span>
+                    </div>
+                    <div class="gas-row">
+                        <span class="gas-label">Costo estimado:</span>
+                        <span class="gas-value" id="approvalGasCostEstimate">- POL</span>
+                    </div>
+                </div>
+                <div class="gas-buttons">
+                    <button id="estimateApprovalGas" class="btn-secondary btn-estimate">
+                        <i class="fas fa-calculator"></i> Estimar Gas
+                    </button>
+                    <button id="approveTokens" class="btn-primary">
+                        <i class="fas fa-check-circle"></i> Aprobar Gastos
+                    </button>
+                </div>
+            </div>
+
+            <div class="approval-info">
+                <p><i class="fas fa-info-circle"></i> <strong>¿Qué es approve?</strong></p>
+                <ul>
+                    <li>Permite que otro contrato gaste tus tokens</li>
+                    <li>Necesario para interactuar con DApps</li>
+                    <li>Revisa siempre el contrato antes de aprobar</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Sección de Quemado (Burn) - De index_Funcional -->
+        <section class="action-card warning-card">
+            <div class="card-header">
+                <h2><i class="fas fa-fire"></i> Quemar Tokens</h2>
+                <div class="info-tooltip">
+                    <i class="fas fa-info-circle"></i>
+                    <div class="tooltip-content">
+                        Quemar tokens los remueve permanentemente de circulación,
+                        <strong>reduciendo el suministro total</strong> de GO.
+                    </div>
+                </div>
+                <button id="configureGasBurn" class="btn-icon gas-config-btn">
+                    <i class="fas fa-gas-pump"></i> Configurar Gas
+                </button>
+            </div>
+
+            <div class="form-group">
+                <label for="burnAmount">
+                    <i class="fas fa-fire-alt"></i> Cantidad a Quemar
+                </label>
+                <div class="input-with-unit">
+                    <input type="number" id="burnAmount" placeholder="0.00" min="0" step="0.000001">
+                    <span class="unit">GO</span>
+                </div>
+                <div class="input-hint">Esta acción no se puede deshacer</div>
+            </div>
+
+            <div class="gas-section enhanced">
+                <div class="gas-comparison">
+                    <div class="gas-row">
+                        <span class="gas-label">Gas estimado:</span>
+                        <span class="gas-value" id="burnGasEstimate">-</span>
+                    </div>
+                    <div class="gas-row">
+                        <span class="gas-label">Gas configurado:</span>
+                        <span class="gas-value" id="burnGasConfigured">-</span>
+                    </div>
+                    <div class="gas-row">
+                        <span class="gas-label">Gas usado:</span>
+                        <span class="gas-value" id="burnGasUsed">-</span>
+                    </div>
+                    <div class="gas-row">
+                        <span class="gas-label">Costo estimado:</span>
+                        <span class="gas-value" id="burnGasCostEstimate">- POL</span>
+                    </div>
+                </div>
+                <div class="gas-buttons">
+                    <button id="estimateBurnGas" class="btn-secondary btn-estimate">
+                        <i class="fas fa-calculator"></i> Estimar Gas
+                    </button>
+                    <button id="burnTokens" class="btn-warning">
+                        <i class="fas fa-fire"></i> Quemar Tokens
+                    </button>
+                </div>
+            </div>
+
+            <div class="burn-warning">
+                <i class="fas fa-radiation-alt"></i>
+                <p><strong>¡Atención!</strong> Al quemar tokens:</p>
+                <ul>
+                    <li>Se reducen permanentemente tus fondos</li>
+                    <li>Disminuye el suministro total de GO</li>
+                    <li>No podrás recuperar los tokens quemados</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Sección de Seguridad de Wallet - De index_Funcional -->
+        <section class="action-card security-card">
+            <div class="card-header">
+                <h2><i class="fas fa-shield-alt"></i> Seguridad de Wallet</h2>
+                <div class="info-tooltip">
+                    <i class="fas fa-info-circle"></i>
+                    <div class="tooltip-content">
+                        Pausar tu wallet bloquea temporalmente todas las transferencias
+                        entrantes y salientes como medida de seguridad.
+                    </div>
+                </div>
+            </div>
+
+            <div class="security-status">
+                <div class="status-item">
+                    <span>Estado de tu Wallet:</span>
+                    <span id="walletPausedStatus" class="status-badge">-</span>
+                </div>
+            </div>
+
+            <div class="gas-section enhanced">
+                <div class="gas-comparison">
+                    <div class="gas-row">
+                        <span class="gas-label">Gas estimado (Pausar):</span>
+                        <span class="gas-value" id="pauseWalletGasEstimate">-</span>
+                    </div>
+                    <div class="gas-row">
+                        <span class="gas-label">Gas usado (Pausar):</span>
+                        <span class="gas-value" id="pauseWalletGasUsed">-</span>
+                    </div>
+                    <div class="gas-row">
+                        <span class="gas-label">Gas estimado (Reanudar):</span>
+                        <span class="gas-value" id="unpauseWalletGasEstimate">-</span>
+                    </div>
+                    <div class="gas-row">
+                        <span class="gas-label">Gas usado (Reanudar):</span>
+                        <span class="gas-value" id="unpauseWalletGasUsed">-</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="button-group">
+                <button id="pauseWallet" class="btn-warning">
+                    <i class="fas fa-pause"></i> Pausar Mi Wallet
+                </button>
+                <button id="unpauseWallet" class="btn-success">
+                    <i class="fas fa-play"></i> Reanudar Mi Wallet
+                </button>
+            </div>
+
+            <div class="security-tips">
+                <p><i class="fas fa-lightbulb"></i> <strong>¿Cuándo pausar?</strong></p>
+                <ul>
+                    <li>Si sospechas actividad no autorizada</li>
+                    <li>Antes de realizar cambios de seguridad</li>
+                    <li>Como medida preventiva temporal</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Sección de Owner - Mejorada con elementos de index_Funcional -->
+        <section id="ownerSection" class="action-card admin-card" style="display: none;">
             <div class="card-header">
                 <h2><i class="fas fa-crown"></i> Funciones de Administrador</h2>
                 <div class="admin-badge">Solo Owner</div>
@@ -207,6 +452,12 @@
             <div class="admin-tabs">
                 <button class="tab-btn active" data-tab="mint-tab">
                     <i class="fas fa-coins"></i> Mint
+                </button>
+                <button class="tab-btn" data-tab="contract-tab">
+                    <i class="fas fa-globe"></i> Contrato
+                </button>
+                <button class="tab-btn" data-tab="recovery-tab">
+                    <i class="fas fa-user-shield"></i> Recovery
                 </button>
             </div>
             
@@ -236,6 +487,10 @@
                             <span class="gas-value" id="mintGasEstimate">-</span>
                         </div>
                         <div class="gas-row">
+                            <span class="gas-label">Gas configurado:</span>
+                            <span class="gas-value" id="mintGasConfigured">-</span>
+                        </div>
+                        <div class="gas-row">
                             <span class="gas-label">Gas usado:</span>
                             <span class="gas-value" id="mintGasUsed">-</span>
                         </div>
@@ -249,27 +504,200 @@
                         </button>
                     </div>
                 </div>
+
+                <div class="admin-info">
+                    <p><i class="fas fa-info-circle"></i> El minting:</p>
+                    <ul>
+                        <li>Aumenta el suministro total de GO</li>
+                        <li>Solo puede realizarlo el owner del contrato</li>
+                        <li>Requiere confirmación por transacción</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Pestaña Contrato -->
+            <div id="contract-tab" class="tab-content">
+                <div class="admin-actions">
+                    <button id="pauseContract" class="btn-warning">
+                        <i class="fas fa-pause"></i> Pausar Contrato
+                    </button>
+                    <button id="unpauseContract" class="btn-success">
+                        <i class="fas fa-play"></i> Reanudar Contrato
+                    </button>
+                </div>
+
+                <div class="gas-section enhanced">
+                    <div class="gas-comparison">
+                        <div class="gas-row">
+                            <span class="gas-label">Gas estimado (Pausar):</span>
+                            <span class="gas-value" id="pauseGasEstimate">-</span>
+                        </div>
+                        <div class="gas-row">
+                            <span class="gas-label">Gas usado (Pausar):</span>
+                            <span class="gas-value" id="pauseGasUsed">-</span>
+                        </div>
+                        <div class="gas-row">
+                            <span class="gas-label">Gas estimado (Reanudar):</span>
+                            <span class="gas-value" id="unpauseGasEstimate">-</span>
+                        </div>
+                        <div class="gas-row">
+                            <span class="gas-label">Gas usado (Reanudar):</span>
+                            <span class="gas-value" id="unpauseGasUsed">-</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="admin-warning">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    <p><strong>Pausar el contrato:</strong></p>
+                    <ul>
+                        <li>Bloquea TODAS las transferencias</li>
+                        <li>Impide el minting y burning</li>
+                        <li>Útil para emergencias o actualizaciones</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Pestaña Recovery -->
+            <div id="recovery-tab" class="tab-content">
+                <div class="recovery-grid">
+                    <div class="recovery-item">
+                        <span class="recovery-label">Nominado Actual:</span>
+                        <span class="recovery-value" id="recoveryNominee">Ninguno</span>
+                    </div>
+                    <div class="recovery-item">
+                        <span class="recovery-label">Plazo:</span>
+                        <span class="recovery-value" id="recoveryDeadline">-</span>
+                    </div>
+                    <div class="recovery-item">
+                        <span class="recovery-label">Aprobado:</span>
+                        <span class="recovery-value" id="recoveryApproved">-</span>
+                    </div>
+                    <div class="recovery-item">
+                        <span class="recovery-label">Tiempo Restante:</span>
+                        <span class="recovery-value" id="recoveryRemainingTime">-</span>
+                    </div>
+                </div>
+
+                <div class="gas-section enhanced">
+                    <div class="gas-comparison">
+                        <div class="gas-row">
+                            <span class="gas-label">Gas estimado (Aprobar):</span>
+                            <span class="gas-value" id="recoveryGasEstimate">-</span>
+                        </div>
+                        <div class="gas-row">
+                            <span class="gas-label">Gas usado (Aprobar):</span>
+                            <span class="gas-value" id="recoveryGasUsed">-</span>
+                        </div>
+                        <div class="gas-row">
+                            <span class="gas-label">Gas estimado (Ejecutar):</span>
+                            <span class="gas-value" id="executeRecoveryGasEstimate">-</span>
+                        </div>
+                        <div class="gas-row">
+                            <span class="gas-label">Gas usado (Ejecutar):</span>
+                            <span class="gas-value" id="executeRecoveryGasUsed">-</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="button-group">
+                    <button id="approveRecoveryBtn" class="btn-secondary">
+                        <i class="fas fa-check-circle"></i> Aprobar Recovery
+                    </button>
+                    <button id="executeRecoveryBtn" class="btn-warning">
+                        <i class="fas fa-user-shield"></i> Ejecutar Recovery
+                    </button>
+                </div>
+
+                <div class="recovery-info">
+                    <p><i class="fas fa-info-circle"></i> El proceso de recovery:</p>
+                    <ol>
+                        <li>El auxiliar inicia la solicitud</li>
+                        <li>El owner actual debe aprobarlo</li>
+                        <li>Tras 7 días, el nuevo owner puede reclamar</li>
+                    </ol>
+                </div>
             </div>
         </section>
 
-        <!-- Modal para MetaMask -->
-        <div id="metaMaskModal" class="modal" style="display: none;">
-            <div class="modal-content">
-                <span class="close">&times;</span>
-                <h2>MetaMask no detectado</h2>
-                <p>Para usar esta DApp necesitas instalar MetaMask.</p>
-                <a href="https://metamask.io/" target="_blank" class="btn-primary">
-                    Instalar MetaMask
-                </a>
-                <p class="modal-alternative">
-                    Si ya lo tienes instalado, asegúrate de:
-                </p>
+        <!-- Sección de Auxiliar (solo visible para auxiliary) - De index_Funcional -->
+        <section id="auxiliarySection" class="action-card auxiliary-card" style="display: none;">
+            <div class="card-header">
+                <h2><i class="fas fa-user-cog"></i> Funciones de Auxiliar</h2>
+                <div class="admin-badge">Solo Auxiliar</div>
+            </div>
+
+            <div class="form-group">
+                <label for="newAuxiliary">
+                    <i class="fas fa-user-edit"></i> Nuevo Auxiliar
+                </label>
+                <input type="text" id="newAuxiliary" placeholder="0x..." pattern="^0x[a-fA-F0-9]{40}$">
+                <div class="input-hint">Solo el owner puede asignar auxiliares</div>
+            </div>
+
+            <div class="auxiliary-status">
+                <span>Auxiliar Actual:</span>
+                <span id="auxiliaryAddress">No asignado</span>
+            </div>
+
+            <div class="gas-section enhanced">
+                <div class="gas-comparison">
+                    <div class="gas-row">
+                        <span class="gas-label">Gas estimado (Asignar):</span>
+                        <span class="gas-value" id="auxiliaryGasEstimate">-</span>
+                    </div>
+                    <div class="gas-row">
+                        <span class="gas-label">Gas usado (Asignar):</span>
+                        <span class="gas-value" id="auxiliaryGasUsed">-</span>
+                    </div>
+                    <div class="gas-row">
+                        <span class="gas-label">Gas estimado (Reclamar):</span>
+                        <span class="gas-value" id="claimOwnershipGasEstimate">-</span>
+                    </div>
+                    <div class="gas-row">
+                        <span class="gas-label">Gas usado (Reclamar):</span>
+                        <span class="gas-value" id="claimOwnershipGasUsed">-</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="button-group">
+                <button id="setAuxiliaryBtn" class="btn-secondary">
+                    <i class="fas fa-save"></i> Actualizar Auxiliar
+                </button>
+                <button id="claimOwnershipBtn" class="btn-warning">
+                    <i class="fas fa-user-lock"></i> Iniciar Recovery
+                </button>
+            </div>
+
+            <div class="auxiliary-info">
+                <p><i class="fas fa-info-circle"></i> El auxiliar puede:</p>
                 <ul>
-                    <li>Estar usando un navegador compatible</li>
-                    <li>Tener la extensión activada</li>
-                    <li>Actualizar a la última versión</li>
+                    <li>Iniciar el proceso de recovery</li>
+                    <li>No puede realizar cambios directos</li>
+                    <li>Es un rol de seguridad para emergencias</li>
                 </ul>
             </div>
+        </section>
+    </div>
+
+    <!-- Modal para MetaMask -->
+    <div id="metaMaskModal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>MetaMask no detectado</h2>
+            <p>Para usar esta DApp necesitas instalar MetaMask.</p>
+            <a href="https://metamask.io/" target="_blank" class="btn-primary">
+                Instalar MetaMask
+            </a>
+            <p class="modal-alternative">
+                Si ya lo tienes instalado, asegúrate de:
+            </p>
+            <ul>
+                <li>Estar usando un navegador compatible</li>
+                <li>Tener la extensión activada</li>
+                <li>Actualizar a la última versión</li>
+            </ul>
         </div>
     </div>
 
@@ -283,5 +711,98 @@
     <script type="module" src="./assets/app.js"></script>
     <!-- Polyfill para navegadores antiguos -->
     <script nomodule src="https://cdn.jsdelivr.net/npm/es-module-shims@1.7.0/dist/es-module-shims.min.js"></script>
+
+    <!-- Script para manejo de gas, pestañas y copiado - De index_Funcional -->
+    <script>
+        // Manejo del panel de configuración de gas
+        document.querySelectorAll('.gas-config-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.getElementById('gasConfigPanel').style.display = 'block';
+                // Aquí se cargarían los valores actuales
+            });
+        });
+
+        document.getElementById('closeGasConfig').addEventListener('click', () => {
+            document.getElementById('gasConfigPanel').style.display = 'none';
+        });
+
+        // Manejo de botones de velocidad
+        document.querySelectorAll('.speed-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                document.querySelectorAll('.speed-btn').forEach(b => b.classList.remove('active'));
+                this.classList.add('active');
+                // Aquí se actualizaría el precio del gas según la velocidad seleccionada
+            });
+        });
+
+        // Aplicar configuración de gas
+        document.getElementById('applyGasConfig').addEventListener('click', () => {
+            const gasPrice = document.getElementById('customGasPrice').value;
+            const gasLimit = document.getElementById('customGasLimit').value;
+            const speed = document.querySelector('.speed-btn.active').dataset.speed;
+            
+            // Aquí se enviaría la configuración a app.js
+            console.log('Configuración de gas aplicada:', { gasPrice, gasLimit, speed });
+            
+            document.getElementById('gasConfigPanel').style.display = 'none';
+        });
+
+        // Copiar dirección de la wallet
+        document.getElementById('copyWalletAddress')?.addEventListener('click', () => {
+            const address = document.getElementById('walletAddress').textContent;
+            navigator.clipboard.writeText(address)
+                .then(() => {
+                    showCopyFeedback('¡Dirección copiada!');
+                })
+                .catch(err => {
+                    console.error('Error al copiar: ', err);
+                });
+        });
+
+        // Copiar dirección del contrato
+        document.getElementById('copyContractAddress')?.addEventListener('click', () => {
+            const address = document.getElementById('contractAddressShort').textContent;
+            navigator.clipboard.writeText(address)
+                .then(() => {
+                    showCopyFeedback('¡Contrato copiado!');
+                })
+                .catch(err => {
+                    console.error('Error al copiar: ', err);
+                });
+        });
+
+        // Función para mostrar feedback de copiado
+        function showCopyFeedback(message) {
+            const notification = document.createElement('div');
+            notification.className = 'address-copy-feedback';
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                document.body.removeChild(notification);
+            }, 2000);
+        }
+
+        // Manejo básico de pestañas
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const tabId = btn.getAttribute('data-tab');
+                
+                // Oculta todos los contenidos
+                document.querySelectorAll('.tab-content').forEach(content => {
+                    content.classList.remove('active');
+                });
+                
+                // Desactiva todos los botones
+                document.querySelectorAll('.tab-btn').forEach(tabBtn => {
+                    tabBtn.classList.remove('active');
+                });
+                
+                // Activa el seleccionado
+                document.getElementById(tabId).classList.add('active');
+                btn.classList.add('active');
+            });
+        });
+    </script>
 </body>
-</html>
+</html>    
