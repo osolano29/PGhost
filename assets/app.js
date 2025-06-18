@@ -1,6 +1,5 @@
 // ================ CONFIGURACIÓN ================
-import { CONTRACT_CONFIG, AMOY_CONFIG } from './ghost-token.js';
-import { getContractConfigSafe, AMOY_CONFIG } from './ghost-token.js';
+import { CONTRACT_CONFIG, getContractConfigSafe, AMOY_CONFIG } from './ghost-token.js';
 
 // Variables globales
 let web3, contract, userAddress, isOwner = false, isAuxiliary = false;
