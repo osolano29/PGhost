@@ -153,25 +153,6 @@ function detectProvider() {
   }
 }
 
-//nueva safe *****************
-const detectProviderSafe = async () => {
-  try {
-    if (window.ethereum) {
-      // Verificación adicional para MetaMask
-      if (window.ethereum.isMetaMask) {
-        await window.ethereum.request({ method: 'eth_chainId' });
-      }
-      return window.ethereum;
-    }
-    
-    showMetaMaskModal();
-    return null;
-  } catch (error) {
-    handleCSPError(error);
-    return null;
-  }
-};
-
 const handleCSPError = (error) => {
   console.error("Error de seguridad:", error);
   
