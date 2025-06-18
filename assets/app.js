@@ -22,7 +22,7 @@ const utils = {
     },
     /*compareAddresses = (addr1, addr2) => {
         return addr1 && addr2 && addr1.toLowerCase() === addr2.toLowerCase();
-    },*/
+    },
     toWei(amount) {
         if (!web3) throw new Error("Web3 no está inicializado");
         return web3.utils.toWei(amount.toString(), 'ether');
@@ -30,7 +30,7 @@ const utils = {
     fromWei(amount) {
         if (!web3) throw new Error("Web3 no está inicializado");
         return web3.utils.fromWei(amount.toString(), 'ether');
-    }
+    }*/
 };
 
 // Elementos del DOM
