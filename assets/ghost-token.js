@@ -25,7 +25,7 @@ export const getContractConfigSafe = () => ({
   abi: FULL_ABI,
   networks: { "80002": { // Polygon Amoy
       address: "0x384E055e56BB83E95cc78caEb084a9Bee3b9AD7C" // Tu dirección de contrato en Amoy },
-  safeMode: true,
+  //safeMode: true,
   version: "1.0.0-secure"
 });
 
