@@ -20,7 +20,10 @@ const utils = {
             DOM.loader.style.display = 'none';
         }
     },
-    /*compareAddresses = (addr1, addr2) => {
+    /*shortAddress = (address) => {
+         return address ? `${address.substring(0, 6)}...${address.substring(address.length - 4)}` : "N/A";
+    };
+    compareAddresses = (addr1, addr2) => {
         return addr1 && addr2 && addr1.toLowerCase() === addr2.toLowerCase();
     },*/
     toWei(amount) {
@@ -466,7 +469,8 @@ async function loadInitialData() {
             contract.methods.isWalletPaused(userAddress).call(),
             contract.methods.auxiliaryOwner().call()
         ]);
-        
+
+        DOM.contractAddressShort.dataset.fullAddress = CONTRACT_CONFIG.networks["80002"].address;
         DOM.tokenBalance.textContent = `${fromWei(balance)} GO`;
         DOM.totalSupply.textContent = `${fromWei(supply)} GO`;
         DOM.contractStatus.textContent = paused ? '⛔ PAUSADO' : '✅ Activo';
