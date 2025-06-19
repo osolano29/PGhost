@@ -356,7 +356,7 @@ const handleCSPError = (error) => {
     handleError(error, "Error en la aplicación");
   }
 };
-// fin seguras
+// fin segura
 
 function initContract() {
   try {
