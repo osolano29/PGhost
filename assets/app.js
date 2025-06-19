@@ -20,21 +20,30 @@ const utils = {
             DOM.loader.style.display = 'none';
         }
     },
-    /*shortAddress = (address) => {
-         return address ? `${address.substring(0, 6)}...${address.substring(address.length - 4)}` : "N/A";
-    };
+    /*
     compareAddresses = (addr1, addr2) => {
         return addr1 && addr2 && addr1.toLowerCase() === addr2.toLowerCase();
     },*/
-    toWei(amount) {
-        if (!web3) throw new Error("Web3 no está inicializado");
-        return web3.utils.toWei(amount.toString(), 'ether');
-    },
-    fromWei(amount) {
-        if (!web3) throw new Error("Web3 no está inicializado");
-        return web3.utils.fromWei(amount.toString(), 'ether');
-    }
 };
+function toWei(amount) {
+    return web3.utils.toWei(amount.toString(), 'ether');
+}
+
+function fromWei(amount) {
+    //return web3.utils.fromWei(amount.toString(), 'ether');
+    return parseFloat(web3.utils.fromWei(amount.toString(), 'ether'));
+}
+
+function shortAddress(address) {
+    return address ? `${address.substring(0, 6)}...${address.substring(38)}` : "N/A";
+}
+
+// Comprueba si el script se está ejecutando como módulo
+if (typeof document !== 'undefined') {
+  document.addEventListener('DOMContentLoaded', () => {
+    initApp().catch(handleCSPError);
+  });
+}
 
 // Elementos del DOM
 const DOM = {
@@ -88,6 +97,18 @@ const DOM = {
     setAuxiliaryBtn: document.getElementById('setAuxiliaryBtn'),
     claimOwnershipBtn: document.getElementById('claimOwnershipBtn'),
     auxiliaryAddress: document.getElementById('auxiliaryAddress'),
+    estimateSetAuxiliaryGas: document.getElementById('estimateSetAuxiliaryGas'),  //***
+    estimateClaimOwnershipGas: document.getElementById('estimateClaimOwnershipGas'), //***
+    auxiliaryGasEstimate: document.getElementById('auxiliaryGasEstimate'),         //****
+    auxiliaryGasUsed: document.getElementById('auxiliaryGasUsed'),                //****
+
+    // Aprobación de gastos
+    spenderContract: document.getElementById('spenderContract'),              //***
+    approvalAmount: document.getElementById('approvalAmount'),               //***
+    approvalGasEstimate: document.getElementById('approvalGasEstimate'),     //***
+    approvalGasUsed: document.getElementById('approvalGasUsed'),             //***
+    estimateApprovalGas: document.getElementById('estimateApprovalGas'),     //***
+    approveTokens: document.getElementById('approveTokens'),                //***
     
     // UI
     loader: document.getElementById('loader'),
@@ -97,6 +118,18 @@ const DOM = {
     ownerSection: document.getElementById('ownerSection'),
     auxiliarySection: document.getElementById('auxiliarySection'),
     metaMaskModal: document.getElementById('metaMaskModal'),
+
+     // Sistema de recovery
+    approveRecoveryBtn: document.getElementById('approveRecoveryBtn'),
+    estimateApproveRecoveryGas: document.getElementById('estimateApproveRecoveryGas'),
+    executeRecoveryBtn: document.getElementById('executeRecoveryBtn'),
+    estimateExecuteRecoveryGas: document.getElementById('estimateExecuteRecoveryGas'),
+    recoveryNominee: document.getElementById('recoveryNominee'),
+    recoveryDeadline: document.getElementById('recoveryDeadline'),
+    recoveryApproved: document.getElementById('recoveryApproved'),
+    recoveryRemainingTime: document.getElementById('recoveryRemainingTime'),
+    recoveryGasEstimate: document.getElementById('recoveryGasEstimate'),
+    recoveryGasUsed: document.getElementById('recoveryGasUsed'),
     
     // Configuración de Gas
     gasConfigPanel: document.getElementById('gasConfigPanel'),
@@ -104,6 +137,10 @@ const DOM = {
     applyGasConfig: document.getElementById('applyGasConfig'),
     customGasPrice: document.getElementById('customGasPrice'),
     customGasLimit: document.getElementById('customGasLimit'),
+    estimatePauseGas: document.getElementById('estimatePauseGas'),    //***
+    estimateUnpauseGas: document.getElementById('estimateUnpauseGas'),//****
+    pauseGasEstimate: document.getElementById('pauseGasEstimate'),    //*****
+    pauseGasUsed: document.getElementById('pauseGasUsed'),            //******
     speedButtons: document.querySelectorAll('.speed-btn')
 };
 
@@ -112,7 +149,7 @@ const initApp = async () => {
   try{  
       // Verificar compatibilidad del navegador
     if (!isBrowserCompatible()) {
-        showBrowserWarning();
+        console.warn('Navegador no es compatible con esta aplicación Web3.');
         return;
     }
     setupEventListeners();
@@ -130,31 +167,43 @@ const initApp = async () => {
   }    
 }
 
-function detectProvider() {
-  try { 
-    if (typeof window.ethereum !== 'undefined') {
-        // Manejar múltiples proveedores
-        if (window.ethereum.providers?.length) {
-            return window.ethereum.providers.find(p => p.isMetaMask) || window.ethereum;
-        }
-        return window.ethereum;
+const detectProviderSafe = async () => {
+  try {
+    if (window.ethereum) {
+      // Si hay múltiples proveedores (como MetaMask + Brave)
+      if (Array.isArray(window.ethereum.providers)) {
+        const provider = window.ethereum.providers.find(p => p.isMetaMask) || window.ethereum;
+        await provider.request({ method: 'eth_chainId' }); // Validación de disponibilidad
+        return provider;
+      }
+
+      // Verificación básica de MetaMask
+      if (window.ethereum.isMetaMask) {
+        await window.ethereum.request({ method: 'eth_chainId' });
+      }
+
+      return window.ethereum;
     }
-    
+
+    // Compatibilidad con versiones antiguas
     if (typeof window.web3 !== 'undefined' && window.web3.currentProvider?.isMetaMask) {
-        return window.web3.currentProvider;
+      return window.web3.currentProvider;
     }
-    
-    if (window.ethereum?.isMetaMask) {
-        return window.ethereum;
+
+    // Si no hay provider, mostrar ayuda al usuario
+    showMetaMaskModal();
+    return null;
+
+  } catch (error) {
+    const msg = error.message || "";
+    if (msg.includes("Content Security Policy")) {
+      showNotification("⚠️ Error de seguridad del navegador (CSP)", "error");
+    } else {
+      handleError(error, "Error detectando proveedor Web3");
     }
-  } catch(error) { 
-     console.error("Error detectando provider:", error);
-     if (error.message.includes("Content Security Policy")) {
-         showNotification("Error de seguridad: Configuración de CSP bloqueada", "error");
-     }
     return null;
   }
-}
+};
 
 const isBrowserCompatible = () => {
   try {
@@ -169,12 +218,7 @@ const isBrowserCompatible = () => {
     return false;
   }
 };
-// Comprueba si el script se está ejecutando como módulo
-if (typeof document !== 'undefined') {
-  document.addEventListener('DOMContentLoaded', () => {
-    initApp().catch(handleCSPError);
-  });
-}
+
 //*********
 
 const connectWallet = async () => {
@@ -205,9 +249,7 @@ const connectWallet = async () => {
         userAddress = accounts[0];
         
         await setupNetwork();
-       /* if (!initContract()) {
-            throw new Error("No se pudo inicializar el contrato");
-        }*/
+
         await initContractSafe();
         await loadInitialData();
         updateUI();
@@ -284,7 +326,7 @@ async function setupNetwork() {
                     throw switchError;
                 }
             }
-        }
+        }    // en app v6 hay una linea==> DOM.networkInfo.innerHTML = `<span>Red: Polygon Amoy</span>`;
     } catch (error) {
         console.error("Error configurando la red:", error);
         throw error;
@@ -294,30 +336,70 @@ async function setupNetwork() {
 // ================ FUNCIÓN SEGURA PARA INICIALIZAR CONTRATO ================
 const initContractSafe = async () => {
   try {
-    const safeConfig = getContractConfigSafe();
-      // Validación previa
-    if (!web3 || !web3.eth) throw new Error("Web3 no está disponible");
-    
-    // Creación segura de la instancia del contrato
+    // Validación básica de Web3
+    if (!web3 || !web3.eth) {
+      throw new Error("Web3 no está inicializado correctamente");
+    }
+
+    // Obtiene la configuración del contrato (puedes usar getContractConfigSafe() si es dinámico)
+    const config = CONTRACT_CONFIG; // o const config = getContractConfigSafe();
+
+    // Verifica que la red esté correctamente configurada
+    const networkId = "80002"; // Polygon Amoy Testnet, por ejemplo
+    if (!config.networks || !config.networks[networkId]) {
+      throw new Error(`La red ${networkId} no está configurada en el contrato`);
+    }
+
+    // Inicialización segura del contrato
     contract = new web3.eth.Contract(
-      safeConfig.abi,
-      safeConfig.networks["80002"].address,
-      /*CONTRACT_CONFIG.abi,
-      CONTRACT_CONFIG.networks["80002"].address,*/
+      config.abi,
+      config.networks[networkId].address,
       {
         handleRevert: true,
-        dataInputFill: 'allow'
+        dataInputFill: 'allow',
+        transactionPollingTimeout: 180000 // 3 minutos
       }
     );
 
-    // Verificación de que los métodos están disponibles
-    if (!contract.methods || !contract.methods.balanceOf) {
-      throw new Error("Los métodos del contrato no están disponibles");
+    // Validación de métodos del contrato
+    if (!contract || !contract.methods) {
+      throw new Error("El contrato no se inicializó correctamente");
     }
 
+    // Ejemplo de verificación de algún método clave
+    if (!contract.methods.balanceOf) {
+      throw new Error("El contrato no expone los métodos esperados");
+    }
+
+    // Configura manejadores de eventos (si tienes una función para esto)
+    if (typeof configureContractEventHandlers === 'function') {
+      configureContractEventHandlers();
+    }
+
+    // Mostrar dirección corta del contrato en el DOM, si está disponible
+    if (DOM.contractAddressShort) {
+      const fullAddress = config.networks[networkId].address;
+      DOM.contractAddressShort.title = fullAddress;
+      DOM.contractAddressShort.dataset.fullAddress = fullAddress;
+    }
+
+    console.log("✅ Contrato inicializado con éxito");
     return true;
+
   } catch (error) {
-    handleCSPError(error);
+    // Manejo específico de errores de CSP y otros
+    const msg = error?.message || "";
+
+    if (msg.includes("Content Security Policy") || msg.includes("eval") || msg.includes("Function")) {
+      console.error("🚫 Error de CSP:", error);
+      showNotification(
+        "⚠️ Error de configuración de seguridad. Verifica las políticas de contenido de tu navegador.",
+        "error"
+      );
+    } else {
+      handleError(error, "Error al inicializar el contrato");
+    }
+
     return false;
   }
 };
@@ -325,81 +407,10 @@ const initContractSafe = async () => {
 // nuevas seguras
 // ================ FUNCIÓN SEGURA PARA INICIALIZAR CONTRATO ================
 // ================ FUNCIONES AUXILIARES SEGURAS ================
-const detectProviderSafe = async () => {
-  try {
-    if (window.ethereum) {
-      // Verificación adicional para MetaMask
-      if (window.ethereum.isMetaMask) {
-        await window.ethereum.request({ method: 'eth_chainId' });
-      }
-      return window.ethereum;
-    }
-    
-    showMetaMaskModal();
-    return null;
-  } catch (error) {
-    handleCSPError(error);
-    return null;
-  }
-};
 
-const handleCSPError = (error) => {
-  console.error("Error de seguridad:", error);
-  
-  // Detección de errores relacionados con CSP
-  if (/Content Security Policy|eval|Function/i.test(error.message)) {
-    showNotification(`
-      Error de seguridad: 
-      Por favor actualiza tu navegador o desactiva extensiones que puedan interferir
-    `, "error");
-  } else {
-    handleError(error, "Error en la aplicación");
-  }
-};
 // fin segura
 
-function initContract() {
-  try {
-    if (!web3) {
-        throw new Error("Web3 no está inicializado");
-    }
-    contract = new web3.eth.Contract(
-        CONTRACT_CONFIG.abi,
-        //CONTRACT_CONFIG.address
-        CONTRACT_CONFIG.networks["80002"].address,
-        {
-           // Opciones adicionales para mayor seguridad
-           dataInputFill: 'allow', // Evita procesamiento peligroso
-           transactionPollingTimeout: 180000 // 3 minutos
-        }
-    );
-    // Verificación de que el contrato se inicializó correctamente
-    if (!contract || !contract.methods) {
-        throw new Error("El contrato no se inicializó correctamente");
-    }
-    // Configura manejadores seguros de eventos
-    configureContractEventHandlers();
-      
-    // Configurar la dirección corta del contrato
-    if (DOM.contractAddressShort) {
-        DOM.contractAddressShort.title = CONTRACT_CONFIG.address;
-        DOM.contractAddressShort.dataset.fullAddress = CONTRACT_CONFIG.address;
-    }
-    console.log("Contrato inicializado con éxito");
-    return true;  
-  } catch (error) {
-    // Manejo específico de errores de CSP
-     if (error.message.includes("Content Security Policy") || 
-         error.message.includes("eval") || 
-         error.message.includes("Function")) {
-            console.error("Error de CSP:", error);
-            showNotification("Error de configuración de seguridad. Actualiza tu navegador o verifica las políticas de contenido.", "error");
-     } else {
-            handleError(error, "Error inicializando contrato");
-     }
-        return false;
-  }
-}
+
 function configureContractEventHandlers() {
     if (!contract) return;
     // Manejadores de eventos seguros (sin eval)
@@ -452,7 +463,26 @@ function handleError(error, context = "") {
     
     showNotification(`${context}: ${message}`, "error");
 }
+const handleCSPError = (error) => {
+  console.error("Error de seguridad:", error);
+  
+  // Detección de errores relacionados con CSP
+  if (/Content Security Policy|eval|Function/i.test(error.message)) {
+    showNotification(`
+      Error de seguridad: 
+      Por favor actualiza tu navegador o desactiva extensiones que puedan interferir
+    `, "error");
+  } else {
+    handleError(error, "Error en la aplicación");
+  }
+};
 
+function updateRecoveryUI([nominee, deadline, approved]) {
+    DOM.recoveryNominee.textContent = nominee === '0x0' ? 'Ninguno' : shortAddress(nominee);
+    DOM.recoveryDeadline.textContent = deadline === '0' ? 'N/A' : new Date(deadline * 1000).toLocaleString();
+    DOM.recoveryApproved.textContent = approved ? '✅ Aprobado' : '❌ No aprobado';
+}
+        
 // ================ FUNCIONES DEL CONTRATO ================
 async function loadInitialData() {
     try {
@@ -462,12 +492,13 @@ async function loadInitialData() {
             throw new Error("El contrato no está disponible");
         }
         // Usa Promise.all para llamadas seguras
-        const [balance, supply, paused, walletPaused, auxiliary] = await Promise.all([
+        const [balance, supply, paused, walletPaused, auxiliary,recovery] = await Promise.all([
             contract.methods.balanceOf(userAddress).call(),
             contract.methods.totalSupply().call(),
             contract.methods.paused().call(),
             contract.methods.isWalletPaused(userAddress).call(),
-            contract.methods.auxiliaryOwner().call()
+            contract.methods.auxiliaryOwner().call(),
+            contract.methods.recoveryStatus().call()
         ]);
 
         DOM.contractAddressShort.dataset.fullAddress = CONTRACT_CONFIG.networks["80002"].address;
@@ -483,8 +514,9 @@ async function loadInitialData() {
         isAuxiliary = userAddress.toLowerCase() === auxiliary.toLowerCase();
         /*isOwner = utils.compareAddresses(userAddress, owner);
         isAuxiliary = utils.compareAddresses(userAddress, auxiliary);*/
-        toggleRoleSections();
-        
+        toggleRoleSections(); // Mostrar/ocultar funciones según roles
+
+        updateRecoveryUI(recovery);  // Actualizar datos de recovery
     } catch (error) {
         handleError(error, "Error cargando datos iniciales");
     } finally {
@@ -582,6 +614,331 @@ async function mintTokens() {
     }
 }
 
+async function toggleWalletPause(pause) {
+    try {
+        const method = pause ? 'pauseMyWallet' : 'unpauseMyWallet';
+        const estimateElementId = pause ? 'pauseWalletGasEstimate' : 'unpauseWalletGasEstimate';
+        const usedElementId = pause ? 'pauseWalletGasUsed' : 'unpauseWalletGasUsed';
+        
+        // Estimar gas
+        const gasEstimate = await estimateTransactionGas(method, [], estimateElementId);
+        if (!gasEstimate) return;
+
+        showLoader(pause ? "Pausando wallet..." : "Reanudando wallet...");
+        const tx = await contract.methods[method]().send({ 
+            from: userAddress,
+            gas: Math.floor(gasEstimate * 1.2)
+        });
+        
+        showGasUsed(tx, usedElementId);
+        showNotification(
+            `Wallet ${pause ? "pausada" : "reanudada"} correctamente! Gas usado: ${tx.gasUsed}`, 
+            "success"
+        );
+        await loadInitialData();
+        return tx;
+        
+    } catch (error) {
+        if (error.receipt) {
+            const usedElementId = pause ? 'pauseWalletGasUsed' : 'unpauseWalletGasUsed';
+            showGasUsed(error.receipt, usedElementId);
+            handleError(error, `Error ${pause ? "pausando" : "reanudando"} wallet (Gas usado: ${error.receipt.gasUsed})`);
+        } else {
+            handleError(error, pause ? "Error pausando wallet" : "Error reanudando wallet");
+        }
+        throw error;
+    } finally {
+        hideLoader();
+    }
+}
+
+async function toggleContractPause(pause) {
+    if (!isOwner) {
+        showNotification("Solo el owner puede pausar el contrato", "error");
+        return;
+    }
+    
+    try {
+        const method = pause ? 'pause' : 'unpause';
+        const estimateElementId = pause ? 'pauseGasEstimate' : 'unpauseGasEstimate';
+        const usedElementId = pause ? 'pauseGasUsed' : 'unpauseGasUsed';
+        
+        // Estimar gas
+        const gasEstimate = await estimateTransactionGas(method, [], estimateElementId);
+        if (!gasEstimate) return;
+
+        showLoader(pause ? "Pausando contrato..." : "Reanudando contrato...");
+        const tx = await contract.methods[method]().send({ 
+            from: userAddress,
+            gas: Math.floor(gasEstimate * 1.2)
+        });
+        
+        showGasUsed(tx, usedElementId);
+        showNotification(
+            `Contrato ${pause ? "pausado" : "reanudado"} correctamente! Gas usado: ${tx.gasUsed}`, 
+            "success"
+        );
+        await loadInitialData();
+        return tx;
+        
+    } catch (error) {
+        if (error.receipt) {
+            const usedElementId = pause ? 'pauseGasUsed' : 'unpauseGasUsed';
+            showGasUsed(error.receipt, usedElementId);
+            handleError(error, `Error ${pause ? "pausando" : "reanudando"} contrato (Gas usado: ${error.receipt.gasUsed})`);
+        } else {
+            handleError(error, pause ? "Error pausando contrato" : "Error reanudando contrato");
+        }
+        throw error;
+    } finally {
+        hideLoader();
+    }
+}
+
+async function setAuxiliaryOwner() {
+    if (!isOwner) {
+        showNotification("Solo el owner puede asignar auxiliar", "error");
+        return;
+    }
+    
+    try {
+        const newAuxiliary = DOM.newAuxiliary.value;
+        validateAddress(newAuxiliary);
+        
+        // Estimar gas
+        const gasEstimate = await estimateTransactionGas(
+            'setAuxiliaryOwner',
+            [newAuxiliary],
+            'auxiliaryGasEstimate'
+        );
+        
+        if (!gasEstimate) return;
+
+        showLoader("Actualizando auxiliar...");
+        const tx = await contract.methods.setAuxiliaryOwner(newAuxiliary)
+            .send({ 
+                from: userAddress,
+                gas: Math.floor(gasEstimate * 1.2)
+            });
+        
+        showGasUsed(tx, 'auxiliaryGasUsed');
+        showNotification(`Auxiliar actualizado correctamente! Gas usado: ${tx.gasUsed}`, "success");
+        await loadInitialData();
+        return tx;
+        
+    } catch (error) {
+        if (error.receipt) {
+            showGasUsed(error.receipt, 'auxiliaryGasUsed');
+            handleError(error, `Error asignando auxiliar (Gas usado: ${error.receipt.gasUsed})`);
+        } else {
+            handleError(error, "Error asignando auxiliar");
+        }
+        throw error;
+    } finally {
+        hideLoader();
+    }
+}
+
+async function approveRecovery(approve) {
+    if (!isOwner) {
+        showNotification("Solo el owner puede aprobar recovery", "error");
+        return;
+    }
+    
+    try {
+        // Estimar gas
+        const gasEstimate = await estimateTransactionGas(
+            'approveRecovery',
+            [approve],
+            'recoveryGasEstimate'
+        );
+        
+        if (!gasEstimate) return;
+
+        showLoader(approve ? "Aprobando recovery..." : "Rechazando recovery...");
+        const tx = await contract.methods.approveRecovery(approve)
+            .send({ 
+                from: userAddress,
+                gas: Math.floor(gasEstimate * 1.2)
+            });
+        
+        showGasUsed(tx, 'recoveryGasUsed');
+        showNotification(
+            `Recovery ${approve ? "aprobado" : "rechazado"} correctamente! Gas usado: ${tx.gasUsed}`, 
+            "success"
+        );
+        await loadInitialData();
+        return tx;
+        
+    } catch (error) {
+        if (error.receipt) {
+            showGasUsed(error.receipt, 'recoveryGasUsed');
+            handleError(error, `Error en aprobación de recovery (Gas usado: ${error.receipt.gasUsed})`);
+        } else {
+            handleError(error, "Error en aprobación de recovery");
+        }
+        throw error;
+    } finally {
+        hideLoader();
+    }
+}
+
+async function executeRecovery() {
+    try {
+        // Estimar gas
+        const gasEstimate = await estimateTransactionGas(
+            'executeRecovery',
+            [],
+            'recoveryGasEstimate'
+        );
+        
+        if (!gasEstimate) return;
+
+        showLoader("Ejecutando recovery...");
+        const tx = await contract.methods.executeRecovery()
+            .send({ 
+                from: userAddress,
+                gas: Math.floor(gasEstimate * 1.2)
+            });
+        
+        showGasUsed(tx, 'recoveryGasUsed');
+        showNotification(`¡Ownership transferido exitosamente! Gas usado: ${tx.gasUsed}`, "success");
+        await loadInitialData();
+        return tx;
+        
+    } catch (error) {
+        if (error.receipt) {
+            showGasUsed(error.receipt, 'recoveryGasUsed');
+            handleError(error, `Error ejecutando recovery (Gas usado: ${error.receipt.gasUsed})`);
+        } else {
+            handleError(error, "Error ejecutando recovery");
+        }
+        throw error;
+    } finally {
+        hideLoader();
+    }
+}
+
+async function claimOwnership() {
+    if (!isAuxiliary) {
+        showNotification("Solo el auxiliar puede iniciar recovery", "error");
+        return;
+    }
+    
+    try {
+        // Estimar gas
+        const gasEstimate = await estimateTransactionGas(
+            'claimOwnershipFromAuxiliary',
+            [],
+            'auxiliaryGasEstimate'
+        );
+        
+        if (!gasEstimate) return;
+
+        showLoader("Iniciando proceso de recovery...");
+        const tx = await contract.methods.claimOwnershipFromAuxiliary()
+            .send({ 
+                from: userAddress,
+                gas: Math.floor(gasEstimate * 1.2)
+            });
+        
+        showGasUsed(tx, 'auxiliaryGasUsed');
+        showNotification(`Proceso de recovery iniciado! Gas usado: ${tx.gasUsed}`, "success");
+        await loadInitialData();
+        return tx;
+        
+    } catch (error) {
+        if (error.receipt) {
+            showGasUsed(error.receipt, 'auxiliaryGasUsed');
+            handleError(error, `Error iniciando recovery (Gas usado: ${error.receipt.gasUsed})`);
+        } else {
+            handleError(error, "Error iniciando recovery");
+        }
+        throw error;
+    } finally {
+        hideLoader();
+    }
+}
+
+async function estimateApprovalGas() {
+    try {
+        const spender = DOM.spenderContract.value;
+        const amount = DOM.approvalAmount.value;
+        
+        validateAddress(spender);
+        validateAmount(amount);
+        
+        // Verificar si el contrato está autorizado
+        const isAllowed = await contract.methods.isContractAllowed(spender).call();
+        if (!isAllowed) {
+            throw new Error("El contrato no está en la lista de permitidos");
+        }
+        
+        const amountInWei = web3.utils.toWei(amount, 'ether');
+        const gasEstimate = await estimateTransactionGas(
+            'approve',
+            [spender, amountInWei],
+            'approvalGasEstimate'
+        );
+        
+        if (gasEstimate) {
+            showNotification(`Gas estimado: ${gasEstimate}`, "info");
+        }
+        
+        return gasEstimate;
+        
+    } catch (error) {
+        handleError(error, "Error estimando gas");
+        throw error;
+    }
+}
+
+async function approveTokens() {
+    try {
+        const spender = DOM.spenderContract.value;
+        const amount = DOM.approvalAmount.value;
+        
+        validateAddress(spender);
+        validateAmount(amount);
+        
+        // Verificar si el contrato está autorizado
+        const isAllowed = await contract.methods.isContractAllowed(spender).call();
+        if (!isAllowed) {
+            throw new Error("El contrato no está en la lista de permitidos");
+        }
+        
+        // Obtener estimación de gas
+        const gasEstimate = await estimateApprovalGas();
+        if (!gasEstimate) return;
+
+        showLoader("Enviando aprobación...");
+        const amountInWei = web3.utils.toWei(amount, 'ether');
+        const tx = await contract.methods.approve(spender, amountInWei)
+            .send({ 
+                from: userAddress,
+                gas: Math.floor(gasEstimate * 1.2)
+            });
+        
+        showGasUsed(tx, 'approvalGasUsed');
+        showNotification(`Aprobación exitosa! Gas usado: ${tx.gasUsed}`, "success");
+        return tx;
+        
+    } catch (error) {
+        if (error.receipt) {
+            showGasUsed(error.receipt, 'approvalGasUsed');
+            handleError(error, `Error en aprobación (Gas usado: ${error.receipt.gasUsed})`);
+        } else {
+            handleError(error, "Error en aprobación");
+        }
+        throw error;
+    } finally {
+        hideLoader();
+    }
+}
+
+
+
+
 function validateMintInputs() {
     let isValid = true;
     
@@ -646,6 +1003,47 @@ async function transferTokens() {
     }
 }
 
+async function burnTokens() {
+    try {
+        const amount = DOM.burnAmount.value;
+        validateAmount(amount);
+        
+        // Estimar gas
+        const gasEstimate = await estimateTransactionGas(
+            'burn',
+            [web3.utils.toWei(amount, 'ether')],
+            'burnGasEstimate'
+        );
+        
+        if (!gasEstimate) return;
+
+        showLoader("Procesando quema...");
+        const tx = await contract.methods.burn(
+            web3.utils.toWei(amount, 'ether')
+        ).send({ 
+            from: userAddress,
+            gas: Math.floor(gasEstimate * 1.2)
+        });
+        
+        showGasUsed(tx, 'burnGasUsed');
+        showNotification(`Tokens quemados exitosamente! Gas usado: ${tx.gasUsed}`, "success");
+        await loadInitialData();
+        return tx;
+        
+    } catch (error) {
+        if (error.receipt) {
+            showGasUsed(error.receipt, 'burnGasUsed');
+            handleError(error, `Error quemando tokens (Gas usado: ${error.receipt.gasUsed})`);
+        } else {
+            handleError(error, "Error quemando tokens");
+        }
+        throw error;
+    } finally {
+        hideLoader();
+    }
+}
+
+        
 function validateTransferInputs() {
     let isValid = true;
     
@@ -671,18 +1069,7 @@ function validateTransferInputs() {
 }
 
 // ================ UTILIDADES ================
-function toWei(amount) {
-    return web3.utils.toWei(amount.toString(), 'ether');
-}
 
-function fromWei(amount) {
-    //return web3.utils.fromWei(amount.toString(), 'ether');
-    return parseFloat(web3.utils.fromWei(amount.toString(), 'ether'));
-}
-
-function shortAddress(address) {
-    return address ? `${address.substring(0, 6)}...${address.substring(38)}` : "N/A";
-}
 
 function updateUI() {
     if (userAddress) {
@@ -717,19 +1104,6 @@ function toggleRoleSections() {
 }
 
 function setupEventListeners() {
-    // Verificar existencia de elementos antes de añadir listeners
-  /*  const elementsToCheck = [
-        'connectWallet', 'disconnectWallet', 'copyWalletAddress', 
-        'copyContractAddress', 'transferTokens', 'estimateTransferGas',
-        'mintTokens', 'estimateMintGas'
-    ];
-
-    elementsToCheck.forEach(id => {
-        if (!DOM[id]) {
-            console.error(`Elemento no encontrado: ${id}`);
-        }
-    });*/
-    
     // Conexión
     if (DOM.connectBtn) {
         DOM.connectBtn.addEventListener('click', connectWallet);
@@ -739,14 +1113,6 @@ function setupEventListeners() {
     // Desconexión
     if (DOM.disconnectBtn) {
         DOM.disconnectBtn.addEventListener('click', disconnectWallet);
-    }
-    // Transferencias
-    if (DOM.transferBtn) {
-        DOM.transferBtn.addEventListener('click', transferTokens);
-    }
-    // Mint
-    if (DOM.mintBtn) {
-        DOM.mintBtn.addEventListener('click', mintTokens);
     }
     
     DOM.refreshBalance.addEventListener('click', loadInitialData);
@@ -785,6 +1151,20 @@ function setupEventListeners() {
             'mintGasEstimate'
         );
     });
+     // Funciones de auxiliar   ********************
+    if (DOM.setAuxiliaryBtn) DOM.setAuxiliaryBtn.addEventListener('click', setAuxiliaryOwner);  //***
+    if (DOM.claimOwnershipBtn) DOM.claimOwnershipBtn.addEventListener('click', claimOwnership);  //****
+        // Recovery
+    if (DOM.approveRecoveryBtn) DOM.approveRecoveryBtn.addEventListener('click', approveRecovery);  //**
+    if (DOM.executeRecoveryBtn) DOM.executeRecoveryBtn.addEventListener('click', executeRecovery);  //**
+
+    DOM.burnBtn.addEventListener('click', burnTokens);   //****
+    if (DOM.pauseContractBtn) DOM.pauseContractBtn.addEventListener('click', () => togglePause(true));   //**
+    if (DOM.unpauseContractBtn) DOM.unpauseContractBtn.addEventListener('click', () => togglePause(false));  //**
+
+    // Recovery
+    if (DOM.approveRecoveryBtn) DOM.approveRecoveryBtn.addEventListener('click', approveRecovery);  //****
+    if (DOM.executeRecoveryBtn) DOM.executeRecoveryBtn.addEventListener('click', executeRecovery);   //*****
     
      // Configuración de Gas (versión mejorada con validación)
     const gasConfigButtons = document.querySelectorAll('.gas-config-btn');
@@ -817,6 +1197,17 @@ function setupEventListeners() {
     }
 }
 
+function validateAddress(address) {       //****
+    if (!web3.utils.isAddress(address)) {
+        throw new Error("Dirección inválida");
+    }
+}
+function validateAmount(amount) {          //**
+    if (!amount || isNaN(amount) || Number(amount) <= 0) {
+        throw new Error("Cantidad inválida");
+    }
+}
+        
 function applyGasConfig() {
     const speed = document.querySelector('.speed-btn.active').dataset.speed;
     console.log('Configuración de gas aplicada:', { 
