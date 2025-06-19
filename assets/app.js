@@ -39,8 +39,8 @@ const utils = {
 // Elementos del DOM
 const DOM = {
     // Conexión
-    connectBtn: document.getElementById('connectWallet'),
-    disconnectBtn: document.getElementById('disconnectWallet'),
+    connectBtn: document.getElementById('connectWallet') || console.warn('connectWallet no encontrado'),
+    disconnectBtn: document.getElementById('disconnectWallet') || console.warn('disconnectWallet no encontrado'),
     walletStatus: document.getElementById('networkStatusText'),
     walletInfo: document.getElementById('walletInfo'),
     walletAddress: document.getElementById('walletAddress'),
@@ -59,7 +59,7 @@ const DOM = {
     // Transferencias
     recipientAddress: document.getElementById('recipientAddress'),
     transferAmount: document.getElementById('transferAmount'),
-    transferBtn: document.getElementById('transferTokens'),
+    transferBtn: document.getElementById('transferTokens') || console.warn('transferTokens no encontrado'),
     estimateTransferGas: document.getElementById('estimateTransferGas'),
     transferGasEstimate: document.getElementById('transferGasEstimate'),
     transferGasUsed: document.getElementById('transferGasUsed'),
@@ -67,7 +67,7 @@ const DOM = {
     // Mint/Burn
     mintAddress: document.getElementById('mintAddress'),
     mintAmount: document.getElementById('mintAmount'),
-    mintBtn: document.getElementById('mintTokens'),
+    mintBtn: document.getElementById('mintTokens') || console.warn('mintTokens no encontrado'),
     estimateMintGas: document.getElementById('estimateMintGas'),
     mintGasEstimate: document.getElementById('mintGasEstimate'),
     mintGasUsed: document.getElementById('mintGasUsed'),
@@ -521,11 +521,11 @@ async function estimateTransactionGas(methodName, args = [], estimateElementId =
 
 function getGasOptions() {
     const options = {};
-    if (DOM.customGasPrice.value) {
-        options.gasPrice = web3.utils.toWei(DOM.customGasPrice.value, 'gwei');
+    if (DOM.customGasPrice?.value) {
+        options.gasPrice = BigInt(web3.utils.toWei(DOM.customGasPrice.value, 'gwei')).toString(); //web3.utils.toWei(DOM.customGasPrice.value, 'gwei');
     }
-    if (DOM.customGasLimit.value) {
-        options.gas = DOM.customGasLimit.value;
+    if (DOM.customGasLimit?.value) {
+        options.gas = BigInt(DOM.customGasLimit.value).toString(); //DOM.customGasLimit.value;
     }
     return options;
 }
@@ -535,27 +535,34 @@ async function mintTokens() {
         showNotification("Solo el owner puede mintear tokens", "error");
         return;
     }
-    
     try {
-        if (!validateMintInputs()) return;
-        
+         if (!validateMintInputs()) return;
         const recipient = DOM.mintAddress.value;
         const amount = DOM.mintAmount.value;
+        // Conversión explícita a BigInt
+        const amountInWei = web3.utils.toWei(amount, 'ether');
+        const amountBigInt = BigInt(amountInWei);
         const gasOptions = getGasOptions();
         
-        const gasEstimate = await estimateTransactionGas(
-            'mint',
-            [recipient, toWei(amount)],
-            'mintGasEstimate'
-        );
-        
-        if (!gasEstimate) return;
+        // Asegúrate que todos los valores sean consistentes
+        const gasEstimate = await contract.methods.mint(
+            recipient, 
+            amountBigInt.toString() // Envía como string
+        ).estimateGas({ 
+            from: userAddress,
+            ...gasOptions
+        });
 
+        if (!gasEstimate) return; // no sé si quitarlo ******
+        
+        // Conversión segura para el gas
+        const gasLimit = BigInt(Math.floor(Number(gasEstimate) * 1.2)).toString();
+        
         utils.showLoader("Minteando tokens...");
-        const tx = await contract.methods.mint(recipient, toWei(amount))
+        const tx = await contract.methods.mint(recipient, amountBigInt.toString())
             .send({ 
                 from: userAddress, 
-                gas: Math.floor(gasEstimate * 1.2)
+                gas: gasLimit,
                 //...gasOptions
             });
         
@@ -669,7 +676,8 @@ function toWei(amount) {
 }
 
 function fromWei(amount) {
-    return web3.utils.fromWei(amount.toString(), 'ether');
+    //return web3.utils.fromWei(amount.toString(), 'ether');
+    return parseFloat(web3.utils.fromWei(amount.toString(), 'ether'));
 }
 
 function shortAddress(address) {
@@ -723,7 +731,7 @@ function setupEventListeners() {
     });
     
     // Conexión
-    if (DOM.connectBtn) {
+    if (DOM.connectBtn && DOM.connectBtn.addEventListener) {
         DOM.connectBtn.addEventListener('click', connectWallet);
     }
     if (DOM.disconnectBtn) {
