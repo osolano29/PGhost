@@ -105,7 +105,24 @@ const DOM = {
     customGasPrice: document.getElementById('customGasPrice'),
     customGasLimit: document.getElementById('customGasLimit'),
     speedButtons: document.querySelectorAll('.speed-btn')
+        
+    // Función para verificar elementos críticos
+    verifyElements: function() {
+        const criticalElements = [
+            'connectWallet', 'disconnectWallet', 'transferTokens', 'mintTokens'
+        ];
+        
+        criticalElements.forEach(id => {
+            if (!document.getElementById(id)) {
+                console.error(`Elemento crítico no encontrado: ${id}`);
+                // Opcional: Crear elementos faltantes o deshabilitar funcionalidad
+            }
+        });
+    }
 };
+
+// Llama esta función al inicio
+DOM.verifyElements();
 
 // ================ FUNCIONES PRINCIPALES ================
 const initApp = async () => {
@@ -718,7 +735,7 @@ function toggleRoleSections() {
 
 function setupEventListeners() {
     // Verificar existencia de elementos antes de añadir listeners
-    const elementsToCheck = [
+  /*  const elementsToCheck = [
         'connectWallet', 'disconnectWallet', 'copyWalletAddress', 
         'copyContractAddress', 'transferTokens', 'estimateTransferGas',
         'mintTokens', 'estimateMintGas'
@@ -728,15 +745,27 @@ function setupEventListeners() {
         if (!DOM[id]) {
             console.error(`Elemento no encontrado: ${id}`);
         }
-    });
+    });*/
     
     // Conexión
-    if (DOM.connectBtn && DOM.connectBtn.addEventListener) {
+    if (DOM.connectBtn) {
         DOM.connectBtn.addEventListener('click', connectWallet);
+    } else {
+        console.error('Botón connectWallet no encontrado');
     }
+    // Desconexión
     if (DOM.disconnectBtn) {
         DOM.disconnectBtn.addEventListener('click', disconnectWallet);
     }
+    // Transferencias
+    if (DOM.transferBtn) {
+        DOM.transferBtn.addEventListener('click', transferTokens);
+    }
+    // Mint
+    if (DOM.mintBtn) {
+        DOM.mintBtn.addEventListener('click', mintTokens);
+    }
+    
     DOM.refreshBalance.addEventListener('click', loadInitialData);
     
     // Copiar direcciones
