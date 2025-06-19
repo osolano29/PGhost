@@ -105,24 +105,7 @@ const DOM = {
     customGasPrice: document.getElementById('customGasPrice'),
     customGasLimit: document.getElementById('customGasLimit'),
     speedButtons: document.querySelectorAll('.speed-btn')
-        
-   /* // Función para verificar elementos críticos
-    verifyElements: function() {
-        const criticalElements = [
-            'connectWallet', 'disconnectWallet', 'transferTokens', 'mintTokens'
-        ];
-        
-        criticalElements.forEach(id => {
-            if (!document.getElementById(id)) {
-                console.error(`Elemento crítico no encontrado: ${id}`);
-                // Opcional: Crear elementos faltantes o deshabilitar funcionalidad
-            }
-        });
-    }*/
 };
-
-// Llama esta función al inicio
-//DOM.verifyElements();
 
 // ================ FUNCIONES PRINCIPALES ================
 const initApp = async () => {
