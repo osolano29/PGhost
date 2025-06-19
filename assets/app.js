@@ -106,7 +106,7 @@ const DOM = {
     customGasLimit: document.getElementById('customGasLimit'),
     speedButtons: document.querySelectorAll('.speed-btn')
         
-    // Función para verificar elementos críticos
+   /* // Función para verificar elementos críticos
     verifyElements: function() {
         const criticalElements = [
             'connectWallet', 'disconnectWallet', 'transferTokens', 'mintTokens'
@@ -118,11 +118,11 @@ const DOM = {
                 // Opcional: Crear elementos faltantes o deshabilitar funcionalidad
             }
         });
-    }
+    }*/
 };
 
 // Llama esta función al inicio
-DOM.verifyElements();
+//DOM.verifyElements();
 
 // ================ FUNCIONES PRINCIPALES ================
 const initApp = async () => {
