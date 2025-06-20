@@ -563,8 +563,7 @@ async function loadInitialData() {
         }
         
         toggleRoleSections(); // Mostrar/ocultar funciones según roles
-        updateRecoveryUI(recovery);  // Actualizar datos de recovery
-        toggleRoleSections();
+        updateRecoveryUI(recovery);  // Actualizar datos de recovery    
     } catch (error) {
         handleError(error, "Error cargando datos iniciales");
     } finally {
