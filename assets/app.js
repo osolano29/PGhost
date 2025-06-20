@@ -519,10 +519,39 @@ const handleCSPError = (error) => {
   }
 };
 
-function updateRecoveryUI([nominee, deadline, approved]) {
-    DOM.recoveryNominee.textContent = nominee === '0x0' ? 'Ninguno' : shortAddress(nominee);
-    DOM.recoveryDeadline.textContent = deadline === '0' ? 'N/A' : new Date(deadline * 1000).toLocaleString();
+function updateRecoveryUI(recoveryData) {
+  try {
+    const dataArray = Array.isArray(recoveryData)
+      ? recoveryData
+      : Object.values(recoveryData || {});
+
+    const [nominee = '0x0', deadline = '0', approved = false] = dataArray;
+
+    DOM.recoveryNominee.textContent =
+      nominee === '0x0' ? 'Ninguno' : shortAddress(nominee);
+
+    const parsedDeadline = parseInt(deadline);
+    const deadlineValid = !isNaN(parsedDeadline) && parsedDeadline > 0;
+
+    DOM.recoveryDeadline.textContent = deadlineValid
+      ? new Date(parsedDeadline * 1000).toLocaleString()
+      : 'N/A';
+
     DOM.recoveryApproved.textContent = approved ? '✅ Aprobado' : '❌ No aprobado';
+
+    if (deadlineValid) {
+      const remaining = Math.max(0, parsedDeadline * 1000 - Date.now()) / 1000;
+      DOM.recoveryRemainingTime.textContent = `${Math.floor(remaining / 86400)} días`;
+    } else {
+      DOM.recoveryRemainingTime.textContent = 'N/A';
+    }
+  } catch (error) {
+    console.error("Error actualizando interfaz de recuperación:", error);
+    DOM.recoveryNominee.textContent = 'Error';
+    DOM.recoveryDeadline.textContent = 'N/A';
+    DOM.recoveryApproved.textContent = 'N/A';
+    DOM.recoveryRemainingTime.textContent = 'N/A';
+  }
 }
         
 // ================ FUNCIONES DEL CONTRATO ================
