@@ -361,16 +361,15 @@ const initContractSafe = async () => {
       throw new Error("Web3 no está inicializado correctamente");
     }
 
-    // Obtiene la configuración del contrato (puedes usar getContractConfigSafe() si es dinámico)
-    const config = CONTRACT_CONFIG; // o const config = getContractConfigSafe();
+    // Obtener configuración del contrato
+    const config = CONTRACT_CONFIG; // O usar getContractConfigSafe() si se quiere dinámico
+    const networkId = "80002"; // Polygon Amoy Testnet
 
-    // Verifica que la red esté correctamente configurada
-    const networkId = "80002"; // Polygon Amoy Testnet, por ejemplo
     if (!config.networks || !config.networks[networkId]) {
       throw new Error(`La red ${networkId} no está configurada en el contrato`);
     }
 
-    // Inicialización segura del contrato
+    // Inicializar contrato
     contract = new web3.eth.Contract(
       config.abi,
       config.networks[networkId].address,
@@ -381,24 +380,35 @@ const initContractSafe = async () => {
       }
     );
 
-    // Validación de métodos del contrato
-    if (!contract || !contract.methods) {
-      throw new Error("El contrato no se inicializó correctamente");
+    // Validar existencia de métodos y eventos
+    if (!contract || !contract.methods || !contract.events) {
+      throw new Error("El contrato no se inicializó correctamente o está incompleto");
     }
 
-    // Ejemplo de verificación de algún método clave
-    if (!contract.methods.balanceOf) {
-      throw new Error("El contrato no expone los métodos esperados");
+    // Verificar métodos clave requeridos
+    const requiredMethods = ['balanceOf', 'transfer'];
+    requiredMethods.forEach(method => {
+      if (typeof contract.methods[method] !== 'function') {
+        throw new Error(`El contrato no expone el método requerido: ${method}`);
+      }
+    });
+
+    // Verificar eventos requeridos (opcional)
+    if (typeof contract.events !== 'object') {
+      throw new Error("El contrato no expone eventos");
     }
 
-    // Configura manejadores de eventos (si tienes una función para esto)
+    // Configura manejadores de eventos si está disponible
     if (typeof configureContractEventHandlers === 'function') {
       configureContractEventHandlers();
     }
 
-    // Mostrar dirección corta del contrato en el DOM, si está disponible
+    // Mostrar dirección del contrato acortada en la UI
     if (DOM.contractAddressShort) {
       const fullAddress = config.networks[networkId].address;
+      DOM.contractAddressShort.textContent = typeof shortAddress === 'function'
+        ? shortAddress(fullAddress)
+        : fullAddress;
       DOM.contractAddressShort.title = fullAddress;
       DOM.contractAddressShort.dataset.fullAddress = fullAddress;
     }
@@ -407,22 +417,28 @@ const initContractSafe = async () => {
     return true;
 
   } catch (error) {
-    // Manejo específico de errores de CSP y otros
     const msg = error?.message || "";
 
     if (msg.includes("Content Security Policy") || msg.includes("eval") || msg.includes("Function")) {
       console.error("🚫 Error de CSP:", error);
-      showNotification(
-        "⚠️ Error de configuración de seguridad. Verifica las políticas de contenido de tu navegador.",
-        "error"
-      );
+      if (typeof showNotification === 'function') {
+        showNotification(
+          "⚠️ Error de configuración de seguridad. Verifica las políticas de contenido de tu navegador.",
+          "error"
+        );
+      }
     } else {
-      handleError(error, "Error al inicializar el contrato");
+      if (typeof handleError === 'function') {
+        handleError(error, "Error al inicializar el contrato");
+      } else {
+        console.error("Error al inicializar el contrato:", error);
+      }
     }
 
     return false;
   }
 };
+
 
 // nuevas seguras
 // ================ FUNCIÓN SEGURA PARA INICIALIZAR CONTRATO ================
@@ -430,9 +446,12 @@ const initContractSafe = async () => {
 
 // fin segura
 
-
 function configureContractEventHandlers() {
-    if (!contract) return;
+    if (!contract || !contract.events) {
+        console.error("Contract not initialized or events not available");
+        return;
+    }
+
     // Manejadores de eventos seguros (sin eval)
     const eventHandlers = {
         'Transfer': (event) => {
@@ -444,17 +463,20 @@ function configureContractEventHandlers() {
         },
         'Approval': (event) => {
             console.log("Evento Approval:", event);
-        },
-        // Agrega más manejadores según sea necesario
+        }
     };
 
     // Suscribe los eventos de forma segura
     Object.keys(eventHandlers).forEach(eventName => {
-        contract.events[eventName]()
-            .on('data', eventHandlers[eventName])
-            .on('error', err => {
-                console.error(`Error en evento ${eventName}:`, err);
-            });
+        try {
+            contract.events[eventName]()
+                .on('data', eventHandlers[eventName])
+                .on('error', err => {
+                    console.error(`Error en evento ${eventName}:`, err);
+                });
+        } catch (error) {
+            console.error(`Error suscribiendo al evento ${eventName}:`, error);
+        }
     });
 }
 
