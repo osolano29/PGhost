@@ -627,17 +627,17 @@ function getGasOptions() {
     
     try {
         if (DOM.customGasPrice?.value) {
-            if (isNaN(DOM.customGasPrice.value)) {
+            if (isNaN(DOM.customGasPrice.value) || DOM.customGasPrice.value <= 0) {
                 throw new Error("Precio de gas inválido");
             }
             options.gasPrice = web3.utils.toWei(DOM.customGasPrice.value, 'gwei');
         }
         
         if (DOM.customGasLimit?.value) {
-            if (isNaN(DOM.customGasLimit.value)) {
+            if (isNaN(DOM.customGasLimit.value) || DOM.customGasLimit.value <= 0) {
                 throw new Error("Límite de gas inválido");
             }
-            options.gas = BigInt(DOM.customGasLimit.value).toString();
+            options.gas = String(Math.floor(Number(DOM.customGasLimit.value)));
         }
     } catch (error) {
         console.error("Error en configuración de gas:", error);
@@ -674,7 +674,7 @@ async function mintTokens() {
         if (!gasEstimate) return; // no sé si quitarlo ******
         
         // Conversión segura para el gas
-        const gasLimit = BigInt(Math.floor(Number(gasEstimate) * 1.2)).toString();
+        const gasLimit = Math.floor(Number(gasEstimate) * 1.2)).toString();
         
         utils.showLoader("Minteando tokens...");
         const tx = await contract.methods.mint(recipient, amountInWei.toString())
