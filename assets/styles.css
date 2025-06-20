@@ -438,12 +438,12 @@ input[type="number"]:focus {
     color: #333;
 }
 
-.copy-feedback {
+/*.copy-feedback {
     display: none;
     font-size: 0.8em;
     color: #4CAF50;
     margin-left: 5px;
-}
+}*/
 
 .copy-feedback {
     display: none; /* Asegura que estén ocultos inicialmente */
