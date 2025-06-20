@@ -519,10 +519,34 @@ const handleCSPError = (error) => {
   }
 };
 
-function updateRecoveryUI([nominee, deadline, approved]) {
-    DOM.recoveryNominee.textContent = nominee === '0x0' ? 'Ninguno' : shortAddress(nominee);
-    DOM.recoveryDeadline.textContent = deadline === '0' ? 'N/A' : new Date(deadline * 1000).toLocaleString();
-    DOM.recoveryApproved.textContent = approved ? '✅ Aprobado' : '❌ No aprobado';
+function updateRecoveryUI(recoveryData) {
+    try {
+        // Manejar tanto arrays como objetos
+        let nominee, deadline, approved;
+        
+        if (Array.isArray(recoveryData)) {
+            // Si es un array (formato antiguo)
+            [nominee, deadline, approved] = recoveryData;
+        } else if (typeof recoveryData === 'object' && recoveryData !== null) {
+            // Si es un objeto (formato nuevo)
+            nominee = recoveryData.nominee || recoveryData[0] || '0x0';
+            deadline = recoveryData.deadline || recoveryData[1] || '0';
+            approved = recoveryData.approved || recoveryData[2] || false;
+        } else {
+            throw new Error("Formato de datos de recovery no reconocido");
+        }
+
+        DOM.recoveryNominee.textContent = nominee === '0x0' ? 'Ninguno' : shortAddress(nominee);
+        DOM.recoveryDeadline.textContent = deadline === '0' ? 'N/A' : new Date(parseInt(deadline) * 1000).toLocaleString();
+        DOM.recoveryApproved.textContent = approved ? '✅ Aprobado' : '❌ No aprobado';
+        
+    } catch (error) {
+        console.error("Error actualizando UI de recovery:", error);
+        // Valores por defecto en caso de error
+        DOM.recoveryNominee.textContent = 'Error';
+        DOM.recoveryDeadline.textContent = 'N/A';
+        DOM.recoveryApproved.textContent = 'N/A';
+    }
 }
         
 // ================ FUNCIONES DEL CONTRATO ================
