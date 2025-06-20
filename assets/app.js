@@ -556,8 +556,13 @@ async function loadInitialData() {
         isAuxiliary = userAddress.toLowerCase() === auxiliary.toLowerCase();
         /*isOwner = utils.compareAddresses(userAddress, owner);
         isAuxiliary = utils.compareAddresses(userAddress, auxiliary);*/
-        toggleRoleSections(); // Mostrar/ocultar funciones según roles
 
+        // Asegurar que el botón de copiar está visible
+        if (DOM.copyContractAddress) {
+            DOM.copyContractAddress.style.display = 'inline-block';
+        }
+        
+        toggleRoleSections(); // Mostrar/ocultar funciones según roles
         updateRecoveryUI(recovery);  // Actualizar datos de recovery
         toggleRoleSections();
     } catch (error) {
