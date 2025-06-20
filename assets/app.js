@@ -674,7 +674,7 @@ async function mintTokens() {
         if (!gasEstimate) return; // no sé si quitarlo ******
         
         // Conversión segura para el gas
-        const gasLimit = Math.floor(Number(gasEstimate) * 1.2)).toString();
+        const gasLimit = Math.floor(Number(gasEstimate) * 1.2).toString();
         
         utils.showLoader("Minteando tokens...");
         const tx = await contract.methods.mint(recipient, amountInWei.toString())
