@@ -25,13 +25,23 @@ const utils = {
         return addr1 && addr2 && addr1.toLowerCase() === addr2.toLowerCase();
     },*/
 };
+
 function toWei(amount) {
-    return web3.utils.toWei(amount.toString(), 'ether');
+  if (amount === null || amount === undefined || amount === '' || isNaN(amount)) {
+    throw new Error("Cantidad inválida para conversión a wei");
+  }
+  return web3.utils.toWei(amount.toString(), 'ether');
 }
 
-function fromWei(amount) {
-    //return web3.utils.fromWei(amount.toString(), 'ether');
-    return parseFloat(web3.utils.fromWei(amount.toString(), 'ether'));
+
+function fromWei(amount, decimals = 6) {
+  try {
+    const value = web3.utils.fromWei(amount.toString(), 'ether');
+    return parseFloat(value).toFixed(decimals).replace(/\.?0+$/, '');
+  } catch (e) {
+    console.error("Error en fromWei:", e);
+    return '0';
+  }
 }
 
 function shortAddress(address) {
@@ -43,6 +53,16 @@ if (typeof document !== 'undefined') {
   document.addEventListener('DOMContentLoaded', () => {
     initApp().catch(handleCSPError);
   });
+}
+
+function formatTokenAmount(amount, isWei = true, decimals = 6) {
+  try {
+    const value = isWei ? fromWei(amount, decimals) : Number(amount).toFixed(decimals);
+    return `${Number(value).toLocaleString()} GO`;
+  } catch (e) {
+    console.error("Error formateando cantidad de token:", e);
+    return `0 GO`;
+  }
 }
 
 // Elementos del DOM
@@ -502,8 +522,8 @@ async function loadInitialData() {
         ]);
 
         DOM.contractAddressShort.dataset.fullAddress = CONTRACT_CONFIG.networks["80002"].address;
-        DOM.tokenBalance.textContent = `${fromWei(balance)} GO`;
-        DOM.totalSupply.textContent = `${fromWei(supply)} GO`;
+        DOM.tokenBalance.textContent = formatTokenAmount(balance); //DOM.tokenBalance.textContent = `${fromWei(balance)} GO`;
+        DOM.totalSupply.textContent = formatTokenAmount(supply);   //DOM.totalSupply.textContent = `${fromWei(supply)} GO`;
         DOM.contractStatus.textContent = paused ? '⛔ PAUSADO' : '✅ Activo';
         DOM.walletStatusIndicator.textContent = walletPaused ? '⛔ PAUSADA' : '✅ Activa';
         DOM.auxiliaryAddress.textContent = auxiliary === '0x0000000000000000000000000000000000000000' ? 
@@ -553,12 +573,27 @@ async function estimateTransactionGas(methodName, args = [], estimateElementId =
 
 function getGasOptions() {
     const options = {};
-    if (DOM.customGasPrice?.value) {
-        options.gasPrice = BigInt(web3.utils.toWei(DOM.customGasPrice.value, 'gwei')).toString(); //web3.utils.toWei(DOM.customGasPrice.value, 'gwei');
+    
+    try {
+        if (DOM.customGasPrice?.value) {
+            if (isNaN(DOM.customGasPrice.value)) {
+                throw new Error("Precio de gas inválido");
+            }
+            options.gasPrice = web3.utils.toWei(DOM.customGasPrice.value, 'gwei');
+        }
+        
+        if (DOM.customGasLimit?.value) {
+            if (isNaN(DOM.customGasLimit.value)) {
+                throw new Error("Límite de gas inválido");
+            }
+            options.gas = BigInt(DOM.customGasLimit.value).toString();
+        }
+    } catch (error) {
+        console.error("Error en configuración de gas:", error);
+        showNotification(`Error en configuración de gas: ${error.message}`, "error");
+        return {};
     }
-    if (DOM.customGasLimit?.value) {
-        options.gas = BigInt(DOM.customGasLimit.value).toString(); //DOM.customGasLimit.value;
-    }
+    
     return options;
 }
 
@@ -572,14 +607,14 @@ async function mintTokens() {
         const recipient = DOM.mintAddress.value;
         const amount = DOM.mintAmount.value;
         // Conversión explícita a BigInt
-        const amountInWei = web3.utils.toWei(amount, 'ether');
-        const amountBigInt = BigInt(amountInWei);
+        const amountInWei = toWei(amount);   //const amountInWei = web3.utils.toWei(amount, 'ether');
+        //const amountBigInt = BigInt(amountInWei);    //***
         const gasOptions = getGasOptions();
         
         // Asegúrate que todos los valores sean consistentes
         const gasEstimate = await contract.methods.mint(
             recipient, 
-            amountBigInt.toString() // Envía como string
+            amountInWei .toString() // Envía como string
         ).estimateGas({ 
             from: userAddress,
             ...gasOptions
@@ -591,15 +626,15 @@ async function mintTokens() {
         const gasLimit = BigInt(Math.floor(Number(gasEstimate) * 1.2)).toString();
         
         utils.showLoader("Minteando tokens...");
-        const tx = await contract.methods.mint(recipient, amountBigInt.toString())
+        const tx = await contract.methods.mint(recipient, amountInWei.toString())
             .send({ 
                 from: userAddress, 
                 gas: gasLimit,
-                //...gasOptions
+                ...gasOptions   //La habia comentado 
             });
         
         showGasUsed(tx, 'mintGasUsed');
-        showNotification(`Tokens minteados exitosamente! Gas usado: ${tx.gasUsed}`, "success");
+        showNotification(`Tokens minteados: ${formatTokenAmount(amountInWei)} para ${shortAddress(recipient)}`, "success");
         await loadInitialData();
         
     } catch (error) {
@@ -874,7 +909,7 @@ async function estimateApprovalGas() {
             throw new Error("El contrato no está en la lista de permitidos");
         }
         
-        const amountInWei = web3.utils.toWei(amount, 'ether');
+        const amountInWei = toWei(amount);   //web3.utils.toWei(amount, 'ether');   ************
         const gasEstimate = await estimateTransactionGas(
             'approve',
             [spender, amountInWei],
@@ -912,7 +947,7 @@ async function approveTokens() {
         if (!gasEstimate) return;
 
         showLoader("Enviando aprobación...");
-        const amountInWei = web3.utils.toWei(amount, 'ether');
+        const amountInWei = toWei(amount);
         const tx = await contract.methods.approve(spender, amountInWei)
             .send({ 
                 from: userAddress,
@@ -920,7 +955,7 @@ async function approveTokens() {
             });
         
         showGasUsed(tx, 'approvalGasUsed');
-        showNotification(`Aprobación exitosa! Gas usado: ${tx.gasUsed}`, "success");
+        showNotification(`Aprobados ${formatTokenAmount(toWei(amount))} al contrato ${shortAddress(spender)}`, "success");
         return tx;
         
     } catch (error) {
@@ -976,6 +1011,7 @@ async function transferTokens() {
             [recipient, toWei(amount)],
             'transferGasEstimate'
         );
+
         
         if (!gasEstimate) return;
 
@@ -988,7 +1024,7 @@ async function transferTokens() {
             });
         
         showGasUsed(tx, 'transferGasUsed');
-        showNotification(`Transferencia exitosa! Gas usado: ${tx.gasUsed}`, "success");
+        showNotification(`Transferencia exitosa: ${formatTokenAmount(toWei(DOM.transferAmount.value))} a ${shortAddress(recipient)}`, "success");
         await loadInitialData();
         
     } catch (error) {
@@ -1011,7 +1047,7 @@ async function burnTokens() {
         // Estimar gas
         const gasEstimate = await estimateTransactionGas(
             'burn',
-            [web3.utils.toWei(amount, 'ether')],
+            [toWei(amount)],
             'burnGasEstimate'
         );
         
@@ -1019,14 +1055,14 @@ async function burnTokens() {
 
         showLoader("Procesando quema...");
         const tx = await contract.methods.burn(
-            web3.utils.toWei(amount, 'ether')
+            toWei(amount)
         ).send({ 
             from: userAddress,
             gas: Math.floor(gasEstimate * 1.2)
         });
         
         showGasUsed(tx, 'burnGasUsed');
-        showNotification(`Tokens quemados exitosamente! Gas usado: ${tx.gasUsed}`, "success");
+        showNotification(`Tokens quemados: ${formatTokenAmount(toWei(amount))}`, "success");
         await loadInitialData();
         return tx;
         
