@@ -30,7 +30,7 @@ function toWei(amount) {
   if (amount === null || amount === undefined || amount === '' || isNaN(amount)) {
     throw new Error("Cantidad inválida para conversión a wei");
   }
-  return web3.utils.toWei(amount.toString(), 'ether');
+  return BigInt(web3.utils.toWei(amount.toString(), 'ether'));
 }
 
 
@@ -466,14 +466,23 @@ function configureContractEventHandlers() {
         }
     };
 
-    // Suscribe los eventos de forma segura
+    // Suscribe los eventos de forma segura usando la nueva sintaxis de Web3.js
     Object.keys(eventHandlers).forEach(eventName => {
         try {
-            contract.events[eventName]()
-                .on('data', eventHandlers[eventName])
-                .on('error', err => {
-                    console.error(`Error en evento ${eventName}:`, err);
-                });
+            // Verificar si el evento existe en el contrato
+            if (!contract.events[eventName]) {
+                console.warn(`Evento ${eventName} no encontrado en el contrato`);
+                return;
+            }
+            
+            contract.events[eventName]({
+                fromBlock: 'latest'
+            })
+            .on('data', eventHandlers[eventName])
+            .on('changed', changed => console.log('Cambio:', changed))
+            .on('error', err => {
+                console.error(`Error en evento ${eventName}:`, err);
+            });
         } catch (error) {
             console.error(`Error suscribiendo al evento ${eventName}:`, error);
         }
@@ -1049,33 +1058,34 @@ function validateMintInputs() {
     return isValid;
 }
 
+// Función transferTokens actualizada
 async function transferTokens() {
     try {
         if (!validateTransferInputs()) return;
         
         const recipient = DOM.recipientAddress.value;
         const amount = DOM.transferAmount.value;
+        const amountInWei = toWei(amount); // Ahora es BigInt
         const gasOptions = getGasOptions();
         
         const gasEstimate = await estimateTransactionGas(
             'transfer',
-            [recipient, toWei(amount)],
+            [recipient, amountInWei.toString()],
             'transferGasEstimate'
         );
 
-        
         if (!gasEstimate) return;
 
         utils.showLoader("Enviando transferencia...");
-        const tx = await contract.methods.transfer(recipient, toWei(amount))
+        const tx = await contract.methods.transfer(recipient, amountInWei.toString())
             .send({ 
                 from: userAddress, 
-                gas: Math.floor(gasEstimate * 1.2),
+                gas: Math.floor(Number(gasEstimate) * 1.2), // Convertir a número para operación matemática
                 ...gasOptions
             });
         
         showGasUsed(tx, 'transferGasUsed');
-        showNotification(`Transferencia exitosa: ${formatTokenAmount(toWei(DOM.transferAmount.value))} a ${shortAddress(recipient)}`, "success");
+        showNotification(`Transferencia exitosa: ${formatTokenAmount(amountInWei.toString())} a ${shortAddress(recipient)}`, "success");
         await loadInitialData();
         
     } catch (error) {
