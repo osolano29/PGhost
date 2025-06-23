@@ -1,9 +1,9 @@
 // ================ CONFIGURACIÓN ================
-import { CONTRACT_CONFIG, getContractConfigSafe, AMOY_CONFIG } from './ghost-token.js';
+import { CONTRACT_CONFIG, AMOY_CONFIG } from './ghost-token.js';
 
 // Variables globales
 let web3, contract, userAddress, isOwner = false, isAuxiliary = false;
-let contractEventSubscriptions = []; // Para manejar suscripciones de eventos
+let contractEventSubscriptions = [];
 
 // ================ UTILIDADES ================
 const utils = {
@@ -89,6 +89,8 @@ const DOM = {
     setAuxiliaryBtn: document.getElementById('setAuxiliaryBtn'),
     claimOwnershipBtn: document.getElementById('claimOwnershipBtn'),
     auxiliaryAddress: document.getElementById('auxiliaryAddress'),
+    auxiliaryGasEstimate: document.getElementById('auxiliaryGasEstimate'),
+    auxiliaryGasUsed: document.getElementById('auxiliaryGasUsed'),
     
     // Aprobación de gastos
     spenderContract: document.getElementById('spenderContract'),
@@ -109,35 +111,41 @@ const DOM = {
 
     // Sistema de recovery
     approveRecoveryBtn: document.getElementById('approveRecoveryBtn'),
+    estimateApproveRecoveryGas: document.getElementById('estimateApproveRecoveryGas'),
     executeRecoveryBtn: document.getElementById('executeRecoveryBtn'),
+    estimateExecuteRecoveryGas: document.getElementById('estimateExecuteRecoveryGas'),
     recoveryNominee: document.getElementById('recoveryNominee'),
     recoveryDeadline: document.getElementById('recoveryDeadline'),
     recoveryApproved: document.getElementById('recoveryApproved'),
-    recoveryRemainingTime: document.getElementById('recoveryRemainingTime')
+    recoveryRemainingTime: document.getElementById('recoveryRemainingTime'),
+    recoveryGasEstimate: document.getElementById('recoveryGasEstimate'),
+    recoveryGasUsed: document.getElementById('recoveryGasUsed'),
+    
+    // Configuración de Gas
+    gasConfigPanel: document.getElementById('gasConfigPanel'),
+    closeGasConfig: document.getElementById('closeGasConfig'),
+    applyGasConfig: document.getElementById('applyGasConfig'),
+    customGasPrice: document.getElementById('customGasPrice'),
+    customGasLimit: document.getElementById('customGasLimit'),
+    pauseGasEstimate: document.getElementById('pauseGasEstimate'),
+    pauseGasUsed: document.getElementById('pauseGasUsed'),
+    speedButtons: document.querySelectorAll('.speed-btn')
 };
 
 // ================ FUNCIONES PRINCIPALES ================
 const initApp = async () => {
     try {
-        // Verificar compatibilidad del navegador
         if (!isBrowserCompatible()) {
-            console.warn('Navegador no es compatible con esta aplicación Web3.');
             showNotification("Tu navegador no es compatible con Web3. Por favor usa Chrome o Firefox con MetaMask.", "error");
             return;
         }
         
         setupEventListeners();
         
-        if (window.location.protocol === 'file:') {
-            console.warn('Modo local detectado - Algunas funciones pueden estar limitadas');
-        }
-        
-        // Verificar si ya hay una wallet conectada
         if (window.ethereum?.selectedAddress) {
             await connectWallet();
         }
         
-        // Configurar listeners para cambios de cuenta y red
         setupWalletListeners();
     } catch (error) {
         handleCSPError(error);
@@ -147,14 +155,12 @@ const initApp = async () => {
 const detectProviderSafe = async () => {
     try {
         if (window.ethereum) {
-            // Si hay múltiples proveedores (como MetaMask + Brave)
             if (Array.isArray(window.ethereum.providers)) {
                 const provider = window.ethereum.providers.find(p => p.isMetaMask) || window.ethereum;
                 await provider.request({ method: 'eth_chainId' });
                 return provider;
             }
 
-            // Verificación básica de MetaMask
             if (window.ethereum.isMetaMask) {
                 await window.ethereum.request({ method: 'eth_chainId' });
             }
@@ -162,12 +168,10 @@ const detectProviderSafe = async () => {
             return window.ethereum;
         }
 
-        // Compatibilidad con versiones antiguas
         if (typeof window.web3 !== 'undefined' && window.web3.currentProvider?.isMetaMask) {
             return window.web3.currentProvider;
         }
 
-        // Si no hay provider, mostrar ayuda al usuario
         showMetaMaskModal();
         return null;
     } catch (error) {
@@ -178,7 +182,6 @@ const detectProviderSafe = async () => {
 
 const isBrowserCompatible = () => {
     try {
-        // Pruebas seguras de funcionalidades requeridas
         return (
             typeof Web3 === 'function' &&
             typeof window.ethereum === 'object' &&
@@ -199,7 +202,6 @@ const connectWallet = async () => {
 
         web3 = new Web3(provider);
         
-        // Solicitar cuentas
         const accounts = await provider.request({ 
             method: 'eth_requestAccounts',
             params: [{ eth_chainId: AMOY_CONFIG.chainId }]
@@ -214,7 +216,6 @@ const connectWallet = async () => {
         await initContractSafe();
         await loadInitialData();
         updateUI();
-        
         showNotification("¡Conectado correctamente!", "success");
         return true;
     } catch (error) {
@@ -227,28 +228,20 @@ const connectWallet = async () => {
 
 async function disconnectWallet() {
     try {
-        // Limpiar suscripciones de eventos
         clearEventSubscriptions();
-        
-        // Limpiar estado
         userAddress = null;
         isOwner = false;
         isAuxiliary = false;
-        
-        // Resetear UI
         updateUI();
-        
         showNotification("Wallet desconectada", "info");
     } catch (error) {
-        console.error("Error al desconectar:", error);
-        showNotification("Error al desconectar", "error");
+        handleError(error, "Error al desconectar");
     }
 }
 
 function showMetaMaskModal() {
     if (DOM.metaMaskModal) {
         DOM.metaMaskModal.style.display = 'block';
-        
         const closeBtn = DOM.metaMaskModal.querySelector('.close');
         if (closeBtn) {
             closeBtn.addEventListener('click', () => {
@@ -301,7 +294,6 @@ const initContractSafe = async () => {
             throw new Error(`La red ${networkId} no está configurada en el contrato`);
         }
 
-        // Inicialización segura del contrato sin eval
         contract = new web3.eth.Contract(
             config.abi,
             config.networks[networkId].address,
@@ -316,10 +308,8 @@ const initContractSafe = async () => {
             throw new Error("El contrato no se inicializó correctamente");
         }
 
-        // Configurar manejadores de eventos
         configureContractEventHandlers();
 
-        // Mostrar dirección del contrato
         if (DOM.contractAddressShort) {
             const fullAddress = config.networks[networkId].address;
             DOM.contractAddressShort.textContent = shortAddress(fullAddress);
@@ -347,12 +337,13 @@ function clearEventSubscriptions() {
 }
 
 function configureContractEventHandlers() {
-    if (!contract || !contract.events) return;
+    if (!contract || !contract.events) {
+        console.warn("El contrato no está listo para suscribir eventos");
+        return;
+    }
     
-    // Limpiar suscripciones anteriores
     clearEventSubscriptions();
 
-    // Manejadores de eventos
     const eventHandlers = {
         'Transfer': (event) => {
             console.log("Evento Transfer:", event);
@@ -363,11 +354,9 @@ function configureContractEventHandlers() {
         },
         'Approval': (event) => {
             console.log("Evento Approval:", event);
-            // Actualizar aprobaciones si es necesario
         }
     };
 
-    // Suscribir eventos de forma segura
     Object.keys(eventHandlers).forEach(eventName => {
         try {
             const subscription = contract.events[eventName]({
@@ -387,13 +376,10 @@ function configureContractEventHandlers() {
 
 function setupWalletListeners() {
     if (window.ethereum) {
-        // Listener para cambio de cuentas
         window.ethereum.on('accountsChanged', async (accounts) => {
             if (accounts.length === 0) {
-                // Wallet desconectada
                 await disconnectWallet();
             } else {
-                // Cuenta cambiada
                 userAddress = accounts[0];
                 await loadInitialData();
                 updateUI();
@@ -401,7 +387,6 @@ function setupWalletListeners() {
             }
         });
 
-        // Listener para cambio de red
         window.ethereum.on('chainChanged', async (chainId) => {
             if (chainId !== AMOY_CONFIG.chainId) {
                 showNotification("Por favor cambia a Polygon Amoy", "warning");
@@ -428,7 +413,6 @@ function handleError(error, context = "") {
     console.error(context, error);
     let message = error.message || "Error desconocido";
     
-    // Simplificar mensajes de error de MetaMask
     if (message.includes("User denied")) {
         message = "Transacción cancelada por el usuario";
     } else if (message.includes("insufficient funds")) {
@@ -450,12 +434,26 @@ const handleCSPError = (error) => {
     }
 };
 
-function updateRecoveryUI([nominee, deadline, approved]) {
-    if (!nominee || !deadline || !approved) return;
+function updateRecoveryUI(recoveryData) {
+    if (!recoveryData || typeof recoveryData !== 'object') return;
     
-    DOM.recoveryNominee.textContent = nominee === '0x0' ? 'Ninguno' : shortAddress(nominee);
-    DOM.recoveryDeadline.textContent = deadline === '0' ? 'N/A' : new Date(deadline * 1000).toLocaleString();
-    DOM.recoveryApproved.textContent = approved ? '✅ Aprobado' : '❌ No aprobado';
+    const nominee = recoveryData.nominee || recoveryData[0];
+    const deadline = recoveryData.deadline || recoveryData[1];
+    const approved = recoveryData.approved || recoveryData[2];
+    const remainingTime = recoveryData.remainingTime || recoveryData[3];
+    
+    if (DOM.recoveryNominee) {
+        DOM.recoveryNominee.textContent = nominee === '0x0' ? 'Ninguno' : shortAddress(nominee);
+    }
+    if (DOM.recoveryDeadline) {
+        DOM.recoveryDeadline.textContent = deadline === '0' ? 'N/A' : new Date(deadline * 1000).toLocaleString();
+    }
+    if (DOM.recoveryApproved) {
+        DOM.recoveryApproved.textContent = approved ? '✅ Aprobado' : '❌ No aprobado';
+    }
+    if (DOM.recoveryRemainingTime) {
+        DOM.recoveryRemainingTime.textContent = remainingTime === '0' ? 'N/A' : `${remainingTime} segundos`;
+    }
 }
 
 async function loadInitialData() {
@@ -466,7 +464,7 @@ async function loadInitialData() {
             return;
         }
 
-        const [balance, supply, paused, walletPaused, auxiliary, recovery] = await Promise.all([
+        const results = await Promise.all([
             contract.methods.balanceOf(userAddress).call(),
             contract.methods.totalSupply().call(),
             contract.methods.paused().call(),
@@ -475,6 +473,8 @@ async function loadInitialData() {
             contract.methods.recoveryStatus().call()
         ]);
 
+        const [balance, supply, paused, walletPaused, auxiliary, recovery] = results;
+
         DOM.tokenBalance.textContent = `${fromWei(balance)} GO`;
         DOM.totalSupply.textContent = `${fromWei(supply)} GO`;
         DOM.contractStatus.textContent = paused ? '⛔ PAUSADO' : '✅ Activo';
@@ -482,7 +482,6 @@ async function loadInitialData() {
         DOM.auxiliaryAddress.textContent = auxiliary === '0x0000000000000000000000000000000000000000' ? 
             'No asignado' : shortAddress(auxiliary);
 
-        // Verificación de roles
         const owner = await contract.methods.owner().call();
         isOwner = utils.compareAddresses(userAddress, owner);
         isAuxiliary = utils.compareAddresses(userAddress, auxiliary);
@@ -565,11 +564,11 @@ async function mintTokens() {
         );
         
         if (!gasEstimate) return;
-        
+
         utils.showLoader("Minteando tokens...");
         const tx = await contract.methods.mint(recipient, amountInWei)
             .send({ 
-                from: userAddress, 
+                from: userAddress,
                 gas: Math.floor(gasEstimate * 1.2)
             });
         
@@ -615,7 +614,283 @@ async function transferTokens() {
     }
 }
 
-// ================ FUNCIONES AUXILIARES ================
+async function burnTokens() {
+    try {
+        const amount = DOM.burnAmount.value;
+        validateAmount(amount);
+        
+        const gasEstimate = await estimateTransactionGas(
+            'burn',
+            [web3.utils.toWei(amount, 'ether')],
+            'burnGasEstimate'
+        );
+        
+        if (!gasEstimate) return;
+
+        utils.showLoader("Procesando quema...");
+        const tx = await contract.methods.burn(
+            web3.utils.toWei(amount, 'ether')
+        ).send({ 
+            from: userAddress,
+            gas: Math.floor(gasEstimate * 1.2)
+        });
+        
+        showNotification(`Tokens quemados exitosamente! Gas usado: ${tx.gasUsed}`, "success");
+        await loadInitialData();
+    } catch (error) {
+        handleError(error, "Error quemando tokens");
+    } finally {
+        utils.hideLoader();
+    }
+}
+
+async function toggleWalletPause(pause) {
+    try {
+        const method = pause ? 'pauseMyWallet' : 'unpauseMyWallet';
+        const estimateElementId = pause ? 'pauseWalletGasEstimate' : 'unpauseWalletGasEstimate';
+        const usedElementId = pause ? 'pauseWalletGasUsed' : 'unpauseWalletGasUsed';
+        
+        const gasEstimate = await estimateTransactionGas(method, [], estimateElementId);
+        if (!gasEstimate) return;
+
+        utils.showLoader(pause ? "Pausando wallet..." : "Reanudando wallet...");
+        const tx = await contract.methods[method]().send({ 
+            from: userAddress,
+            gas: Math.floor(gasEstimate * 1.2)
+        });
+        
+        showNotification(
+            `Wallet ${pause ? "pausada" : "reanudada"} correctamente! Gas usado: ${tx.gasUsed}`, 
+            "success"
+        );
+        await loadInitialData();
+    } catch (error) {
+        handleError(error, pause ? "Error pausando wallet" : "Error reanudando wallet");
+    } finally {
+        utils.hideLoader();
+    }
+}
+
+async function toggleContractPause(pause) {
+    if (!isOwner) {
+        showNotification("Solo el owner puede pausar el contrato", "error");
+        return;
+    }
+    
+    try {
+        const method = pause ? 'pause' : 'unpause';
+        const estimateElementId = pause ? 'pauseGasEstimate' : 'unpauseGasEstimate';
+        const usedElementId = pause ? 'pauseGasUsed' : 'unpauseGasUsed';
+        
+        const gasEstimate = await estimateTransactionGas(method, [], estimateElementId);
+        if (!gasEstimate) return;
+
+        utils.showLoader(pause ? "Pausando contrato..." : "Reanudando contrato...");
+        const tx = await contract.methods[method]().send({ 
+            from: userAddress,
+            gas: Math.floor(gasEstimate * 1.2)
+        });
+        
+        showNotification(
+            `Contrato ${pause ? "pausado" : "reanudado"} correctamente! Gas usado: ${tx.gasUsed}`, 
+            "success"
+        );
+        await loadInitialData();
+    } catch (error) {
+        handleError(error, pause ? "Error pausando contrato" : "Error reanudando contrato");
+    } finally {
+        utils.hideLoader();
+    }
+}
+
+async function setAuxiliaryOwner() {
+    if (!isOwner) {
+        showNotification("Solo el owner puede asignar auxiliar", "error");
+        return;
+    }
+    
+    try {
+        const newAuxiliary = DOM.newAuxiliary.value;
+        validateAddress(newAuxiliary);
+        
+        const gasEstimate = await estimateTransactionGas(
+            'setAuxiliaryOwner',
+            [newAuxiliary],
+            'auxiliaryGasEstimate'
+        );
+        
+        if (!gasEstimate) return;
+
+        utils.showLoader("Actualizando auxiliar...");
+        const tx = await contract.methods.setAuxiliaryOwner(newAuxiliary)
+            .send({ 
+                from: userAddress,
+                gas: Math.floor(gasEstimate * 1.2)
+            });
+        
+        showNotification(`Auxiliar actualizado correctamente! Gas usado: ${tx.gasUsed}`, "success");
+        await loadInitialData();
+    } catch (error) {
+        handleError(error, "Error asignando auxiliar");
+    } finally {
+        utils.hideLoader();
+    }
+}
+
+async function approveRecovery(approve) {
+    if (!isOwner) {
+        showNotification("Solo el owner puede aprobar recovery", "error");
+        return;
+    }
+    
+    try {
+        const gasEstimate = await estimateTransactionGas(
+            'approveRecovery',
+            [approve],
+            'recoveryGasEstimate'
+        );
+        
+        if (!gasEstimate) return;
+
+        utils.showLoader(approve ? "Aprobando recovery..." : "Rechazando recovery...");
+        const tx = await contract.methods.approveRecovery(approve)
+            .send({ 
+                from: userAddress,
+                gas: Math.floor(gasEstimate * 1.2)
+            });
+        
+        showNotification(
+            `Recovery ${approve ? "aprobado" : "rechazado"} correctamente! Gas usado: ${tx.gasUsed}`, 
+            "success"
+        );
+        await loadInitialData();
+    } catch (error) {
+        handleError(error, "Error en aprobación de recovery");
+    } finally {
+        utils.hideLoader();
+    }
+}
+
+async function executeRecovery() {
+    try {
+        const gasEstimate = await estimateTransactionGas(
+            'executeRecovery',
+            [],
+            'recoveryGasEstimate'
+        );
+        
+        if (!gasEstimate) return;
+
+        utils.showLoader("Ejecutando recovery...");
+        const tx = await contract.methods.executeRecovery()
+            .send({ 
+                from: userAddress,
+                gas: Math.floor(gasEstimate * 1.2)
+            });
+        
+        showNotification(`¡Ownership transferido exitosamente! Gas usado: ${tx.gasUsed}`, "success");
+        await loadInitialData();
+    } catch (error) {
+        handleError(error, "Error ejecutando recovery");
+    } finally {
+        utils.hideLoader();
+    }
+}
+
+async function claimOwnership() {
+    if (!isAuxiliary) {
+        showNotification("Solo el auxiliar puede iniciar recovery", "error");
+        return;
+    }
+    
+    try {
+        const gasEstimate = await estimateTransactionGas(
+            'claimOwnershipFromAuxiliary',
+            [],
+            'auxiliaryGasEstimate'
+        );
+        
+        if (!gasEstimate) return;
+
+        utils.showLoader("Iniciando proceso de recovery...");
+        const tx = await contract.methods.claimOwnershipFromAuxiliary()
+            .send({ 
+                from: userAddress,
+                gas: Math.floor(gasEstimate * 1.2)
+            });
+        
+        showNotification(`Proceso de recovery iniciado! Gas usado: ${tx.gasUsed}`, "success");
+        await loadInitialData();
+    } catch (error) {
+        handleError(error, "Error iniciando recovery");
+    } finally {
+        utils.hideLoader();
+    }
+}
+
+async function estimateApprovalGas() {
+    try {
+        const spender = DOM.spenderContract.value;
+        const amount = DOM.approvalAmount.value;
+        
+        validateAddress(spender);
+        validateAmount(amount);
+        
+        const isAllowed = await contract.methods.isContractAllowed(spender).call();
+        if (!isAllowed) {
+            throw new Error("El contrato no está en la lista de permitidos");
+        }
+        
+        const amountInWei = web3.utils.toWei(amount, 'ether');
+        const gasEstimate = await estimateTransactionGas(
+            'approve',
+            [spender, amountInWei],
+            'approvalGasEstimate'
+        );
+        
+        if (gasEstimate) {
+            showNotification(`Gas estimado: ${gasEstimate}`, "info");
+        }
+        
+        return gasEstimate;
+    } catch (error) {
+        handleError(error, "Error estimando gas");
+        throw error;
+    }
+}
+
+async function approveTokens() {
+    try {
+        const spender = DOM.spenderContract.value;
+        const amount = DOM.approvalAmount.value;
+        
+        validateAddress(spender);
+        validateAmount(amount);
+        
+        const isAllowed = await contract.methods.isContractAllowed(spender).call();
+        if (!isAllowed) {
+            throw new Error("El contrato no está en la lista de permitidos");
+        }
+        
+        const gasEstimate = await estimateApprovalGas();
+        if (!gasEstimate) return;
+
+        utils.showLoader("Enviando aprobación...");
+        const amountInWei = web3.utils.toWei(amount, 'ether');
+        const tx = await contract.methods.approve(spender, amountInWei)
+            .send({ 
+                from: userAddress,
+                gas: Math.floor(gasEstimate * 1.2)
+            });
+        
+        showNotification(`Aprobación exitosa! Gas usado: ${tx.gasUsed}`, "success");
+    } catch (error) {
+        handleError(error, "Error en aprobación");
+    } finally {
+        utils.hideLoader();
+    }
+}
+
 function validateMintInputs() {
     let isValid = true;
     
@@ -809,7 +1084,7 @@ function setupEventListeners() {
     }
     
     // Quemar tokens
-    if (DOM.burnBtn) {
+    if (DOM.burnBtn)
         DOM.burnBtn.addEventListener('click', burnTokens);
     }
     
