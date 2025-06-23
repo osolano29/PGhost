@@ -8,6 +8,8 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
     <link rel="icon" href="data:;base64,iVBORw0KGgo=">
+    <!-- Politica de Seguridad de Contenido para evitar eval() -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; connect-src *; style-src 'self' https://cdnjs.cloudflare.com https://fonts.googleapis.com; font-src https://fonts.gstatic.com;">
 </head>
 <body>
     <div class="container">
@@ -57,7 +59,7 @@
             </div>
         </div>
 
-        <!-- Panel de Gas configurable - Mejorado con funcionalidades de index_Funcional -->
+        <!-- Panel de Gas configurable -->
         <section id="gasConfigPanel" class="gas-config-panel" style="display: none;">
             <div class="gas-config-header">
                 <h3><i class="fas fa-gas-pump"></i> Configuración de Gas</h3>
@@ -77,7 +79,6 @@
                     <input type="number" id="customGasLimit" placeholder="Auto">
                 </div>
                 
-                <!-- Añadido de index_Funcional -->
                 <div class="gas-config-item">
                     <label><i class="fas fa-sliders-h"></i> Velocidad</label>
                     <div class="speed-buttons">
@@ -88,28 +89,12 @@
                 </div>
             </div>
             
-            <!-- Añadido de index_Funcional -->
-            <div class="gas-feedback">
-                <div class="gas-feedback-item">
-                    <span class="gas-label">Estimado:</span>
-                    <span id="gasEstimatedValue">-</span>
-                </div>
-                <div class="gas-feedback-item">
-                    <span class="gas-label">Configurado:</span>
-                    <span id="gasConfiguredValue">-</span>
-                </div>
-                <div class="gas-feedback-item">
-                    <span class="gas-label">Usado:</span>
-                    <span id="gasUsedValue">-</span>
-                </div>
-            </div>
-            
             <button id="applyGasConfig" class="btn-primary">
                 <i class="fas fa-check-circle"></i> Aplicar Configuración
             </button>
         </section>
 
-        <!-- Panel de Información - Manteniendo diseño de Index_Actual -->
+        <!-- Panel de Información -->
         <section class="info-panel enhanced-info">
             <div class="info-card highlight-card">
                 <div class="info-header">
@@ -166,7 +151,7 @@
             </div>
         </section>
 
-        <!-- Sección de Transferencias - Mejorada con elementos de index_Funcional -->
+        <!-- Sección de Transferencias -->
         <section class="action-card" id="transferSection">
             <div class="card-header">
                 <h2><i class="fas fa-exchange-alt"></i> Transferir GO</h2>
@@ -208,16 +193,8 @@
                         <span class="gas-value" id="transferGasEstimate">-</span>
                     </div>
                     <div class="gas-row">
-                        <span class="gas-label">Gas configurado:</span>
-                        <span class="gas-value" id="transferGasConfigured">-</span>
-                    </div>
-                    <div class="gas-row">
                         <span class="gas-label">Gas usado:</span>
                         <span class="gas-value" id="transferGasUsed">-</span>
-                    </div>
-                    <div class="gas-row">
-                        <span class="gas-label">Costo estimado:</span>
-                        <span class="gas-value" id="transferGasCostEstimate">- POL</span>
                     </div>
                 </div>
                 <div class="gas-buttons">
@@ -230,7 +207,6 @@
                 </div>
             </div>
 
-            <!-- Añadido de index_Funcional -->
             <div class="transaction-tips">
                 <p><i class="fas fa-exclamation-triangle"></i> <strong>Importante:</strong></p>
                 <ul>
@@ -241,7 +217,7 @@
             </div>
         </section>
 
-        <!-- Sección de Aprobación para Contratos Autorizados - De index_Funcional -->
+        <!-- Sección de Aprobación para Contratos Autorizados -->
         <section class="action-card approval-card">
             <div class="card-header">
                 <h2><i class="fas fa-handshake"></i> Aprobar Gastos</h2>
@@ -283,16 +259,8 @@
                         <span class="gas-value" id="approvalGasEstimate">-</span>
                     </div>
                     <div class="gas-row">
-                        <span class="gas-label">Gas configurado:</span>
-                        <span class="gas-value" id="approvalGasConfigured">-</span>
-                    </div>
-                    <div class="gas-row">
                         <span class="gas-label">Gas usado:</span>
                         <span class="gas-value" id="approvalGasUsed">-</span>
-                    </div>
-                    <div class="gas-row">
-                        <span class="gas-label">Costo estimado:</span>
-                        <span class="gas-value" id="approvalGasCostEstimate">- POL</span>
                     </div>
                 </div>
                 <div class="gas-buttons">
@@ -315,7 +283,7 @@
             </div>
         </section>
 
-        <!-- Sección de Quemado (Burn) - De index_Funcional -->
+        <!-- Sección de Quemado (Burn) -->
         <section class="action-card warning-card">
             <div class="card-header">
                 <h2><i class="fas fa-fire"></i> Quemar Tokens</h2>
@@ -339,7 +307,7 @@
                     <input type="number" id="burnAmount" placeholder="0.00" min="0" step="0.000001">
                     <span class="unit">GO</span>
                 </div>
-                <div class="input-hint">1 GO = 10<sup>18</sup> unidades (wei). Esta acción no se puede deshacer</div>
+                <div class="input-hint">Esta acción no se puede deshacer</div>
             </div>
 
             <div class="gas-section enhanced">
@@ -349,16 +317,8 @@
                         <span class="gas-value" id="burnGasEstimate">-</span>
                     </div>
                     <div class="gas-row">
-                        <span class="gas-label">Gas configurado:</span>
-                        <span class="gas-value" id="burnGasConfigured">-</span>
-                    </div>
-                    <div class="gas-row">
                         <span class="gas-label">Gas usado:</span>
                         <span class="gas-value" id="burnGasUsed">-</span>
-                    </div>
-                    <div class="gas-row">
-                        <span class="gas-label">Costo estimado:</span>
-                        <span class="gas-value" id="burnGasCostEstimate">- POL</span>
                     </div>
                 </div>
                 <div class="gas-buttons">
@@ -382,7 +342,7 @@
             </div>
         </section>
 
-        <!-- Sección de Seguridad de Wallet - De index_Funcional -->
+        <!-- Sección de Seguridad de Wallet -->
         <section class="action-card security-card">
             <div class="card-header">
                 <h2><i class="fas fa-shield-alt"></i> Seguridad de Wallet</h2>
@@ -442,7 +402,7 @@
             </div>
         </section>
 
-        <!-- Sección de Owner - Mejorada con elementos de index_Funcional -->
+        <!-- Sección de Owner -->
         <section id="ownerSection" class="action-card admin-card" style="display: none;">
             <div class="card-header">
                 <h2><i class="fas fa-crown"></i> Funciones de Administrador</h2>
@@ -478,8 +438,6 @@
                         <input type="number" id="mintAmount" placeholder="0.00" min="0" step="0.000001" required>
                         <span class="unit">GO</span>
                     </div>
-                    <!-- Agregar tooltip de conversión -->
-                    <div class="input-hint">1 GO = 10<sup>18</sup> unidades (wei)</div>
                 </div>
 
                 <div class="gas-section enhanced">
@@ -487,10 +445,6 @@
                         <div class="gas-row">
                             <span class="gas-label">Gas estimado:</span>
                             <span class="gas-value" id="mintGasEstimate">-</span>
-                        </div>
-                        <div class="gas-row">
-                            <span class="gas-label">Gas configurado:</span>
-                            <span class="gas-value" id="mintGasConfigured">-</span>
                         </div>
                         <div class="gas-row">
                             <span class="gas-label">Gas usado:</span>
@@ -575,10 +529,6 @@
                         <span class="recovery-label">Aprobado:</span>
                         <span class="recovery-value" id="recoveryApproved">-</span>
                     </div>
-                    <div class="recovery-item">
-                        <span class="recovery-label">Tiempo Restante:</span>
-                        <span class="recovery-value" id="recoveryRemainingTime">-</span>
-                    </div>
                 </div>
 
                 <div class="gas-section enhanced">
@@ -590,14 +540,6 @@
                         <div class="gas-row">
                             <span class="gas-label">Gas usado (Aprobar):</span>
                             <span class="gas-value" id="recoveryGasUsed">-</span>
-                        </div>
-                        <div class="gas-row">
-                            <span class="gas-label">Gas estimado (Ejecutar):</span>
-                            <span class="gas-value" id="executeRecoveryGasEstimate">-</span>
-                        </div>
-                        <div class="gas-row">
-                            <span class="gas-label">Gas usado (Ejecutar):</span>
-                            <span class="gas-value" id="executeRecoveryGasUsed">-</span>
                         </div>
                     </div>
                 </div>
@@ -622,7 +564,7 @@
             </div>
         </section>
 
-        <!-- Sección de Auxiliar (solo visible para auxiliary) - De index_Funcional -->
+        <!-- Sección de Auxiliar (solo visible para auxiliary) -->
         <section id="auxiliarySection" class="action-card auxiliary-card" style="display: none;">
             <div class="card-header">
                 <h2><i class="fas fa-user-cog"></i> Funciones de Auxiliar</h2>
@@ -651,14 +593,6 @@
                     <div class="gas-row">
                         <span class="gas-label">Gas usado (Asignar):</span>
                         <span class="gas-value" id="auxiliaryGasUsed">-</span>
-                    </div>
-                    <div class="gas-row">
-                        <span class="gas-label">Gas estimado (Reclamar):</span>
-                        <span class="gas-value" id="claimOwnershipGasEstimate">-</span>
-                    </div>
-                    <div class="gas-row">
-                        <span class="gas-label">Gas usado (Reclamar):</span>
-                        <span class="gas-value" id="claimOwnershipGasUsed">-</span>
                     </div>
                 </div>
             </div>
@@ -711,100 +645,5 @@
     
     <!-- Nuestra aplicación como módulo -->
     <script type="module" src="./assets/app.js"></script>
-    <!-- Polyfill para navegadores antiguos -->
-    <script nomodule src="https://cdn.jsdelivr.net/npm/es-module-shims@1.7.0/dist/es-module-shims.min.js"></script>
-
-    <!-- Script para manejo de gas, pestañas y copiado - De index_Funcional -->
-    <script>
-        // Manejo del panel de configuración de gas
-        document.querySelectorAll('.gas-config-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                document.getElementById('gasConfigPanel').style.display = 'block';
-                // Aquí se cargarían los valores actuales
-            });
-        });
-
-        document.getElementById('closeGasConfig').addEventListener('click', () => {
-            document.getElementById('gasConfigPanel').style.display = 'none';
-        });
-
-        // Manejo de botones de velocidad
-        document.querySelectorAll('.speed-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                document.querySelectorAll('.speed-btn').forEach(b => b.classList.remove('active'));
-                this.classList.add('active');
-                // Aquí se actualizaría el precio del gas según la velocidad seleccionada
-            });
-        });
-
-        // Aplicar configuración de gas
-        document.getElementById('applyGasConfig').addEventListener('click', () => {
-            const gasPrice = document.getElementById('customGasPrice').value;
-            const gasLimit = document.getElementById('customGasLimit').value;
-            const speed = document.querySelector('.speed-btn.active').dataset.speed;
-            
-            // Aquí se enviaría la configuración a app.js
-            console.log('Configuración de gas aplicada:', { gasPrice, gasLimit, speed });
-            
-            document.getElementById('gasConfigPanel').style.display = 'none';
-        });
-
-        // Copiar dirección de la wallet
-        document.getElementById('copyWalletAddress')?.addEventListener('click', () => {
-            const address = document.getElementById('walletAddress').textContent;
-            navigator.clipboard.writeText(address)
-                .then(() => {
-                    showCopyFeedback('¡Dirección copiada!');
-                })
-                .catch(err => {
-                    console.error('Error al copiar: ', err);
-                });
-        });
-
-        // Copiar dirección del contrato
-        document.getElementById('copyContractAddress')?.addEventListener('click', () => {
-            const address = document.getElementById('contractAddressShort').textContent;
-            navigator.clipboard.writeText(address)
-                .then(() => {
-                    showCopyFeedback('¡Contrato copiado!');
-                })
-                .catch(err => {
-                    console.error('Error al copiar: ', err);
-                });
-        });
-
-        // Función para mostrar feedback de copiado
-        function showCopyFeedback(message) {
-            const notification = document.createElement('div');
-            notification.className = 'address-copy-feedback';
-            notification.textContent = message;
-            document.body.appendChild(notification);
-            
-            setTimeout(() => {
-                document.body.removeChild(notification);
-            }, 2000);
-        }
-
-        // Manejo básico de pestañas
-        document.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const tabId = btn.getAttribute('data-tab');
-                
-                // Oculta todos los contenidos
-                document.querySelectorAll('.tab-content').forEach(content => {
-                    content.classList.remove('active');
-                });
-                
-                // Desactiva todos los botones
-                document.querySelectorAll('.tab-btn').forEach(tabBtn => {
-                    tabBtn.classList.remove('active');
-                });
-                
-                // Activa el seleccionado
-                document.getElementById(tabId).classList.add('active');
-                btn.classList.add('active');
-            });
-        });
-    </script>
 </body>
-</html>    
+</html>
