@@ -26,16 +26,26 @@ const utils = {
 };
 
 function toWei(amount) {
-    return web3.utils.toWei(amount.toString(), 'ether');
+  if (amount === null || amount === undefined || amount === '' || isNaN(amount)) {
+    throw new Error("Cantidad inválida para conversión a wei");
+  }
+  return web3.utils.toWei(amount.toString(), 'ether');
 }
 
 function fromWei(amount) {
-    return parseFloat(web3.utils.fromWei(amount.toString(), 'ether'));
+  try {
+    const value = web3.utils.fromWei(amount.toString(), 'ether');
+    return parseFloat(value).toFixed(decimals).replace(/\.?0+$/, '');
+  } catch (e) {
+    console.error("Error en fromWei:", e);
+    return '0';
+  }
 }
 
 function shortAddress(address) {
     return address ? `${address.substring(0, 6)}...${address.substring(38)}` : "N/A";
 }
+
 
 // Elementos del DOM
 const DOM = {
@@ -61,9 +71,9 @@ const DOM = {
     recipientAddress: document.getElementById('recipientAddress'),
     transferAmount: document.getElementById('transferAmount'),
     transferBtn: document.getElementById('transferTokens'),
-    estimateTransferGas: document.getElementById('estimateTransferGas'),
-    transferGasEstimate: document.getElementById('transferGasEstimate'),
-    transferGasUsed: document.getElementById('transferGasUsed'),
+    estimateTransferGas: document.getElementById('estimateTransferGas'), //??
+    transferGasEstimate: document.getElementById('transferGasEstimate'), //html
+    transferGasUsed: document.getElementById('transferGasUsed'), //html
     
     // Mint/Burn
     mintAddress: document.getElementById('mintAddress'),
@@ -83,7 +93,7 @@ const DOM = {
     unpauseWalletBtn: document.getElementById('unpauseWallet'),
     pauseContractBtn: document.getElementById('pauseContract'),
     unpauseContractBtn: document.getElementById('unpauseContract'),
-    
+  
     // Auxiliar
     newAuxiliary: document.getElementById('newAuxiliary'),
     setAuxiliaryBtn: document.getElementById('setAuxiliaryBtn'),
@@ -91,6 +101,10 @@ const DOM = {
     auxiliaryAddress: document.getElementById('auxiliaryAddress'),
     auxiliaryGasEstimate: document.getElementById('auxiliaryGasEstimate'),
     auxiliaryGasUsed: document.getElementById('auxiliaryGasUsed'),
+  
+    /*estimateSetAuxiliaryGas: document.getElementById('estimateSetAuxiliaryGas'),  //***
+      estimateClaimOwnershipGas: document.getElementById('estimateClaimOwnershipGas'), //*** */
+
     
     // Aprobación de gastos
     spenderContract: document.getElementById('spenderContract'),
@@ -111,9 +125,9 @@ const DOM = {
 
     // Sistema de recovery
     approveRecoveryBtn: document.getElementById('approveRecoveryBtn'),
-    estimateApproveRecoveryGas: document.getElementById('estimateApproveRecoveryGas'),
+    estimateApproveRecoveryGas: document.getElementById('estimateApproveRecoveryGas'), //??
     executeRecoveryBtn: document.getElementById('executeRecoveryBtn'),
-    estimateExecuteRecoveryGas: document.getElementById('estimateExecuteRecoveryGas'),
+    estimateExecuteRecoveryGas: document.getElementById('estimateExecuteRecoveryGas'),  //??
     recoveryNominee: document.getElementById('recoveryNominee'),
     recoveryDeadline: document.getElementById('recoveryDeadline'),
     recoveryApproved: document.getElementById('recoveryApproved'),
@@ -127,8 +141,12 @@ const DOM = {
     applyGasConfig: document.getElementById('applyGasConfig'),
     customGasPrice: document.getElementById('customGasPrice'),
     customGasLimit: document.getElementById('customGasLimit'),
-    pauseGasEstimate: document.getElementById('pauseGasEstimate'),
-    pauseGasUsed: document.getElementById('pauseGasUsed'),
+//gas de pausa
+    estimatePauseGas: document.getElementById('estimatePauseGas'),    //***
+    estimateUnpauseGas: document.getElementById('estimateUnpauseGas'),//****
+    pauseGasEstimate: document.getElementById('pauseGasEstimate'),    //*****
+    pauseGasUsed: document.getElementById('pauseGasUsed'),            //******  
+
     speedButtons: document.querySelectorAll('.speed-btn')
 };
 
@@ -200,7 +218,7 @@ const connectWallet = async () => {
         const provider = await detectProviderSafe();
         if (!provider) return false;
 
-        web3 = new Web3(provider);
+        web3 = new Web3(provider); // Inicialización segura de Web3
         
         const accounts = await provider.request({ 
             method: 'eth_requestAccounts',
@@ -233,6 +251,10 @@ async function disconnectWallet() {
         isOwner = false;
         isAuxiliary = false;
         updateUI();
+        // Cerrar conexión si es posible
+        if (window.ethereum && window.ethereum.close) {
+            await window.ethereum.close();
+        }
         showNotification("Wallet desconectada", "info");
     } catch (error) {
         handleError(error, "Error al desconectar");
@@ -300,7 +322,7 @@ const initContractSafe = async () => {
             {
                 handleRevert: true,
                 dataInputFill: 'allow',
-                transactionPollingTimeout: 180000
+                transactionPollingTimeout: 180000 // 3 minutos
             }
         );
 
@@ -425,13 +447,17 @@ function handleError(error, context = "") {
 }
 
 const handleCSPError = (error) => {
-    console.error("Error de seguridad:", error);
-    
-    if (/Content Security Policy|eval|Function/i.test(error.message)) {
-        showNotification(`Error de seguridad: Por favor actualiza tu navegador o desactiva extensiones que puedan interferir`, "error");
-    } else {
-        handleError(error, "Error en la aplicación");
-    }
+  console.error("Error de seguridad:", error);
+  
+  // Detección de errores relacionados con CSP
+  if (/Content Security Policy|eval|Function/i.test(error.message)) {
+    showNotification(`
+      Error de seguridad: 
+      Por favor actualiza tu navegador o desactiva extensiones que puedan interferir
+    `, "error");
+  } else {
+    handleError(error, "Error en la aplicación");
+  }
 };
 
 function updateRecoveryUI(recoveryData) {
@@ -461,7 +487,7 @@ async function loadInitialData() {
         utils.showLoader("Cargando datos...");
         
         if (!contract || !contract.methods || !userAddress) {
-            return;
+            return;   //throw new Error("El contrato no está disponible");
         }
 
         const results = await Promise.all([
@@ -475,6 +501,8 @@ async function loadInitialData() {
 
         const [balance, supply, paused, walletPaused, auxiliary, recovery] = results;
 
+        DOM.contractAddressShort.dataset.fullAddress = CONTRACT_CONFIG.networks["80002"].address;
+
         DOM.tokenBalance.textContent = `${fromWei(balance)} GO`;
         DOM.totalSupply.textContent = `${fromWei(supply)} GO`;
         DOM.contractStatus.textContent = paused ? '⛔ PAUSADO' : '✅ Activo';
@@ -485,9 +513,9 @@ async function loadInitialData() {
         const owner = await contract.methods.owner().call();
         isOwner = utils.compareAddresses(userAddress, owner);
         isAuxiliary = utils.compareAddresses(userAddress, auxiliary);
-        
-        toggleRoleSections();
-        updateRecoveryUI(recovery);
+        toggleRoleSections(); // Mostrar/ocultar funciones según roles
+ 
+        updateRecoveryUI(recovery); // Actualizar datos de recovery
     } catch (error) {
         handleError(error, "Error cargando datos iniciales");
     } finally {
@@ -556,6 +584,9 @@ async function mintTokens() {
         const recipient = DOM.mintAddress.value;
         const amount = DOM.mintAmount.value;
         const amountInWei = toWei(amount);
+        const amountBigInt = BigInt(amountInWei);
+        const gasOptions = getGasOptions();
+        
         
         const gasEstimate = await estimateTransactionGas(
             'mint',
@@ -566,16 +597,22 @@ async function mintTokens() {
         if (!gasEstimate) return;
 
         utils.showLoader("Minteando tokens...");
-        const tx = await contract.methods.mint(recipient, amountInWei)
+        const tx = await contract.methods.mint(recipient, amountBigInt.toString()) //amountInWei)
             .send({ 
                 from: userAddress,
                 gas: Math.floor(gasEstimate * 1.2)
             });
         
+        showGasUsed(tx, 'mintGasUsed');
         showNotification(`Tokens minteados exitosamente! Gas usado: ${tx.gasUsed}`, "success");
         await loadInitialData();
     } catch (error) {
-        handleError(error, "Error minteando tokens");
+        if (error.receipt) {
+            showGasUsed(error.receipt, 'mintGasUsed');
+            handleError(error, `Error minteando tokens (Gas usado: ${error.receipt.gasUsed})`);
+        } else {
+            handleError(error, "Error minteando tokens");
+        }
     } finally {
         utils.hideLoader();
     }
@@ -605,10 +642,16 @@ async function transferTokens() {
                 ...gasOptions
             });
         
+        showGasUsed(tx, 'transferGasUsed');
         showNotification(`Transferencia exitosa! Gas usado: ${tx.gasUsed}`, "success");
         await loadInitialData();
     } catch (error) {
-        handleError(error, "Error en transferencia");
+        if (error.receipt) {
+            showGasUsed(error.receipt, 'transferGasUsed');
+            handleError(error, `Error en transferencia (Gas usado: ${error.receipt.gasUsed})`);
+        } else {
+            handleError(error, "Error en transferencia");
+        }
     } finally {
         utils.hideLoader();
     }
@@ -616,6 +659,7 @@ async function transferTokens() {
 
 async function burnTokens() {
     try {
+        
         const amount = DOM.burnAmount.value;
         validateAmount(amount);
         
@@ -635,10 +679,18 @@ async function burnTokens() {
             gas: Math.floor(gasEstimate * 1.2)
         });
         
+        showGasUsed(tx, 'burnGasUsed');
         showNotification(`Tokens quemados exitosamente! Gas usado: ${tx.gasUsed}`, "success");
         await loadInitialData();
+        // return tx;
     } catch (error) {
-        handleError(error, "Error quemando tokens");
+        if (error.receipt) {
+            showGasUsed(error.receipt, 'burnGasUsed');
+            handleError(error, `Error quemando tokens (Gas usado: ${error.receipt.gasUsed})`);
+        } else {
+            handleError(error, "Error quemando tokens");
+        }
+        throw error;
     } finally {
         utils.hideLoader();
     }
@@ -659,13 +711,22 @@ async function toggleWalletPause(pause) {
             gas: Math.floor(gasEstimate * 1.2)
         });
         
+        showGasUsed(tx, usedElementId);
         showNotification(
             `Wallet ${pause ? "pausada" : "reanudada"} correctamente! Gas usado: ${tx.gasUsed}`, 
             "success"
         );
         await loadInitialData();
+       // return tx;
     } catch (error) {
-        handleError(error, pause ? "Error pausando wallet" : "Error reanudando wallet");
+        if (error.receipt) {
+            const usedElementId = pause ? 'pauseWalletGasUsed' : 'unpauseWalletGasUsed';
+            showGasUsed(error.receipt, usedElementId);
+            handleError(error, `Error ${pause ? "pausando" : "reanudando"} wallet (Gas usado: ${error.receipt.gasUsed})`);
+        } else {
+            handleError(error, pause ? "Error pausando wallet" : "Error reanudando wallet");
+        }
+        throw error;
     } finally {
         utils.hideLoader();
     }
@@ -690,14 +751,23 @@ async function toggleContractPause(pause) {
             from: userAddress,
             gas: Math.floor(gasEstimate * 1.2)
         });
-        
+
+        showGasUsed(tx, usedElementId);
         showNotification(
             `Contrato ${pause ? "pausado" : "reanudado"} correctamente! Gas usado: ${tx.gasUsed}`, 
             "success"
         );
         await loadInitialData();
+       // return tx;
     } catch (error) {
-        handleError(error, pause ? "Error pausando contrato" : "Error reanudando contrato");
+        if (error.receipt) {
+            const usedElementId = pause ? 'pauseGasUsed' : 'unpauseGasUsed';
+            showGasUsed(error.receipt, usedElementId);
+            handleError(error, `Error ${pause ? "pausando" : "reanudando"} contrato (Gas usado: ${error.receipt.gasUsed})`);
+        } else {
+            handleError(error, pause ? "Error pausando contrato" : "Error reanudando contrato");
+        }
+        throw error;
     } finally {
         utils.hideLoader();
     }
@@ -728,10 +798,18 @@ async function setAuxiliaryOwner() {
                 gas: Math.floor(gasEstimate * 1.2)
             });
         
+        showGasUsed(tx, 'auxiliaryGasUsed');
         showNotification(`Auxiliar actualizado correctamente! Gas usado: ${tx.gasUsed}`, "success");
         await loadInitialData();
+        return tx;
     } catch (error) {
-        handleError(error, "Error asignando auxiliar");
+        if (error.receipt) {
+            showGasUsed(error.receipt, 'auxiliaryGasUsed');
+            handleError(error, `Error asignando auxiliar (Gas usado: ${error.receipt.gasUsed})`);
+        } else {
+            handleError(error, "Error asignando auxiliar");
+        }
+        throw error;
     } finally {
         utils.hideLoader();
     }
@@ -759,13 +837,21 @@ async function approveRecovery(approve) {
                 gas: Math.floor(gasEstimate * 1.2)
             });
         
+        showGasUsed(tx, 'recoveryGasUsed');
         showNotification(
             `Recovery ${approve ? "aprobado" : "rechazado"} correctamente! Gas usado: ${tx.gasUsed}`, 
             "success"
         );
         await loadInitialData();
+     //   return tx;
     } catch (error) {
-        handleError(error, "Error en aprobación de recovery");
+        if (error.receipt) {
+            showGasUsed(error.receipt, 'recoveryGasUsed');
+            handleError(error, `Error en aprobación de recovery (Gas usado: ${error.receipt.gasUsed})`);
+        } else {
+            handleError(error, "Error en aprobación de recovery");
+        }
+        throw error;
     } finally {
         utils.hideLoader();
     }
@@ -788,10 +874,18 @@ async function executeRecovery() {
                 gas: Math.floor(gasEstimate * 1.2)
             });
         
+        showGasUsed(tx, 'recoveryGasUsed');
         showNotification(`¡Ownership transferido exitosamente! Gas usado: ${tx.gasUsed}`, "success");
         await loadInitialData();
+      //  return tx;
     } catch (error) {
-        handleError(error, "Error ejecutando recovery");
+        if (error.receipt) {
+            showGasUsed(error.receipt, 'recoveryGasUsed');
+            handleError(error, `Error ejecutando recovery (Gas usado: ${error.receipt.gasUsed})`);
+        } else {
+            handleError(error, "Error ejecutando recovery");
+        }
+        throw error;
     } finally {
         utils.hideLoader();
     }
@@ -818,11 +912,18 @@ async function claimOwnership() {
                 from: userAddress,
                 gas: Math.floor(gasEstimate * 1.2)
             });
-        
+        showGasUsed(tx, 'auxiliaryGasUsed');
         showNotification(`Proceso de recovery iniciado! Gas usado: ${tx.gasUsed}`, "success");
         await loadInitialData();
+       // return tx;
     } catch (error) {
-        handleError(error, "Error iniciando recovery");
+        if (error.receipt) {
+            showGasUsed(error.receipt, 'auxiliaryGasUsed');
+            handleError(error, `Error iniciando recovery (Gas usado: ${error.receipt.gasUsed})`);
+        } else {
+            handleError(error, "Error iniciando recovery");
+        }
+        throw error;
     } finally {
         utils.hideLoader();
     }
@@ -882,10 +983,17 @@ async function approveTokens() {
                 from: userAddress,
                 gas: Math.floor(gasEstimate * 1.2)
             });
-        
+        showGasUsed(tx, 'approvalGasUsed');
         showNotification(`Aprobación exitosa! Gas usado: ${tx.gasUsed}`, "success");
+        //return tx;
     } catch (error) {
-        handleError(error, "Error en aprobación");
+        if (error.receipt) {
+            showGasUsed(error.receipt, 'approvalGasUsed');
+            handleError(error, `Error en aprobación (Gas usado: ${error.receipt.gasUsed})`);
+        } else {
+            handleError(error, "Error en aprobación");
+        }
+        throw error;
     } finally {
         utils.hideLoader();
     }
@@ -1096,6 +1204,65 @@ function setupEventListeners() {
     if (DOM.approveTokens) {
         DOM.approveTokens.addEventListener('click', approveTokens);
     }
+
+//****
+     // Configuración de Gas (versión mejorada con validación)
+    const gasConfigButtons = document.querySelectorAll('.gas-config-btn');
+    if (gasConfigButtons.length > 0) {
+        gasConfigButtons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                if (DOM.gasConfigPanel) {
+                    DOM.gasConfigPanel.style.display = 'block';
+                }
+            });
+        });
+    }
+
+    if (DOM.closeGasConfig && DOM.gasConfigPanel) {
+        DOM.closeGasConfig.addEventListener('click', () => {
+            DOM.gasConfigPanel.style.display = 'none';
+        });
+    }
+
+    if (DOM.applyGasConfig) {
+        DOM.applyGasConfig.addEventListener('click', applyGasConfig);
+    }
+
+    // Pestañas (versión segura)
+    const tabButtons = document.querySelectorAll('.tab-btn');
+    if (tabButtons.length > 0) {
+        tabButtons.forEach(btn => {
+            btn.addEventListener('click', switchTab);
+        });
+    }
+//****
+}
+
+function applyGasConfig() {
+    const speed = document.querySelector('.speed-btn.active').dataset.speed;
+    console.log('Configuración de gas aplicada:', { 
+        gasPrice: DOM.customGasPrice.value,
+        gasLimit: DOM.customGasLimit.value,
+        speed 
+    });
+    DOM.gasConfigPanel.style.display = 'none';
+}
+function showGasUsed(txReceipt, elementId) {
+    if (txReceipt.gasUsed && DOM[elementId]) {
+        DOM[elementId].textContent = txReceipt.gasUsed;
+    }
+}
+
+function switchTab(e) {
+    const tabId = e.currentTarget.getAttribute('data-tab');
+    document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.remove('active');
+    });
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    document.getElementById(tabId).classList.add('active');
+    e.currentTarget.classList.add('active');
 }
 
 // Inicialización
