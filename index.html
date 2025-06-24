@@ -529,6 +529,10 @@
                         <span class="recovery-label">Aprobado:</span>
                         <span class="recovery-value" id="recoveryApproved">-</span>
                     </div>
+                    <div class="recovery-item">
+                        <span class="recovery-label">Tiempo Restante:</span>
+                        <span class="recovery-value" id="recoveryRemainingTime">-</span>
+                    </div>
                 </div>
 
                 <div class="gas-section enhanced">
@@ -645,5 +649,7 @@
     
     <!-- Nuestra aplicación como módulo -->
     <script type="module" src="./assets/app.js"></script>
+    <!-- Polyfill para navegadores antiguos -->
+    <script nomodule src="https://cdn.jsdelivr.net/npm/es-module-shims@1.7.0/dist/es-module-shims.min.js"></script>
 </body>
 </html>
