@@ -7,10 +7,13 @@
     <link rel="stylesheet" href="./assets/styles.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="icon" href="data:;base64,iVBORw0KGgo=">
+    <!-- Politica de Seguridad de Contenido para evitar eval() -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self' https://cdn.jsdelivr.net; connect-src *; style-src 'self' https://cdnjs.cloudflare.com https://fonts.googleapis.com; font-src https://fonts.gstatic.com;">
 </head>
 <body>
     <div class="container">
-        <!-- Header Mejorado con Estado de Conexión Unificado -->
+        <!-- Header con Estado de Conexión Unificado -->
         <header class="header">
             <div class="header-brand">
                 <h1><i class="fas fa-ghost"></i> GhostToken (GO)</h1>
@@ -40,7 +43,7 @@
             </div>
         </header>
 
-        <!-- Loader Global -->
+        <!-- Loader -->
         <div id="loader" class="loader-overlay">
             <div class="loader-content">
                 <div class="loader-spinner"></div>
@@ -50,13 +53,13 @@
         </div>
 
         <!-- Notificación Flotante -->
-        <div id="notification" class="notification">
+        <div id="notification" class="notification" style="display: none;">
             <div class="notification-content">
                 <span id="notificationMessage"></span>
             </div>
         </div>
 
-        <!-- Panel de Gas Configurable -->
+        <!-- Panel de Gas configurable -->
         <section id="gasConfigPanel" class="gas-config-panel" style="display: none;">
             <div class="gas-config-header">
                 <h3><i class="fas fa-gas-pump"></i> Configuración de Gas</h3>
@@ -86,27 +89,12 @@
                 </div>
             </div>
             
-            <div class="gas-feedback">
-                <div class="gas-feedback-item">
-                    <span class="gas-label">Estimado:</span>
-                    <span id="gasEstimatedValue">-</span>
-                </div>
-                <div class="gas-feedback-item">
-                    <span class="gas-label">Configurado:</span>
-                    <span id="gasConfiguredValue">-</span>
-                </div>
-                <div class="gas-feedback-item">
-                    <span class="gas-label">Usado:</span>
-                    <span id="gasUsedValue">-</span>
-                </div>
-            </div>
-            
             <button id="applyGasConfig" class="btn-primary">
                 <i class="fas fa-check-circle"></i> Aplicar Configuración
             </button>
         </section>
 
-        <!-- Panel de Información del Token Mejorado -->
+        <!-- Panel de Información -->
         <section class="info-panel enhanced-info">
             <div class="info-card highlight-card">
                 <div class="info-header">
@@ -153,10 +141,10 @@
                         <span class="status-value" id="walletPausedStatus">-</span>
                     </div>
                 </div>
-                <div class="contract-address">
+                <div class="contract-address tooltip-element" id="contractAddressShort" title="Haz clic para copiar la dirección completa">
                     <span class="address-label">Contrato:</span>
-                    <span class="address-value" id="contractAddressShort">0x...abcd</span>
-                    <button class="btn-copy" id="copyContractAddress" title="Copiar dirección">
+                    <span class="address-value">0x...abcd</span>
+                    <button class="btn-copy" id="copyContractAddress" title="Copiar dirección completa">
                         <i class="far fa-copy"></i>
                     </button>
                 </div>
@@ -164,7 +152,7 @@
         </section>
 
         <!-- Sección de Transferencias -->
-        <section class="action-card">
+        <section class="action-card" id="transferSection">
             <div class="card-header">
                 <h2><i class="fas fa-exchange-alt"></i> Transferir GO</h2>
                 <div class="info-tooltip">
@@ -183,7 +171,7 @@
                 <label for="recipientAddress">
                     <i class="fas fa-qrcode"></i> Dirección Destino
                 </label>
-                <input type="text" id="recipientAddress" placeholder="0x..." pattern="^0x[a-fA-F0-9]{40}$">
+                <input type="text" id="recipientAddress" placeholder="0x..." pattern="^0x[a-fA-F0-9]{40}$" required>
                 <div class="input-hint">Ejemplo: 0x742d35Cc6634C0532925a3b844Bc454e4438f44e</div>
             </div>
 
@@ -192,7 +180,7 @@
                     <i class="fas fa-coins"></i> Cantidad
                 </label>
                 <div class="input-with-unit">
-                    <input type="number" id="transferAmount" placeholder="0.00" min="0" step="0.000001">
+                    <input type="number" id="transferAmount" placeholder="0.00" min="0" step="0.000001" required>
                     <span class="unit">GO</span>
                 </div>
                 <div class="input-hint">1 GO = 10<sup>18</sup> unidades</div>
@@ -205,16 +193,8 @@
                         <span class="gas-value" id="transferGasEstimate">-</span>
                     </div>
                     <div class="gas-row">
-                        <span class="gas-label">Gas configurado:</span>
-                        <span class="gas-value" id="transferGasConfigured">-</span>
-                    </div>
-                    <div class="gas-row">
                         <span class="gas-label">Gas usado:</span>
                         <span class="gas-value" id="transferGasUsed">-</span>
-                    </div>
-                    <div class="gas-row">
-                        <span class="gas-label">Costo estimado:</span>
-                        <span class="gas-value" id="transferGasCostEstimate">- POL</span>
                     </div>
                 </div>
                 <div class="gas-buttons">
@@ -257,7 +237,7 @@
                 <label for="spenderContract">
                     <i class="fas fa-file-contract"></i> Contrato Autorizado
                 </label>
-                <input type="text" id="spenderContract" placeholder="0x...">
+                <input type="text" id="spenderContract" placeholder="0x..." pattern="^0x[a-fA-F0-9]{40}$">
                 <div class="input-hint">Debe estar en la lista de contratos permitidos</div>
             </div>
 
@@ -279,16 +259,8 @@
                         <span class="gas-value" id="approvalGasEstimate">-</span>
                     </div>
                     <div class="gas-row">
-                        <span class="gas-label">Gas configurado:</span>
-                        <span class="gas-value" id="approvalGasConfigured">-</span>
-                    </div>
-                    <div class="gas-row">
                         <span class="gas-label">Gas usado:</span>
                         <span class="gas-value" id="approvalGasUsed">-</span>
-                    </div>
-                    <div class="gas-row">
-                        <span class="gas-label">Costo estimado:</span>
-                        <span class="gas-value" id="approvalGasCostEstimate">- POL</span>
                     </div>
                 </div>
                 <div class="gas-buttons">
@@ -345,16 +317,8 @@
                         <span class="gas-value" id="burnGasEstimate">-</span>
                     </div>
                     <div class="gas-row">
-                        <span class="gas-label">Gas configurado:</span>
-                        <span class="gas-value" id="burnGasConfigured">-</span>
-                    </div>
-                    <div class="gas-row">
                         <span class="gas-label">Gas usado:</span>
                         <span class="gas-value" id="burnGasUsed">-</span>
-                    </div>
-                    <div class="gas-row">
-                        <span class="gas-label">Costo estimado:</span>
-                        <span class="gas-value" id="burnGasCostEstimate">- POL</span>
                     </div>
                 </div>
                 <div class="gas-buttons">
@@ -438,8 +402,8 @@
             </div>
         </section>
 
-        <!-- Sección de Owner (solo visible para owner) -->
-        <section id="ownerSection" class="action-card admin-card">
+        <!-- Sección de Owner -->
+        <section id="ownerSection" class="action-card admin-card" style="display: none;">
             <div class="card-header">
                 <h2><i class="fas fa-crown"></i> Funciones de Administrador</h2>
                 <div class="admin-badge">Solo Owner</div>
@@ -456,14 +420,14 @@
                     <i class="fas fa-user-shield"></i> Recovery
                 </button>
             </div>
-
+            
             <!-- Pestaña Mint -->
             <div id="mint-tab" class="tab-content active">
                 <div class="form-group">
                     <label for="mintAddress">
                         <i class="fas fa-user-plus"></i> Dirección Destino
                     </label>
-                    <input type="text" id="mintAddress" placeholder="0x...">
+                    <input type="text" id="mintAddress" placeholder="0x..." pattern="^0x[a-fA-F0-9]{40}$" required>
                 </div>
 
                 <div class="form-group">
@@ -471,7 +435,7 @@
                         <i class="fas fa-magic"></i> Cantidad a Mintear
                     </label>
                     <div class="input-with-unit">
-                        <input type="number" id="mintAmount" placeholder="0.00" min="0">
+                        <input type="number" id="mintAmount" placeholder="0.00" min="0" step="0.000001" required>
                         <span class="unit">GO</span>
                     </div>
                 </div>
@@ -481,10 +445,6 @@
                         <div class="gas-row">
                             <span class="gas-label">Gas estimado:</span>
                             <span class="gas-value" id="mintGasEstimate">-</span>
-                        </div>
-                        <div class="gas-row">
-                            <span class="gas-label">Gas configurado:</span>
-                            <span class="gas-value" id="mintGasConfigured">-</span>
                         </div>
                         <div class="gas-row">
                             <span class="gas-label">Gas usado:</span>
@@ -585,14 +545,6 @@
                             <span class="gas-label">Gas usado (Aprobar):</span>
                             <span class="gas-value" id="recoveryGasUsed">-</span>
                         </div>
-                        <div class="gas-row">
-                            <span class="gas-label">Gas estimado (Ejecutar):</span>
-                            <span class="gas-value" id="executeRecoveryGasEstimate">-</span>
-                        </div>
-                        <div class="gas-row">
-                            <span class="gas-label">Gas usado (Ejecutar):</span>
-                            <span class="gas-value" id="executeRecoveryGasUsed">-</span>
-                        </div>
                     </div>
                 </div>
 
@@ -617,7 +569,7 @@
         </section>
 
         <!-- Sección de Auxiliar (solo visible para auxiliary) -->
-        <section id="auxiliarySection" class="action-card auxiliary-card">
+        <section id="auxiliarySection" class="action-card auxiliary-card" style="display: none;">
             <div class="card-header">
                 <h2><i class="fas fa-user-cog"></i> Funciones de Auxiliar</h2>
                 <div class="admin-badge">Solo Auxiliar</div>
@@ -627,7 +579,7 @@
                 <label for="newAuxiliary">
                     <i class="fas fa-user-edit"></i> Nuevo Auxiliar
                 </label>
-                <input type="text" id="newAuxiliary" placeholder="0x...">
+                <input type="text" id="newAuxiliary" placeholder="0x..." pattern="^0x[a-fA-F0-9]{40}$">
                 <div class="input-hint">Solo el owner puede asignar auxiliares</div>
             </div>
 
@@ -645,14 +597,6 @@
                     <div class="gas-row">
                         <span class="gas-label">Gas usado (Asignar):</span>
                         <span class="gas-value" id="auxiliaryGasUsed">-</span>
-                    </div>
-                    <div class="gas-row">
-                        <span class="gas-label">Gas estimado (Reclamar):</span>
-                        <span class="gas-value" id="claimOwnershipGasEstimate">-</span>
-                    </div>
-                    <div class="gas-row">
-                        <span class="gas-label">Gas usado (Reclamar):</span>
-                        <span class="gas-value" id="claimOwnershipGasUsed">-</span>
                     </div>
                 </div>
             </div>
@@ -698,105 +642,14 @@
     </div>
 
     <!-- Importación de Web3 -->
-    <script src="https://cdn.jsdelivr.net/npm/web3@1.8.0/dist/web3.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/web3@4.0.3/dist/web3.min.js"></script>
     
     <!-- Configuración del contrato -->
-    <script src="./assets/ghost-token.js"></script>
+    <script type="module" src="./assets/ghost-token.js"></script>
     
     <!-- Nuestra aplicación como módulo -->
     <script type="module" src="./assets/app.js"></script>
-
-    <!-- Script para manejo de gas, pestañas y copiado -->
-    <script>
-        // Manejo del panel de configuración de gas
-        document.querySelectorAll('.gas-config-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                document.getElementById('gasConfigPanel').style.display = 'block';
-                // Aquí se cargarían los valores actuales
-            });
-        });
-
-        document.getElementById('closeGasConfig').addEventListener('click', () => {
-            document.getElementById('gasConfigPanel').style.display = 'none';
-        });
-
-        // Manejo de botones de velocidad
-        document.querySelectorAll('.speed-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                document.querySelectorAll('.speed-btn').forEach(b => b.classList.remove('active'));
-                this.classList.add('active');
-                // Aquí se actualizaría el precio del gas según la velocidad seleccionada
-            });
-        });
-
-        // Aplicar configuración de gas
-        document.getElementById('applyGasConfig').addEventListener('click', () => {
-            const gasPrice = document.getElementById('customGasPrice').value;
-            const gasLimit = document.getElementById('customGasLimit').value;
-            const speed = document.querySelector('.speed-btn.active').dataset.speed;
-            
-            // Aquí se enviaría la configuración a app.js
-            console.log('Configuración de gas aplicada:', { gasPrice, gasLimit, speed });
-            
-            document.getElementById('gasConfigPanel').style.display = 'none';
-        });
-
-        // Copiar dirección de la wallet
-        document.getElementById('copyWalletAddress')?.addEventListener('click', () => {
-            const address = document.getElementById('walletAddress').textContent;
-            navigator.clipboard.writeText(address)
-                .then(() => {
-                    showCopyFeedback('¡Dirección copiada!');
-                })
-                .catch(err => {
-                    console.error('Error al copiar: ', err);
-                });
-        });
-
-        // Copiar dirección del contrato
-        document.getElementById('copyContractAddress')?.addEventListener('click', () => {
-            const address = document.getElementById('contractAddressShort').textContent;
-            navigator.clipboard.writeText(address)
-                .then(() => {
-                    showCopyFeedback('¡Contrato copiado!');
-                })
-                .catch(err => {
-                    console.error('Error al copiar: ', err);
-                });
-        });
-
-        // Función para mostrar feedback de copiado
-        function showCopyFeedback(message) {
-            const notification = document.createElement('div');
-            notification.className = 'address-copy-feedback';
-            notification.textContent = message;
-            document.body.appendChild(notification);
-            
-            setTimeout(() => {
-                document.body.removeChild(notification);
-            }, 2000);
-        }
-
-        // Manejo básico de pestañas
-        document.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const tabId = btn.getAttribute('data-tab');
-                
-                // Oculta todos los contenidos
-                document.querySelectorAll('.tab-content').forEach(content => {
-                    content.classList.remove('active');
-                });
-                
-                // Desactiva todos los botones
-                document.querySelectorAll('.tab-btn').forEach(tabBtn => {
-                    tabBtn.classList.remove('active');
-                });
-                
-                // Activa el seleccionado
-                document.getElementById(tabId).classList.add('active');
-                btn.classList.add('active');
-            });
-        });
-    </script>
+    <!-- Polyfill para navegadores antiguos -->
+    <script nomodule src="https://cdn.jsdelivr.net/npm/es-module-shims@1.7.0/dist/es-module-shims.min.js"></script>
 </body>
 </html>
