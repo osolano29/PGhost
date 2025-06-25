@@ -412,14 +412,21 @@ const initContractSafe = async () => {
 
 function configureContractEventHandlers(contract) {
     // Ensure the contract object is valid before adding event listeners
-    if (!contract || typeof contract.on !== 'function') {
+    if (!contract || typeof contract.events !== 'object') {   //if (!contract || typeof contract.on !== 'function') {
         console.error("Contract object is not valid or missing 'on' method.");
         return; // Exit the function if the contract is not ready
     }
 
     // Assuming 'events' is an array of event names you want to listen to
     const events = ['Transfer', 'Approval']; // Example event names, replace with actual events
-
+    
+    //mientras supera pruebas
+    console.log("Es válido:", !!contract);
+    console.log("Tiene 'on':", typeof contract.on);
+    console.log("Tiene 'events':", contract.events);
+     console.log("Tiene 'Transfer':", typeof contract.events?.Transfer);
+    //mientras pruebas
+    
     events.forEach(eventName => {
         // Check if the event exists on the contract object
         if (contract.events && contract.events[eventName]) {
