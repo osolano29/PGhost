@@ -437,29 +437,40 @@ function configureContractEventHandlers(contract) {
 }
 
 /* function configureContractEventHandlers() {
-    if (!contract) return;
-    // Manejadores de eventos seguros (sin eval)
+    if (!contract || !contract.events) {
+        console.warn("El contrato no está listo para suscribir eventos");
+        return;
+    }
+    
+    clearEventSubscriptions();
+
     const eventHandlers = {
         'Transfer': (event) => {
             console.log("Evento Transfer:", event);
-            if (event.returnValues.from === userAddress || 
-                event.returnValues.to === userAddress) {
+            if (utils.compareAddresses(event.returnValues.from, userAddress) || 
+                utils.compareAddresses(event.returnValues.to, userAddress)) {
                 updateTokenBalance();
             }
         },
         'Approval': (event) => {
             console.log("Evento Approval:", event);
-        },
-        // Agrega más manejadores según sea necesario
+        }
     };
 
-    // Suscribe los eventos de forma segura
     Object.keys(eventHandlers).forEach(eventName => {
-        contract.events[eventName]()
+        try {
+            const subscription = contract.events[eventName]({
+                fromBlock: 'latest'
+            })
             .on('data', eventHandlers[eventName])
             .on('error', err => {
                 console.error(`Error en evento ${eventName}:`, err);
             });
+            
+            contractEventSubscriptions.push(subscription);
+        } catch (error) {
+            console.error(`Error suscribiendo al evento ${eventName}:`, error);
+        }
     });
 } */
 
