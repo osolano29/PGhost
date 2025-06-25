@@ -414,7 +414,7 @@ const initContractSafe = async () => {
 
 // fin segura
 
-function configureContractEventHandlers(contract) {
+function configureContractEventHandlers() {
     // Ensure the contract object is valid before adding event listeners
     if (!contract || typeof contract.events !== 'object') {   //if (!contract || typeof contract.on !== 'function') {
         console.error("Contract object is not valid or missing 'on' method.");
