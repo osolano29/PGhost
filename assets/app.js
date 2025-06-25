@@ -410,8 +410,33 @@ const initContractSafe = async () => {
 
 // fin segura
 
+function configureContractEventHandlers(contract) {
+    // Ensure the contract object is valid before adding event listeners
+    if (!contract || typeof contract.on !== 'function') {
+        console.error("Contract object is not valid or missing 'on' method.");
+        return; // Exit the function if the contract is not ready
+    }
 
-function configureContractEventHandlers() {
+    // Assuming 'events' is an array of event names you want to listen to
+    const events = ['Transfer', 'Approval']; // Example event names, replace with actual events
+
+    events.forEach(eventName => {
+        // Check if the event exists on the contract object
+        if (contract.events && contract.events[eventName]) {
+            contract.events[eventName].on('data', (event) => {
+                console.log(`${eventName} event received:`, event);
+                // Handle the event data
+            }).on('error', (error) => {
+                console.error(`Error with ${eventName} event:`, error);
+                // Handle event errors
+            });
+        } else {
+            console.warn(`Event "${eventName}" not found on contract.`);
+        }
+    });
+}
+
+/* function configureContractEventHandlers() {
     if (!contract) return;
     // Manejadores de eventos seguros (sin eval)
     const eventHandlers = {
@@ -436,7 +461,7 @@ function configureContractEventHandlers() {
                 console.error(`Error en evento ${eventName}:`, err);
             });
     });
-}
+} */
 
 function showNotification(message, type = "info") {
     if (!DOM.notification || !DOM.notificationMessage) return;
