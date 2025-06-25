@@ -231,10 +231,12 @@ const connectWallet = async () => {
             return false;
         }*/
         // Detección segura del provider
+                     console.log("connectWallet: Detectando provider "); //***
         const provider = await detectProviderSafe();
         if (!provider) return false;
 
        // Inicialización segura de Web3
+                     console.log("connectWallet: Iniciando Web3");
         web3 = new Web3(provider);
         
         // Solicita cuentas de forma moderna (EIP-1102)
@@ -247,11 +249,13 @@ const connectWallet = async () => {
             throw new Error("No se encontraron cuentas");
         }
         userAddress = accounts[0];
-        
+                console.log("connectWallet: Levantando la red");
         await setupNetwork();
-
+                console.log("connectWallet: Inicia el contrato");
         await initContractSafe();
+                console.log("connectWallet: Leer datos iniciales");
         await loadInitialData();
+                console.log("connectWallet: Actualiza UI");
         updateUI();
         showNotification("¡Conectado correctamente!", "success");
         return true;
