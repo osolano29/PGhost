@@ -513,10 +513,31 @@ const handleCSPError = (error) => {
   }
 };
 
-function updateRecoveryUI([nominee, deadline, approved]) {
+/*function updateRecoveryUI([nominee, deadline, approved]) {
     DOM.recoveryNominee.textContent = nominee === '0x0' ? 'Ninguno' : shortAddress(nominee);
     DOM.recoveryDeadline.textContent = deadline === '0' ? 'N/A' : new Date(deadline * 1000).toLocaleString();
     DOM.recoveryApproved.textContent = approved ? '✅ Aprobado' : '❌ No aprobado';
+}*/
+function updateRecoveryUI(recoveryData) {
+    if (!recoveryData || typeof recoveryData !== 'object') return;
+    
+    const nominee = recoveryData.nominee || recoveryData[0];
+    const deadline = recoveryData.deadline || recoveryData[1];
+    const approved = recoveryData.approved || recoveryData[2];
+    const remainingTime = recoveryData.remainingTime || recoveryData[3];
+    
+    if (DOM.recoveryNominee) {
+        DOM.recoveryNominee.textContent = nominee === '0x0' ? 'Ninguno' : shortAddress(nominee);
+    }
+    if (DOM.recoveryDeadline) {
+        DOM.recoveryDeadline.textContent = deadline === '0' ? 'N/A' : new Date(deadline * 1000).toLocaleString();
+    }
+    if (DOM.recoveryApproved) {
+        DOM.recoveryApproved.textContent = approved ? '✅ Aprobado' : '❌ No aprobado';
+    }
+    if (DOM.recoveryRemainingTime) {
+        DOM.recoveryRemainingTime.textContent = remainingTime === '0' ? 'N/A' : `${remainingTime} segundos`;
+    }
 }
         
 // ================ FUNCIONES DEL CONTRATO ================
