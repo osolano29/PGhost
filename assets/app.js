@@ -2,7 +2,7 @@
 import { CONTRACT_CONFIG, getContractConfigSafe, AMOY_CONFIG } from './ghost-token.js';
 
 // Variables globales
-let web3, contract, userAddress, isOwner = false, isAuxiliary = false;
+let web3, contract, contractEvents = null, userAddress, isOwner = false, isAuxiliary = false;
 
 // ================ UTILIDADES ================
 // Añadir al inicio del archivo
@@ -220,54 +220,82 @@ const isBrowserCompatible = () => {
 };
 
 //*********
+function getWebSocketContract(config, networkId = "80002") {
+    try {
+        const wssUrl = "wss://rpc-amoy.polygon.technology"; // Cambia si usas otra red
+        const provider = new Web3.providers.WebsocketProvider(wssUrl);
+        const web3Events = new Web3(provider);
+
+        if (!config || !config.abi || !config.networks || !config.networks[networkId]) {
+            throw new Error(`Configuración de contrato inválida para red ${networkId}`);
+        }
+
+        const address = config.networks[networkId].address;
+        const contract = new web3Events.eth.Contract(config.abi, address);
+
+        return contract; // ← este sí tiene .on()
+    } catch (error) {
+        console.error("Error al crear contrato WebSocket:", error);
+        return null;
+    }
+}
+
 
 const connectWallet = async () => {
     try {
         utils.showLoader("Conectando wallet...");
-        
-        /*const provider = detectProvider();
-        if (!provider) {
-            showMetaMaskModal();
-            return false;
-        }*/
-        // Detección segura del provider
-                     console.log("connectWallet: Detectando provider "); //***
+
+        console.log("connectWallet: Detectando provider "); //***
         const provider = await detectProviderSafe();
         if (!provider) return false;
 
-       // Inicialización segura de Web3
-                     console.log("connectWallet: Iniciando Web3");
+        // Inicialización segura de Web3
+        console.log("connectWallet: Iniciando Web3");
         web3 = new Web3(provider);
-        
+
         // Solicita cuentas de forma moderna (EIP-1102)
         const accounts = await provider.request({ 
             method: 'eth_requestAccounts',
-            params: [{ eth_chainId: AMOY_CONFIG.chainId }] // Especifica la cadena
+            params: [{ eth_chainId: AMOY_CONFIG.chainId }]
         }).catch(handleCSPError);
-        
+
         if (!accounts || accounts.length === 0) {
             throw new Error("No se encontraron cuentas");
         }
+
         userAddress = accounts[0];
-                console.log("connectWallet: Levantando la red");
+
+        console.log("connectWallet: Levantando la red");
         await setupNetwork();
-                console.log("connectWallet: Inicia el contrato");
+
+        console.log("connectWallet: Inicia el contrato");
         await initContractSafe();
-                console.log("connectWallet: Leer datos iniciales");
+
+        // 🔁 NUEVO: Instancia contrato para eventos por WebSocket
+        contractEvents = getWebSocketContract(CONTRACT_CONFIG);
+        if (contractEvents && typeof configureContractEventHandlers === 'function') {
+            configureContractEventHandlers(contractEvents);
+        } else {
+            console.warn("No se pudo configurar eventos del contrato.");
+        }
+
+        console.log("connectWallet: Leer datos iniciales");
         await loadInitialData();
-                console.log("connectWallet: Actualiza UI");
+
+        console.log("connectWallet: Actualiza UI");
         updateUI();
+
         showNotification("¡Conectado correctamente!", "success");
         return true;
-        
+
     } catch (error) {
-        //handleError(error, "Error al conectar");
         handleCSPError(error);
         return false;
     } finally {
         utils.hideLoader();
     }
-}
+};
+
 
 // ====== NUEVA FUNCIÓN DISCONNECT WALLET ======
 async function disconnectWallet() {
@@ -403,7 +431,6 @@ const initContractSafe = async () => {
     } else {
       handleError(error, "Error al inicializar el contrato");
     }
-
     return false;
   }
 };
@@ -414,38 +441,37 @@ const initContractSafe = async () => {
 
 // fin segura
 
-function configureContractEventHandlers() {
-    // Ensure the contract object is valid before adding event listeners
-    if (!contract || typeof contract.events !== 'object') {   //if (!contract || typeof contract.on !== 'function') {
-        console.error("Contract object is not valid or missing 'on' method.");
-        return; // Exit the function if the contract is not ready
+function configureContractEventHandlers(contract) {
+    if (!contract || typeof contract.events !== 'object') {
+        console.error("Contract object is not valid or missing 'events'.");
+        return;
     }
 
-    // Assuming 'events' is an array of event names you want to listen to
-    const events = ['Transfer', 'Approval']; // Example event names, replace with actual events
-    
-    //mientras supera pruebas
-    console.log("Es válido:", !!contract);
-    console.log("Tiene 'on':", typeof contract.on);
-    console.log("Tiene 'events':", contract.events);
-     console.log("Tiene 'Transfer':", typeof contract.events?.Transfer);
-    //mientras pruebas
-    
-    events.forEach(eventName => {
-        // Check if the event exists on the contract object
-        if (contract.events && contract.events[eventName]) {
-            contract.events[eventName].on('data', (event) => {
-                console.log(`${eventName} event received:`, event);
-                // Handle the event data
-            }).on('error', (error) => {
-                console.error(`Error with ${eventName} event:`, error);
-                // Handle event errors
+    const eventHandlers = {
+        'Transfer': (event) => {
+            console.log("Evento Transfer:", event);
+            if (event.returnValues.from === userAddress || 
+                event.returnValues.to === userAddress) {
+                updateTokenBalance();
+            }
+        },
+        'Approval': (event) => {
+            console.log("Evento Approval:", event);
+        }
+    };
+
+    Object.entries(eventHandlers).forEach(([eventName, handler]) => {
+        const ev = contract.events[eventName];
+        if (typeof ev === 'function') {
+            ev().on('data', handler).on('error', err => {
+                console.error(`Error en evento ${eventName}:`, err);
             });
         } else {
-            console.warn(`Event "${eventName}" not found on contract.`);
+            console.warn(`Evento no disponible: ${eventName}`);
         }
     });
 }
+
 
 /* function configureContractEventHandlers() {
     if (!contract || !contract.events) {
