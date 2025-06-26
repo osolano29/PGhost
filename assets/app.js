@@ -654,6 +654,10 @@ async function loadInitialData() {
         toggleRoleSections(); // Mostrar/ocultar funciones según roles
 
         updateRecoveryUI(recovery);  // Actualizar datos de recovery
+        // Asegurar que el botón de copiar está visible
+        if (DOM.copyContractAddress) {
+            DOM.copyContractAddress.style.display = 'inline-block';
+        }
     } catch (error) {
         handleError(error, "Error cargando datos iniciales");
     } finally {
