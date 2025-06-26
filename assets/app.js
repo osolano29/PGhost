@@ -1301,10 +1301,19 @@ function setupEventListeners() {
     DOM.burnBtn.addEventListener('click', burnTokens);   //****
     if (DOM.pauseContractBtn) DOM.pauseContractBtn.addEventListener('click', () => togglePause(true));   //**
     if (DOM.unpauseContractBtn) DOM.unpauseContractBtn.addEventListener('click', () => togglePause(false));  //**
-
-    // Recovery
-    if (DOM.approveRecoveryBtn) DOM.approveRecoveryBtn.addEventListener('click', approveRecovery);  //****
-    if (DOM.executeRecoveryBtn) DOM.executeRecoveryBtn.addEventListener('click', executeRecovery);   //*****
+     if (DOM.pauseWalletBtn) {
+        DOM.pauseWalletBtn.addEventListener('click', () => toggleWalletPause(true));
+    }
+    if (DOM.unpauseWalletBtn) {
+        DOM.unpauseWalletBtn.addEventListener('click', () => toggleWalletPause(false));
+    }
+       // Aprobación de gastos
+    if (DOM.estimateApprovalGas) {
+        DOM.estimateApprovalGas.addEventListener('click', estimateApprovalGas);  //****
+    }
+    if (DOM.approveTokens) {
+        DOM.approveTokens.addEventListener('click', approveTokens);
+    }
     
      // Configuración de Gas (versión mejorada con validación)
     const gasConfigButtons = document.querySelectorAll('.gas-config-btn');
