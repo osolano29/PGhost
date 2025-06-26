@@ -274,7 +274,7 @@ const connectWallet = async () => {
         // 🔁 NUEVO: Instancia contrato para eventos por WebSocket
         contractEvents = getWebSocketContract(CONTRACT_CONFIG);
         if (contractEvents && typeof configureContractEventHandlers === 'function') {
-            configureContractEventHandlers(contractEvents);
+            configureContractEventHandlers();
         } else {
             console.warn("No se pudo configurar eventos del contrato.");
         }
@@ -441,9 +441,9 @@ const initContractSafe = async () => {
 
 // fin segura
 
-function configureContractEventHandlers(contract) {
-    if (!contract || typeof contract.events !== 'object') {
-        console.error("Contract object is not valid or missing 'events'.");
+function configureContractEventHandlers() {
+    if (!contractEvents || typeof contractEvents.events !== 'object') {
+        console.error("contractEvents no es válido o no tiene eventos.");
         return;
     }
 
@@ -461,7 +461,7 @@ function configureContractEventHandlers(contract) {
     };
 
     Object.entries(eventHandlers).forEach(([eventName, handler]) => {
-        const ev = contract.events[eventName];
+        const ev = contractEvents.events[eventName];
         if (typeof ev === 'function') {
             ev().on('data', handler).on('error', err => {
                 console.error(`Error en evento ${eventName}:`, err);
