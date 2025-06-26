@@ -36,7 +36,13 @@ function fromWei(amount) {
 }
 
 function shortAddress(address) {
-    return address ? `${address.substring(0, 6)}...${address.substring(38)}` : "N/A";
+    if (
+    typeof address === 'string' &&
+    /^0x[a-fA-F0-9]{40}$/.test(address)
+  ) {
+    return `${address.substring(0, 6)}...${address.substring(38)}`;
+  }
+  return "N/A";
 }
 
 // Comprueba si el script se está ejecutando como módulo
@@ -412,8 +418,9 @@ const initContractSafe = async () => {
     // Mostrar dirección corta del contrato en el DOM, si está disponible
     if (DOM.contractAddressShort) {
       const fullAddress = config.networks[networkId].address;
-      DOM.contractAddressShort.title = fullAddress;
-      DOM.contractAddressShort.dataset.fullAddress = fullAddress;
+      DOM.contractAddressShort.title = fullAddress;                 //mostrar raton encima
+      DOM.contractAddressShort.dataset.fullAddress = fullAddress;   //opera js
+      DOM.contractAddressShort.textContent = shortAddress(fullAddress);
     }
 
     console.log("✅ Contrato inicializado con éxito");
