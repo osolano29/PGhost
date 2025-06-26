@@ -690,11 +690,11 @@ async function estimateTransactionGas(methodName, args = [], estimateElementId =
 
 function getGasOptions() {
     const options = {};
-    if (DOM.customGasPrice?.value) {
+    if (DOM.customGasPrice?.value && !isNaN(DOM.customGasPrice.value)) {
         options.gasPrice = BigInt(web3.utils.toWei(DOM.customGasPrice.value, 'gwei')).toString(); //web3.utils.toWei(DOM.customGasPrice.value, 'gwei');
     }
     if (DOM.customGasLimit?.value) {
-        options.gas = BigInt(DOM.customGasLimit.value).toString(); //DOM.customGasLimit.value;
+        options.gas = Number(DOM.customGasLimit.value); //options.gas = BigInt(DOM.customGasLimit.value).toString(); 
     }
     return options;
 }
@@ -1078,25 +1078,28 @@ async function approveTokens() {
 
 function validateMintInputs() {
     let isValid = true;
-    
-    if (!DOM.mintAddress.value || !web3.utils.isAddress(DOM.mintAddress.value)) {
+
+    const address = DOM.mintAddress.value.trim();
+    const amount = Number(DOM.mintAmount.value);
+
+    if (!address || !web3.utils.isAddress(address)) {
         DOM.mintAddress.classList.add('input-error');
         isValid = false;
     } else {
         DOM.mintAddress.classList.remove('input-error');
     }
-    
-    if (!DOM.mintAmount.value || Number(DOM.mintAmount.value) <= 0) {
+
+    if (!DOM.mintAmount.value || isNaN(amount) || amount <= 0) {
         DOM.mintAmount.classList.add('input-error');
         isValid = false;
     } else {
         DOM.mintAmount.classList.remove('input-error');
     }
-    
+
     if (!isValid) {
         showNotification("Corrige los campos marcados", "error");
     }
-    
+
     return isValid;
 }
 
