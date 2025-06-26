@@ -434,6 +434,20 @@ input[type="number"]:focus {
     transition: color 0.2s;
 }
 
+/* Garantizar que el botón persista */
+.btn-copy.persistent {
+    display: inline-block !important;
+    visibility: visible !important;
+}
+
+/* Contenedor del botón */
+.contract-address-container {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
 .btn-copy:hover {
     color: #333;
 }
