@@ -1120,7 +1120,7 @@ async function transferTokens() {
         const tx = await contract.methods.transfer(recipient, toWei(amount))
             .send({ 
                 from: userAddress, 
-                gas: Math.floor(gasEstimate * 1.2),
+                gas: Math.floor(Number(gasEstimate) * 1.2),
                 ...gasOptions
             });
         
