@@ -1213,6 +1213,10 @@ function validateTransferInputs() {
 
 function updateUI() {
     if (userAddress) {
+        // Mantener siempre visible el botón de copiar contrato
+        if (DOM.copyContractAddress) {
+            DOM.copyContractAddress.style.display = 'inline-block';
+        }
         DOM.walletStatus.textContent = shortAddress(userAddress);
         DOM.networkStatus.className = 'connection-status-badge connected';
         DOM.walletInfo.style.display = 'flex';
