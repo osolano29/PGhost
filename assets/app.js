@@ -3,6 +3,7 @@ import { CONTRACT_CONFIG, getContractConfigSafe, AMOY_CONFIG } from './ghost-tok
 
 // Variables globales
 let web3, contract, contractEvents = null, userAddress, isOwner = false, isAuxiliary = false;
+let contractEventSubscriptions = [];
 
 // ================ UTILIDADES ================
 // Añadir al inicio del archivo
@@ -440,14 +441,30 @@ const initContractSafe = async () => {
 // ================ FUNCIONES AUXILIARES SEGURAS ================
 
 // fin segura
+function clearEventSubscriptions() {
+    contractEventSubscriptions.forEach(sub => {
+        try {
+            sub.unsubscribe();
+        } catch (e) {
+            console.warn("Error al desuscribir evento:", e);
+        }
+    });
+    contractEventSubscriptions = [];
+}
+
+function isEventInABI(eventName) {
+    return CONTRACT_CONFIG.abi.some(
+        entry => entry.type === "event" && entry.name === eventName
+    );
+}
 
 function configureContractEventHandlers() {
     if (!contractEvents || typeof contractEvents.events !== 'object') {
         console.error("contractEvents no es válido o no tiene eventos.");
         return;
     }
-
-    const eventHandlers = {
+    clearEventSubscriptions;
+    const potentialHandlers = {
         'Transfer': (event) => {
             console.log("Evento Transfer:", event);
             if (event.returnValues.from === userAddress || 
@@ -460,18 +477,34 @@ function configureContractEventHandlers() {
         }
     };
 
-    Object.entries(eventHandlers).forEach(([eventName, handler]) => {
-        const ev = contractEvents.events[eventName];
-        if (typeof ev === 'function') {
-            ev().on('data', handler).on('error', err => {
-                console.error(`Error en evento ${eventName}:`, err);
-            });
+    Object.entries(potentialHandlers).forEach(([eventName, handler]) => {
+        if (isEventInABI(eventName)) {
+            try {
+                const subscription = contractEvents.events[eventName]()
+                    .on('data', handler)
+                    .on('error', err => {
+                        console.error(`Error en evento ${eventName}:`, err);
+                    });
+                contractEventSubscriptions.push(subscription);
+            } catch (err) {
+                console.error(`Fallo al suscribirse a evento ${eventName}:`, err);
+            }
         } else {
-            console.warn(`Evento no disponible: ${eventName}`);
+            console.warn(`Evento '${eventName}' no está en el ABI. Omitido.`);
         }
     });
 }
 
+async function updateTokenBalance() {
+    try {
+        if (!contract || !userAddress) return;
+        
+        const balance = await contract.methods.balanceOf(userAddress).call();
+        DOM.tokenBalance.textContent = `${fromWei(balance)} GO`;
+    } catch (error) {
+        console.error("Error actualizando balance:", error);
+    }
+}
 
 /* function configureContractEventHandlers() {
     if (!contract || !contract.events) {
