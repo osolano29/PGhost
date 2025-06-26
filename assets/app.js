@@ -764,7 +764,7 @@ async function toggleWalletPause(pause) {
         showLoader(pause ? "Pausando wallet..." : "Reanudando wallet...");
         const tx = await contract.methods[method]().send({ 
             from: userAddress,
-            gas: Math.floor(gasEstimate * 1.2)
+            gas: Math.floor(Number(gasEstimate) * 1.2)
         });
         
         showGasUsed(tx, usedElementId);
@@ -807,7 +807,7 @@ async function toggleContractPause(pause) {
         showLoader(pause ? "Pausando contrato..." : "Reanudando contrato...");
         const tx = await contract.methods[method]().send({ 
             from: userAddress,
-            gas: Math.floor(gasEstimate * 1.2)
+            gas: Math.floor(Number(gasEstimate) * 1.2)
         });
         
         showGasUsed(tx, usedElementId);
@@ -855,7 +855,7 @@ async function setAuxiliaryOwner() {
         const tx = await contract.methods.setAuxiliaryOwner(newAuxiliary)
             .send({ 
                 from: userAddress,
-                gas: Math.floor(gasEstimate * 1.2)
+                gas: Math.floor(Number(gasEstimate) * 1.2)
             });
         
         showGasUsed(tx, 'auxiliaryGasUsed');
@@ -896,7 +896,7 @@ async function approveRecovery(approve) {
         const tx = await contract.methods.approveRecovery(approve)
             .send({ 
                 from: userAddress,
-                gas: Math.floor(gasEstimate * 1.2)
+                gas: Math.floor(Number(gasEstimate) * 1.2)
             });
         
         showGasUsed(tx, 'recoveryGasUsed');
@@ -935,7 +935,7 @@ async function executeRecovery() {
         const tx = await contract.methods.executeRecovery()
             .send({ 
                 from: userAddress,
-                gas: Math.floor(gasEstimate * 1.2)
+                gas: Math.floor(Number(gasEstimate) * 1.2)
             });
         
         showGasUsed(tx, 'recoveryGasUsed');
@@ -976,7 +976,7 @@ async function claimOwnership() {
         const tx = await contract.methods.claimOwnershipFromAuxiliary()
             .send({ 
                 from: userAddress,
-                gas: Math.floor(gasEstimate * 1.2)
+                gas: Math.floor(Number(gasEstimate) * 1.2)
             });
         
         showGasUsed(tx, 'auxiliaryGasUsed');
@@ -1053,7 +1053,7 @@ async function approveTokens() {
         const tx = await contract.methods.approve(spender, amountInWei)
             .send({ 
                 from: userAddress,
-                gas: Math.floor(gasEstimate * 1.2)
+                gas: Math.floor(Number(gasEstimate) * 1.2)
             });
         
         showGasUsed(tx, 'approvalGasUsed');
@@ -1159,7 +1159,7 @@ async function burnTokens() {
             web3.utils.toWei(amount, 'ether')
         ).send({ 
             from: userAddress,
-            gas: Math.floor(gasEstimate * 1.2)
+            gas: Math.floor(Number(gasEstimate) * 1.2)
         });
         
         showGasUsed(tx, 'burnGasUsed');
