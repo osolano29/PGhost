@@ -493,6 +493,7 @@ function configureContractEventHandlers() {
                         console.error(`Error en evento ${eventName}:`, err);
                     });
                 contractEventSubscriptions.push(subscription);
+                console.error(`EVENTO inscrito: ${eventName}`);
             } catch (err) {
                 console.error(`Fallo al suscribirse a evento ${eventName}:`, err);
             }
