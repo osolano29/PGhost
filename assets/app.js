@@ -45,7 +45,36 @@ function fromWei(amount) {
 function shortAddress(address) {
     return address ? `${address.substring(0, 6)}...${address.substring(38)}` : "N/A";
 }
-
+  // Función de reconexión. Mantener la función handleReconnect separada (más limpia y reutilizable)
+async function handleReconnect() {
+    try {
+        updateConnectionStatus('reconnecting');
+        toggleReconnectButton(false);
+        utils.showLoader("Reconectando...");
+        
+        // 1. Cerrar conexiones existentes
+        if (contractEvents?.currentProvider?.disconnect) {
+            contractEvents.currentProvider.disconnect();
+        }
+        
+        // 2. Reintentar conexión completa
+        const success = await connectWallet();
+        
+        if (!success) {
+            throw new Error("No se pudo reconectar");
+        }
+        
+        showNotification("¡Reconexión exitosa!", "success");
+        return true;
+    } catch (error) {
+        console.error("Error en reconexión:", error);
+        handleError(error, "Error al reconectar");
+        toggleReconnectButton(true);
+        return false;
+    } finally {
+        utils.hideLoader();
+    }
+}
 
 // Elementos del DOM
 const DOM = {
@@ -105,7 +134,6 @@ const DOM = {
     /*estimateSetAuxiliaryGas: document.getElementById('estimateSetAuxiliaryGas'),  //***
       estimateClaimOwnershipGas: document.getElementById('estimateClaimOwnershipGas'), //*** */
 
-    
     // Aprobación de gastos
     spenderContract: document.getElementById('spenderContract'),
     approvalAmount: document.getElementById('approvalAmount'),
@@ -173,19 +201,26 @@ const initApp = async () => {
 const detectProviderSafe = async () => {
     try {
         if (window.ethereum) {
+            const timeoutPromise = new Promise((_, reject) => 
+               setTimeout(() => reject(new Error("Timeout al detectar proveedor")), 5000)
+            );
             if (Array.isArray(window.ethereum.providers)) {
                 const provider = window.ethereum.providers.find(p => p.isMetaMask) || window.ethereum;
-                await provider.request({ method: 'eth_chainId' });
+                await Promise.race([
+                   provider.request({ method: 'eth_chainId' }),
+                   timeoutPromise
+                ]);
                 return provider;
             }
 
-            if (window.ethereum.isMetaMask) {
-                await window.ethereum.request({ method: 'eth_chainId' });
-            }
-
+            // Verificación con timeout
+            await Promise.race([
+              window.ethereum.request({ method: 'eth_chainId' }),
+              timeoutPromise
+            ]);
             return window.ethereum;
         }
-
+        // Compatibilidad con versiones antiguas
         if (typeof window.web3 !== 'undefined' && window.web3.currentProvider?.isMetaMask) {
             return window.web3.currentProvider;
         }
@@ -193,7 +228,14 @@ const detectProviderSafe = async () => {
         showMetaMaskModal();
         return null;
     } catch (error) {
-        handleCSPError(error);
+        console.error("Error detectando proveedor:", error);
+        if (error.message.includes("Timeout")) {
+           showNotification("El proveedor no respondió a tiempo. Intente recargar la página.", "error");
+        } else if (error.message.includes("Content Security Policy")) {
+           showNotification("Error de seguridad del navegador (CSP)", "error");
+        } else {
+           showNotification("Error al conectar con el proveedor Web3", "error");
+        }
         return null;
     }
 };
@@ -211,38 +253,111 @@ const isBrowserCompatible = () => {
     }
 };
 
-const connectWallet = async () => {
-    try {
-        utils.showLoader("Conectando wallet...");
-        
-        const provider = await detectProviderSafe();
-        if (!provider) return false;
+function getWebSocketContract(config, networkId = "80002") {
+  try {
+    const wssUrl = "wss://rpc-amoy.polygon.technology";
+    
+    // Configurar reconexión automática
+    const providerOptions = {
+      reconnect: {
+        auto: true,
+        delay: 5000, // ms
+        maxAttempts: 5,
+        onTimeout: false
+      }
+    };
+    
+    const provider = new Web3.providers.WebsocketProvider(wssUrl, providerOptions);
+    const web3Events = new Web3(provider);
 
-        web3 = new Web3(provider); // Inicialización segura de Web3
-        
-        const accounts = await provider.request({ 
-            method: 'eth_requestAccounts',
-            params: [{ eth_chainId: AMOY_CONFIG.chainId }]
-        }).catch(handleCSPError);
-        
-        if (!accounts || accounts.length === 0) {
-            throw new Error("No se encontraron cuentas");
-        }
-        
-        userAddress = accounts[0];
-        await setupNetwork();
-        await initContractSafe();
-        await loadInitialData();
-        updateUI();
-        showNotification("¡Conectado correctamente!", "success");
-        return true;
+    // Manejar eventos de conexión/desconexión
+    provider.on('connect', () => console.log("WebSocket conectado"));
+    provider.on('close', () => console.log("WebSocket desconectado"));
+    provider.on('error', (err) => console.error("Error WebSocket:", err));
+
+    if (!config || !config.abi || !config.networks || !config.networks[networkId]) {
+      throw new Error(`Configuración de contrato inválida para red ${networkId}`);
+    }
+
+    const address = config.networks[networkId].address;
+    const contract = new web3Events.eth.Contract(config.abi, address);
+
+    return contract;
+  } catch (error) {
+    console.error("Error al crear contrato WebSocket:", error);
+    return null;
+  }
+}
+async function withRetry(fn, maxRetries = 3, delay = 1000) {
+  let lastError;
+  
+  for (let i = 0; i < maxRetries; i++) {
+    try {
+      return await fn();
     } catch (error) {
-        handleCSPError(error);
-        return false;
-    } finally {
-        utils.hideLoader();
+      lastError = error;
+      console.warn(`Intento ${i + 1} fallido. Reintentando...`, error);
+      
+      // Esperar antes del próximo intento (con backoff exponencial)
+      await new Promise(resolve => setTimeout(resolve, delay * (i + 1)));
+      
+      // Verificar si es un error de conexión
+      if (error.message.includes("reconnect") || error.message.includes("connection")) {
+        continue;
+      }
+      break;
+    }
+  }
+  
+  throw lastError;
+}
+// Función para mostrar/ocultar el botón de reconexión
+function toggleReconnectButton(show) {
+    const reconnectBtn = document.getElementById('reconnectBtn');
+    if (reconnectBtn) {
+        reconnectBtn.style.display = show ? 'block' : 'none';
     }
 }
+
+const connectWallet = async () => {
+  try {
+    utils.showLoader("Conectando wallet...");
+    
+    return await withRetry(async () => {
+      const provider = await detectProviderSafe();
+      if (!provider) return false;
+
+      web3 = new Web3(provider);
+      const accounts = await provider.request({ 
+        method: 'eth_requestAccounts',
+        params: [{ eth_chainId: AMOY_CONFIG.chainId }]
+      });
+
+      if (!accounts || accounts.length === 0) {
+        throw new Error("No se encontraron cuentas");
+      }
+
+      userAddress = accounts[0];
+      await setupNetwork();
+      await initContractSafe();
+
+      contractEvents = getWebSocketContract(CONTRACT_CONFIG);
+      if (contractEvents) {
+        configureContractEventHandlers();
+      }
+
+      await loadInitialData();
+      updateUI();
+      showNotification("¡Conectado correctamente!", "success");
+      return true;
+    });
+  } catch (error) {
+    handleCSPError(error);
+    return false;
+  } finally {
+    utils.hideLoader();
+  }
+};
 
 async function disconnectWallet() {
     try {
@@ -359,41 +474,58 @@ function clearEventSubscriptions() {
 }
 
 function configureContractEventHandlers() {
-    if (!contract || !contract.events) {
-        console.warn("El contrato no está listo para suscribir eventos");
-        return;
+  if (!contractEvents || typeof contractEvents.events !== 'object') {
+    console.error("contractEvents no es válido o no tiene eventos.");
+    return;
+  }
+  
+  clearEventSubscriptions();
+  
+  /*const handleReconnect = () => {
+    console.log("Reconectando eventos...");
+    setTimeout(() => {
+      if (contractEvents) {
+        configureContractEventHandlers();
+      }
+    }, 5000);
+  };*/
+
+  const potentialHandlers = {
+    'Transfer': (event) => {
+      if (event.returnValues.from === userAddress || 
+          event.returnValues.to === userAddress) {
+        updateTokenBalance();
+      }
+    },
+    'Approval': (event) => {
+      console.log("Evento Approval:", event);
+    },
+    'error': (error) => {
+      console.error("Error en conexión de eventos:", error);
+      handleReconnect();
+    },
+    'end': () => {
+      console.log("Conexión de eventos terminada");
+      handleReconnect();
     }
-    
-    clearEventSubscriptions();
+  };
 
-    const eventHandlers = {
-        'Transfer': (event) => {
-            console.log("Evento Transfer:", event);
-            if (utils.compareAddresses(event.returnValues.from, userAddress) || 
-                utils.compareAddresses(event.returnValues.to, userAddress)) {
-                updateTokenBalance();
-            }
-        },
-        'Approval': (event) => {
-            console.log("Evento Approval:", event);
-        }
-    };
 
-    Object.keys(eventHandlers).forEach(eventName => {
-        try {
-            const subscription = contract.events[eventName]({
-                fromBlock: 'latest'
-            })
-            .on('data', eventHandlers[eventName])
-            .on('error', err => {
-                console.error(`Error en evento ${eventName}:`, err);
-            });
-            
-            contractEventSubscriptions.push(subscription);
-        } catch (error) {
-            console.error(`Error suscribiendo al evento ${eventName}:`, error);
-        }
-    });
+  Object.entries(potentialHandlers).forEach(([eventName, handler]) => {
+    if (isEventInABI(eventName) || eventName === 'error' || eventName === 'end') {
+      try {
+        const subscription = contractEvents.events[eventName]()
+          .on('data', handler)
+          .on('error', err => {
+            console.error(`Error en evento ${eventName}:`, err);
+            handleReconnect();
+          });
+        contractEventSubscriptions.push(subscription);
+      } catch (err) {
+        console.error(`Fallo al suscribirse a evento ${eventName}:`, err);
+      }
+    }
+  });
 }
 
 function setupWalletListeners() {
@@ -433,6 +565,13 @@ function showNotification(message, type = "info") {
 
 function handleError(error, context = "") {
     console.error(context, error);
+    // Mostrar botón de reconexión para errores de conexión
+    if (error.message.includes("disconnected") || 
+        error.message.includes("reconnect") ||
+        error.message.includes("connection")) {
+        toggleReconnectButton(true);
+    }
+
     let message = error.message || "Error desconocido";
     
     if (message.includes("User denied")) {
@@ -1077,6 +1216,40 @@ function updateUI() {
     toggleRoleSections();
 }
 
+function updateConnectionStatus(status) {
+    const statusElement = document.getElementById('networkStatus');
+    const statusText = document.getElementById('networkStatusText');
+    
+    if (!statusElement || !statusText) return;
+    
+    statusElement.className = 'connection-status-badge ' + status;
+    
+    switch(status) {
+        case 'connected':
+            statusText.textContent = shortAddress(userAddress);
+            toggleReconnectButton(false);
+            break;
+        case 'disconnected':
+            statusText.textContent = 'Desconectado';
+            toggleReconnectButton(true);
+            break;
+        case 'reconnecting':
+            statusText.textContent = 'Reconectando...';
+            toggleReconnectButton(false);
+            break;
+    }
+}
+async function checkConnection() {
+  try {
+    await web3.eth.net.isListening();
+    return true;
+  } catch (error) {
+    console.error("Error verificando conexión:", error);
+    updateConnectionStatus('disconnected');
+    return false;
+  }
+}
+
 function toggleRoleSections() {
     if (isOwner) {
         DOM.ownerSection.style.display = 'block';
@@ -1100,6 +1273,44 @@ function setupEventListeners() {
     // Desconexión
     if (DOM.disconnectBtn) {
         DOM.disconnectBtn.addEventListener('click', disconnectWallet);
+    }
+
+    // Botón de reconexión - Versión mejorada
+    const reconnectBtn = document.getElementById('reconnectBtn');
+    if (reconnectBtn) {
+        reconnectBtn.addEventListener('click', handleReconnect);
+    }
+    
+    // Manejadores de eventos de MetaMask - Versión mejorada
+    if (window.ethereum) {
+        // Desconexión
+        window.ethereum.on('disconnect', (error) => {
+            console.warn("Desconexión detectada:", error);
+            updateConnectionStatus('disconnected');
+            toggleReconnectButton(true);
+            showNotification("Conexión perdida. Por favor reconecta.", "error");
+        });
+        
+        // Cambio de red
+        window.ethereum.on('chainChanged', (chainId) => {
+            console.log("Cadena cambiada:", chainId);
+            if (chainId !== AMOY_CONFIG.chainId) {
+                showNotification("Red cambiada. Reconectando...", "warning");
+            }
+            handleReconnect();
+        });
+        
+        // Cuenta cambiada
+        window.ethereum.on('accountsChanged', (accounts) => {
+            console.log("Cuentas cambiadas:", accounts);
+            if (accounts.length === 0) {
+                showNotification("Wallet desconectada", "warning");
+                updateConnectionStatus('disconnected');
+                toggleReconnectButton(true);
+            } else {
+                handleReconnect();
+            }
+        });
     }
     
     // Actualizar balance
