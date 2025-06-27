@@ -1433,13 +1433,13 @@ function setupEventListeners() {
     DOM.burnBtn?.addEventListener('click', burnTokens);   //****
     if (DOM.pauseContractBtn) DOM.pauseContractBtn.addEventListener('click', () => toggleContractPause(true));   //**
     if (DOM.unpauseContractBtn) DOM.unpauseContractBtn.addEventListener('click', () => toggleContractPause(false));  //**
-     if (DOM.pauseWalletBtn) {
+    if (DOM.pauseWalletBtn) {
         DOM.pauseWalletBtn.addEventListener('click', () => toggleWalletPause(true));
     }
     if (DOM.unpauseWalletBtn) {
         DOM.unpauseWalletBtn.addEventListener('click', () => toggleWalletPause(false));
     }
-    if (DOM.burnBtn)
+    if (DOM.burnBtn){
         DOM.burnBtn.addEventListener('click', burnTokens);
     }
        // Aprobación de gastos
