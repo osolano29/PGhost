@@ -624,7 +624,7 @@ function configureContractEventHandlers() {
   if ((isEventInABI(eventName) || eventName === 'error' || eventName === 'end') &&
       typeof eventFn === 'function') {
     try {     
-        console.log(`💡 REGISTRANDO evento ${eventName} y su handler:`, handler);
+        console.log(`💡 REGISTRANDO evento ${eventName} y su handler: ${eventName}`);
       const subscription = eventFn()
         .on('data', handler)
         .on('error', err => {
