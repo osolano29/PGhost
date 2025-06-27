@@ -624,7 +624,7 @@ function configureContractEventHandlers() {
       typeof eventFn === 'function') {
     try {
         console.log("💡 Eventos disponibles en contractEvents:", Object.keys(contractEvents.events || {}));
-        console.log(`💡 REGISTRANDO evento ${eventName} Y SU HANDLER: ${handler}`);
+        console.log("💡 REGISTRANDO evento ${eventName} Y SU HANDLER: ${handler}");
       const subscription = eventFn()
         .on('data', handler)
         .on('error', err => {
