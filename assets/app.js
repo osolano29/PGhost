@@ -1356,7 +1356,6 @@ function setupEventListeners() {
     if (reconnectBtn) {
         reconnectBtn.addEventListener('click', handleReconnect);
     }
-    
     // Manejadores de eventos de MetaMask - Versión mejorada
     if (window.ethereum) {
         // Desconexión
@@ -1388,8 +1387,7 @@ function setupEventListeners() {
             }
         });
     }
-    
-    DOM.refreshBalance.addEventListener('click', loadInitialData);
+    DOM.refreshBalance?.addEventListener('click', loadInitialData);
     
     // Copiar direcciones
     DOM.copyWalletAddress?.addEventListener('click', () => {
@@ -1429,17 +1427,20 @@ function setupEventListeners() {
     if (DOM.setAuxiliaryBtn) DOM.setAuxiliaryBtn.addEventListener('click', setAuxiliaryOwner);  //***
     if (DOM.claimOwnershipBtn) DOM.claimOwnershipBtn.addEventListener('click', claimOwnership);  //****
         // Recovery
-    if (DOM.approveRecoveryBtn) DOM.approveRecoveryBtn.addEventListener('click', approveRecovery);  //**
+    if (DOM.approveRecoveryBtn) DOM.approveRecoveryBtn.addEventListener('click', approveRecovery(true));  //**
     if (DOM.executeRecoveryBtn) DOM.executeRecoveryBtn.addEventListener('click', executeRecovery);  //**
 
-    DOM.burnBtn.addEventListener('click', burnTokens);   //****
-    if (DOM.pauseContractBtn) DOM.pauseContractBtn.addEventListener('click', () => togglePause(true));   //**
-    if (DOM.unpauseContractBtn) DOM.unpauseContractBtn.addEventListener('click', () => togglePause(false));  //**
+    DOM.burnBtn?.addEventListener('click', burnTokens);   //****
+    if (DOM.pauseContractBtn) DOM.pauseContractBtn.addEventListener('click', () => toggleContractPause(true));   //**
+    if (DOM.unpauseContractBtn) DOM.unpauseContractBtn.addEventListener('click', () => toggleContractPause(false));  //**
      if (DOM.pauseWalletBtn) {
         DOM.pauseWalletBtn.addEventListener('click', () => toggleWalletPause(true));
     }
     if (DOM.unpauseWalletBtn) {
         DOM.unpauseWalletBtn.addEventListener('click', () => toggleWalletPause(false));
+    }
+    if (DOM.burnBtn)
+        DOM.burnBtn.addEventListener('click', burnTokens);
     }
        // Aprobación de gastos
     if (DOM.estimateApprovalGas) {
