@@ -620,11 +620,11 @@ function configureContractEventHandlers() {
   Object.entries(potentialHandlers).forEach(([eventName, handler]) => {
   const eventFn = contractEvents.events?.[eventName];
 
+  console.log("💡 Eventos disponibles en contractEvents:", Object.keys(contractEvents.events || {}));
   if ((isEventInABI(eventName) || eventName === 'error' || eventName === 'end') &&
       typeof eventFn === 'function') {
-    try {
-        console.log("💡 Eventos disponibles en contractEvents:", Object.keys(contractEvents.events || {}));
-        console.log("💡 REGISTRANDO evento ${eventName} Y SU HANDLER: ${handler}");
+    try {     
+        console.log(`💡 REGISTRANDO evento ${eventName} y su handler:`, handler);
       const subscription = eventFn()
         .on('data', handler)
         .on('error', err => {
