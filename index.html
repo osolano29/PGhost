@@ -160,13 +160,13 @@
                         <span class="status-value" id="walletPausedStatus">-</span>
                     </div>
                 </div>
-                <div class="contract-address tooltip-element" id="contractAddressShort" title="Haz clic para copiar la dirección completa">
-                    <span class="address-label">Contrato:</span>
-                    <span class="address-value">0x...abcd</span>
-                    <button class="btn-copy persistent" id="copyContractAddress" title="Copiar dirección completa">
-                        <i class="far fa-copy"></i>
-                    </button>
-                </div>
+                <div class="contract-address-container">
+                     <span>Contrato:</span>
+                     <span id="contractAddressShort">0x...1234</span>
+                     <button id="copyContractAddress" class="btn-copy persistent">
+                          <i class="far fa-copy"></i>
+                     </button>
+                </div> 
             </div>
         </section>
 
@@ -715,98 +715,5 @@
     <script type="module" src="./assets/app.js"></script>
     <!-- Polyfill para navegadores antiguos -->
     <script nomodule src="https://cdn.jsdelivr.net/npm/es-module-shims@1.7.0/dist/es-module-shims.min.js"></script>
-
-    <!-- Script para manejo de gas, pestañas y copiado - De index_Funcional -->
-    <script>
-        // Manejo del panel de configuración de gas
-        document.querySelectorAll('.gas-config-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                document.getElementById('gasConfigPanel').style.display = 'block';
-                // Aquí se cargarían los valores actuales
-            });
-        });
-
-        document.getElementById('closeGasConfig').addEventListener('click', () => {
-            document.getElementById('gasConfigPanel').style.display = 'none';
-        });
-
-        // Manejo de botones de velocidad
-        document.querySelectorAll('.speed-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                document.querySelectorAll('.speed-btn').forEach(b => b.classList.remove('active'));
-                this.classList.add('active');
-                // Aquí se actualizaría el precio del gas según la velocidad seleccionada
-            });
-        });
-
-        // Aplicar configuración de gas
-        document.getElementById('applyGasConfig').addEventListener('click', () => {
-            const gasPrice = document.getElementById('customGasPrice').value;
-            const gasLimit = document.getElementById('customGasLimit').value;
-            const speed = document.querySelector('.speed-btn.active').dataset.speed;
-            
-            // Aquí se enviaría la configuración a app.js
-            console.log('Configuración de gas aplicada:', { gasPrice, gasLimit, speed });
-            
-            document.getElementById('gasConfigPanel').style.display = 'none';
-        });
-
-        // Copiar dirección de la wallet
-        document.getElementById('copyWalletAddress')?.addEventListener('click', () => {
-            const address = document.getElementById('walletAddress').textContent;
-            navigator.clipboard.writeText(address)
-                .then(() => {
-                    showCopyFeedback('¡Dirección copiada!');
-                })
-                .catch(err => {
-                    console.error('Error al copiar: ', err);
-                });
-        });
-
-        // Copiar dirección del contrato
-        document.getElementById('copyContractAddress')?.addEventListener('click', () => {
-            const address = document.getElementById('contractAddressShort').textContent;
-            navigator.clipboard.writeText(address)
-                .then(() => {
-                    showCopyFeedback('¡Contrato copiado!');
-                })
-                .catch(err => {
-                    console.error('Error al copiar: ', err);
-                });
-        });
-
-        // Función para mostrar feedback de copiado
-        function showCopyFeedback(message) {
-            const notification = document.createElement('div');
-            notification.className = 'address-copy-feedback';
-            notification.textContent = message;
-            document.body.appendChild(notification);
-            
-            setTimeout(() => {
-                document.body.removeChild(notification);
-            }, 2000);
-        }
-
-        // Manejo básico de pestañas
-        document.querySelectorAll('.tab-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const tabId = btn.getAttribute('data-tab');
-                
-                // Oculta todos los contenidos
-                document.querySelectorAll('.tab-content').forEach(content => {
-                    content.classList.remove('active');
-                });
-                
-                // Desactiva todos los botones
-                document.querySelectorAll('.tab-btn').forEach(tabBtn => {
-                    tabBtn.classList.remove('active');
-                });
-                
-                // Activa el seleccionado
-                document.getElementById(tabId).classList.add('active');
-                btn.classList.add('active');
-            });
-        });
-    </script>
 </body>
 </html>    
