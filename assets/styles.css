@@ -421,6 +421,30 @@ input[type="number"]:focus {
   color: var(--accent-color);
   transform: rotate(180deg); /* Efecto de giro al hacer hover */
 }
+/* Estilo para el botón de reconexión */
+#reconnectBtn {
+    margin-left: 10px;
+    background-color: #ff9800; /* Naranja para indicar acción requerida */
+    animation: pulse 2s infinite;
+}
+
+#reconnectBtn:hover {
+    background-color: #f57c00;
+}
+
+/* Animación de pulso para llamar la atención */
+@keyframes pulse {
+    0% { opacity: 1; }
+    50% { opacity: 0.7; }
+    100% { opacity: 1; }
+}
+
+/* Ajuste para el contenedor de estado */
+.connection-status-container {
+    display: flex;
+    align-items: center;
+    gap: 10px; /* Espacio uniforme entre elementos */
+}
 
 /* Estilos para botones de copiar y feedback */
 .btn-copy {
