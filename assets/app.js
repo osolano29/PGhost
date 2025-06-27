@@ -51,6 +51,66 @@ if (typeof document !== 'undefined') {
     initApp().catch(handleCSPError);
   });
 }
+// Función para mostrar/ocultar el botón de reconexión
+function toggleReconnectButton(show) {
+    const reconnectBtn = document.getElementById('reconnectBtn');
+    if (reconnectBtn) {
+        reconnectBtn.style.display = show ? 'block' : 'none';
+    }
+}
+// 1. Mantener la función handleReconnect separada (más limpia y reutilizable)
+async function handleReconnect() {
+    try {
+        updateConnectionStatus('reconnecting');
+        toggleReconnectButton(false);
+        utils.showLoader("Reconectando...");
+        
+        // 1. Cerrar conexiones existentes
+        if (contractEvents?.currentProvider?.disconnect) {
+            contractEvents.currentProvider.disconnect();
+        }
+        
+        // 2. Reintentar conexión completa
+        const success = await connectWallet();
+        
+        if (!success) {
+            throw new Error("No se pudo reconectar");
+        }
+        
+        showNotification("¡Reconexión exitosa!", "success");
+        return true;
+    } catch (error) {
+        console.error("Error en reconexión:", error);
+        handleError(error, "Error al reconectar");
+        toggleReconnectButton(true);
+        return false;
+    } finally {
+        utils.hideLoader();
+    }
+}
+function updateConnectionStatus(status) {
+    const statusElement = document.getElementById('networkStatus');
+    const statusText = document.getElementById('networkStatusText');
+    
+    if (!statusElement || !statusText) return;
+    
+    statusElement.className = 'connection-status-badge ' + status;
+    
+    switch(status) {
+        case 'connected':
+            statusText.textContent = shortAddress(userAddress);
+            toggleReconnectButton(false);
+            break;
+        case 'disconnected':
+            statusText.textContent = 'Desconectado';
+            toggleReconnectButton(true);
+            break;
+        case 'reconnecting':
+            statusText.textContent = 'Reconectando...';
+            toggleReconnectButton(false);
+            break;
+    }
+}
 
 // Elementos del DOM
 const DOM = {
@@ -246,7 +306,6 @@ function getWebSocketContract(config, networkId = "80002") {
         return null;
     }
 }
-
 
 const connectWallet = async () => {
     try {
@@ -566,6 +625,12 @@ function showNotification(message, type = "info") {
 
 function handleError(error, context = "") {
     console.error(context, error);
+    // Mostrar botón de reconexión para errores de conexión
+    if (error.message.includes("disconnected") || 
+        error.message.includes("reconnect") ||
+        error.message.includes("connection")) {
+        toggleReconnectButton(true);
+    }
     let message = error.message || "Error desconocido";
     
     // Simplificar mensajes de error de MetaMask
@@ -614,11 +679,6 @@ function updateRecoveryUI(recoveryData) {
         console.error("Error actualizando la UI de recuperación:", error);
     }
 }
-
-
-
-
-
         
 // ================ FUNCIONES DEL CONTRATO ================
 async function loadInitialData() {
@@ -1077,9 +1137,6 @@ async function approveTokens() {
     }
 }
 
-
-
-
 function validateMintInputs() {
     let isValid = true;
 
@@ -1186,7 +1243,6 @@ async function burnTokens() {
         hideLoader();
     }
 }
-
         
 function validateTransferInputs() {
     let isValid = true;
@@ -1213,8 +1269,6 @@ function validateTransferInputs() {
 }
 
 // ================ UTILIDADES ================
-
-
 function updateUI() {
     if (userAddress) {
         // Mantener siempre visible el botón de copiar contrato
@@ -1261,6 +1315,44 @@ function setupEventListeners() {
     // Desconexión
     if (DOM.disconnectBtn) {
         DOM.disconnectBtn.addEventListener('click', disconnectWallet);
+    }
+
+    // Botón de reconexión - Versión mejorada
+    const reconnectBtn = document.getElementById('reconnectBtn');
+    if (reconnectBtn) {
+        reconnectBtn.addEventListener('click', handleReconnect);
+    }
+    
+    // Manejadores de eventos de MetaMask - Versión mejorada
+    if (window.ethereum) {
+        // Desconexión
+        window.ethereum.on('disconnect', (error) => {
+            console.warn("Desconexión detectada:", error);
+            updateConnectionStatus('disconnected');
+            toggleReconnectButton(true);
+            showNotification("Conexión perdida. Por favor reconecta.", "error");
+        });
+        
+        // Cambio de red
+        window.ethereum.on('chainChanged', (chainId) => {
+            console.log("Cadena cambiada:", chainId);
+            if (chainId !== AMOY_CONFIG.chainId) {
+                showNotification("Red cambiada. Reconectando...", "warning");
+            }
+            handleReconnect();
+        });
+        
+        // Cuenta cambiada
+        window.ethereum.on('accountsChanged', (accounts) => {
+            console.log("Cuentas cambiadas:", accounts);
+            if (accounts.length === 0) {
+                showNotification("Wallet desconectada", "warning");
+                updateConnectionStatus('disconnected');
+                toggleReconnectButton(true);
+            } else {
+                handleReconnect();
+            }
+        });
     }
     
     DOM.refreshBalance.addEventListener('click', loadInitialData);
