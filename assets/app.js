@@ -618,21 +618,27 @@ function configureContractEventHandlers() {
   };
 
   Object.entries(potentialHandlers).forEach(([eventName, handler]) => {
-    if (isEventInABI(eventName) || eventName === 'error' || eventName === 'end') {
-      try {
-        console.error(`Emtrando a registrar el evento: ${eventName} y su handler: ${handler}`);
-        const subscription = contractEvents.events[eventName]()
-          .on('data', handler)
-          .on('error', err => {
-            console.error(`Error confi: en evento ${eventName}:`, err);
-            handleReconnect();
-          });
-        contractEventSubscriptions.push(subscription);
-      } catch (err) {
-        console.error(`Fallo al suscribirse a evento ${eventName}:`, err);
-      }
+  const eventFn = contractEvents.events?.[eventName];
+
+  if ((isEventInABI(eventName) || eventName === 'error' || eventName === 'end') &&
+      typeof eventFn === 'function') {
+    try {
+        console.log("💡 Eventos disponibles en contractEvents:", Object.keys(contractEvents.events || {}));
+        console.log(`💡 REGISTRANDO evento ${eventName} Y SU HANDLER: ${handler}`
+      const subscription = eventFn()
+        .on('data', handler)
+        .on('error', err => {
+          console.error(`Error en evento ${eventName}:`, err);
+          handleReconnect();
+        });
+      contractEventSubscriptions.push(subscription);
+    } catch (err) {
+      console.error(`Fallo al suscribirse a evento ${eventName}:`, err);
     }
-  });
+  } else {
+    console.warn(`⚠️ Evento '${eventName}' no disponible como función en contractEvents.events`);
+  }
+});
 }
 async function updateTokenBalance() {
     try {
