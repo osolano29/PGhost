@@ -111,6 +111,16 @@ function updateConnectionStatus(status) {
             break;
     }
 }
+async function checkConnection() {
+  try {
+    await web3.eth.net.isListening();
+    return true;
+  } catch (error) {
+    console.error("Error verificando conexión:", error);
+    updateConnectionStatus('disconnected');
+    return false;
+  }
+}
 
 // Elementos del DOM
 const DOM = {
@@ -237,18 +247,26 @@ const initApp = async () => {
 const detectProviderSafe = async () => {
   try {
     if (window.ethereum) {
-      // Si hay múltiples proveedores (como MetaMask + Brave)
+      // Agregar timeout para evitar esperas infinitas
+      const timeoutPromise = new Promise((_, reject) => 
+        setTimeout(() => reject(new Error("Timeout al detectar proveedor")), 5000)
+      );
+
+      // Si hay múltiples proveedores
       if (Array.isArray(window.ethereum.providers)) {
         const provider = window.ethereum.providers.find(p => p.isMetaMask) || window.ethereum;
-        await provider.request({ method: 'eth_chainId' }); // Validación de disponibilidad
+        await Promise.race([
+          provider.request({ method: 'eth_chainId' }),
+          timeoutPromise
+        ]);
         return provider;
       }
 
-      // Verificación básica de MetaMask
-      if (window.ethereum.isMetaMask) {
-        await window.ethereum.request({ method: 'eth_chainId' });
-      }
-
+      // Verificación con timeout
+      await Promise.race([
+        window.ethereum.request({ method: 'eth_chainId' }),
+        timeoutPromise
+      ]);
       return window.ethereum;
     }
 
@@ -257,16 +275,17 @@ const detectProviderSafe = async () => {
       return window.web3.currentProvider;
     }
 
-    // Si no hay provider, mostrar ayuda al usuario
     showMetaMaskModal();
     return null;
 
   } catch (error) {
-    const msg = error.message || "";
-    if (msg.includes("Content Security Policy")) {
-      showNotification("⚠️ Error de seguridad del navegador (CSP)", "error");
+    console.error("Error detectando proveedor:", error);
+    if (error.message.includes("Timeout")) {
+      showNotification("El proveedor no respondió a tiempo. Intente recargar la página.", "error");
+    } else if (error.message.includes("Content Security Policy")) {
+      showNotification("Error de seguridad del navegador (CSP)", "error");
     } else {
-      handleError(error, "Error detectando proveedor Web3");
+      showNotification("Error al conectar con el proveedor Web3", "error");
     }
     return null;
   }
@@ -288,80 +307,105 @@ const isBrowserCompatible = () => {
 
 //*********
 function getWebSocketContract(config, networkId = "80002") {
-    try {
-        const wssUrl = "wss://rpc-amoy.polygon.technology"; // Cambia si usas otra red
-        const provider = new Web3.providers.WebsocketProvider(wssUrl);
-        const web3Events = new Web3(provider);
+  try {
+    const wssUrl = "wss://rpc-amoy.polygon.technology";
+    
+    // Configurar reconexión automática
+    const providerOptions = {
+      reconnect: {
+        auto: true,
+        delay: 5000, // ms
+        maxAttempts: 5,
+        onTimeout: false
+      }
+    };
+    
+    const provider = new Web3.providers.WebsocketProvider(wssUrl, providerOptions);
+    const web3Events = new Web3(provider);
 
-        if (!config || !config.abi || !config.networks || !config.networks[networkId]) {
-            throw new Error(`Configuración de contrato inválida para red ${networkId}`);
-        }
+    // Manejar eventos de conexión/desconexión
+    provider.on('connect', () => console.log("WebSocket conectado"));
+    provider.on('close', () => console.log("WebSocket desconectado"));
+    provider.on('error', (err) => console.error("Error WebSocket:", err));
 
-        const address = config.networks[networkId].address;
-        const contract = new web3Events.eth.Contract(config.abi, address);
-
-        return contract; // ← este sí tiene .on()
-    } catch (error) {
-        console.error("Error al crear contrato WebSocket:", error);
-        return null;
+    if (!config || !config.abi || !config.networks || !config.networks[networkId]) {
+      throw new Error(`Configuración de contrato inválida para red ${networkId}`);
     }
+
+    const address = config.networks[networkId].address;
+    const contract = new web3Events.eth.Contract(config.abi, address);
+
+    return contract;
+  } catch (error) {
+    console.error("Error al crear contrato WebSocket:", error);
+    return null;
+  }
 }
 
-const connectWallet = async () => {
+async function withRetry(fn, maxRetries = 3, delay = 1000) {
+  let lastError;
+  
+  for (let i = 0; i < maxRetries; i++) {
     try {
-        utils.showLoader("Conectando wallet...");
-
-        console.log("connectWallet: Detectando provider "); //***
-        const provider = await detectProviderSafe();
-        if (!provider) return false;
-
-        // Inicialización segura de Web3
-        console.log("connectWallet: Iniciando Web3");
-        web3 = new Web3(provider);
-
-        // Solicita cuentas de forma moderna (EIP-1102)
-        const accounts = await provider.request({ 
-            method: 'eth_requestAccounts',
-            params: [{ eth_chainId: AMOY_CONFIG.chainId }]
-        }).catch(handleCSPError);
-
-        if (!accounts || accounts.length === 0) {
-            throw new Error("No se encontraron cuentas");
-        }
-
-        userAddress = accounts[0];
-
-        console.log("connectWallet: Levantando la red");
-        await setupNetwork();
-
-        console.log("connectWallet: Inicia el contrato");
-        await initContractSafe();
-
-        // 🔁 NUEVO: Instancia contrato para eventos por WebSocket
-        contractEvents = getWebSocketContract(CONTRACT_CONFIG);
-        if (contractEvents && typeof configureContractEventHandlers === 'function') {
-            configureContractEventHandlers();
-        } else {
-            console.warn("No se pudo configurar eventos del contrato.");
-        }
-
-        console.log("connectWallet: Leer datos iniciales");
-        await loadInitialData();
-
-        console.log("connectWallet: Actualiza UI");
-        updateUI();
-
-        showNotification("¡Conectado correctamente!", "success");
-        return true;
-
+      return await fn();
     } catch (error) {
-        handleCSPError(error);
-        return false;
-    } finally {
-        utils.hideLoader();
+      lastError = error;
+      console.warn(`Intento ${i + 1} fallido. Reintentando...`, error);
+      
+      // Esperar antes del próximo intento (con backoff exponencial)
+      await new Promise(resolve => setTimeout(resolve, delay * (i + 1)));
+      
+      // Verificar si es un error de conexión
+      if (error.message.includes("reconnect") || error.message.includes("connection")) {
+        continue;
+      }
+      break;
     }
-};
+  }
+  
+  throw lastError;
+}
 
+// Ejemplo de uso en connectWallet:
+const connectWallet = async () => {
+  try {
+    utils.showLoader("Conectando wallet...");
+    
+    return await withRetry(async () => {
+      const provider = await detectProviderSafe();
+      if (!provider) return false;
+
+      web3 = new Web3(provider);
+      const accounts = await provider.request({ 
+        method: 'eth_requestAccounts',
+        params: [{ eth_chainId: AMOY_CONFIG.chainId }]
+      });
+
+      if (!accounts || accounts.length === 0) {
+        throw new Error("No se encontraron cuentas");
+      }
+
+      userAddress = accounts[0];
+      await setupNetwork();
+      await initContractSafe();
+
+      contractEvents = getWebSocketContract(CONTRACT_CONFIG);
+      if (contractEvents) {
+        configureContractEventHandlers();
+      }
+
+      await loadInitialData();
+      updateUI();
+      showNotification("¡Conectado correctamente!", "success");
+      return true;
+    });
+  } catch (error) {
+    handleCSPError(error);
+    return false;
+  } finally {
+    utils.hideLoader();
+  }
+};
 
 // ====== NUEVA FUNCIÓN DISCONNECT WALLET ======
 async function disconnectWallet() {
@@ -525,43 +569,58 @@ function isEventInABI(eventName) {
 }
 
 function configureContractEventHandlers() {
-    if (!contractEvents || typeof contractEvents.events !== 'object') {
-        console.error("contractEvents no es válido o no tiene eventos.");
-        return;
+  if (!contractEvents || typeof contractEvents.events !== 'object') {
+    console.error("contractEvents no es válido o no tiene eventos.");
+    return;
+  }
+  
+  clearEventSubscriptions();
+  
+  const handleReconnect = () => {
+    console.log("Reconectando eventos...");
+    setTimeout(() => {
+      if (contractEvents) {
+        configureContractEventHandlers();
+      }
+    }, 5000);
+  };
+
+  const potentialHandlers = {
+    'Transfer': (event) => {
+      if (event.returnValues.from === userAddress || 
+          event.returnValues.to === userAddress) {
+        updateTokenBalance();
+      }
+    },
+    'Approval': (event) => {
+      console.log("Evento Approval:", event);
+    },
+    'error': (error) => {
+      console.error("Error en conexión de eventos:", error);
+      handleReconnect();
+    },
+    'end': () => {
+      console.log("Conexión de eventos terminada");
+      handleReconnect();
     }
-    clearEventSubscriptions;
-    const potentialHandlers = {
-        'Transfer': (event) => {
-            console.log("Evento Transfer:", event);
-            if (event.returnValues.from === userAddress || 
-                event.returnValues.to === userAddress) {
-                updateTokenBalance();
-            }
-        },
-        'Approval': (event) => {
-            console.log("Evento Approval:", event);
-        }
-    };
+  };
 
-    Object.entries(potentialHandlers).forEach(([eventName, handler]) => {
-        if (isEventInABI(eventName)) {
-            try {
-                const subscription = contractEvents.events[eventName]()
-                    .on('data', handler)
-                    .on('error', err => {
-                        console.error(`Error en evento ${eventName}:`, err);
-                    });
-                contractEventSubscriptions.push(subscription);
-                console.error(`EVENTO inscrito: ${eventName}`);
-            } catch (err) {
-                console.error(`Fallo al suscribirse a evento ${eventName}:`, err);
-            }
-        } else {
-            console.warn(`Evento '${eventName}' no está en el ABI. Omitido.`);
-        }
-    });
+  Object.entries(potentialHandlers).forEach(([eventName, handler]) => {
+    if (isEventInABI(eventName) || eventName === 'error' || eventName === 'end') {
+      try {
+        const subscription = contractEvents.events[eventName]()
+          .on('data', handler)
+          .on('error', err => {
+            console.error(`Error en evento ${eventName}:`, err);
+            handleReconnect();
+          });
+        contractEventSubscriptions.push(subscription);
+      } catch (err) {
+        console.error(`Fallo al suscribirse a evento ${eventName}:`, err);
+      }
+    }
+  });
 }
-
 async function updateTokenBalance() {
     try {
         if (!contract || !userAddress) return;
