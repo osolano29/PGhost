@@ -4,6 +4,7 @@ import { CONTRACT_CONFIG, getContractConfigSafe, AMOY_CONFIG } from './ghost-tok
 // Variables globales
 let web3, contract, contractEvents = null, userAddress, isOwner = false, isAuxiliary = false;
 let contractEventSubscriptions = [];
+const decimals = 18;
 
 // ================ UTILIDADES ================
 // Añadir al inicio del archivo
@@ -36,7 +37,8 @@ function toWei(amount) {
 function fromWei(amount) {
   try {
     const value = web3.utils.fromWei(amount.toString(), 'ether');
-    return parseFloat(value).toFixed(decimals).replace(/\.?0+$/, '');
+    const decimalsToUse = typeof decimals !== 'undefined' ? decimals : 18;
+    return parseFloat(value).toFixed(decimalsToUse).replace(/\.?0+$/, '');
   } catch (e) {
     console.error("Error en fromWei:", e);
     return '0';
@@ -209,6 +211,7 @@ const DOM = {
     estimateApproveRecoveryGas: document.getElementById('estimateApproveRecoveryGas'),
     executeRecoveryBtn: document.getElementById('executeRecoveryBtn'),
     estimateExecuteRecoveryGas: document.getElementById('estimateExecuteRecoveryGas'),
+    
     recoveryNominee: document.getElementById('recoveryNominee'),
     recoveryDeadline: document.getElementById('recoveryDeadline'),
     recoveryApproved: document.getElementById('recoveryApproved'),
@@ -697,6 +700,10 @@ const handleCSPError = (error) => {
 };
 
 function updateRecoveryUI(recoveryData) {
+    if (!DOM.recoveryNominee || !DOM.recoveryStatus || !DOM.recoveryCountdown) {
+       console.warn("⚠️ Elementos del DOM de recuperación no encontrados");
+       return;
+    }
     try {
         // Desestructurar con fallback si es objeto plano
         const data = Array.isArray(recoveryData) ? recoveryData : Object.values(recoveryData || {});
@@ -705,15 +712,19 @@ function updateRecoveryUI(recoveryData) {
         const isActive = nominee !== '0x0000000000000000000000000000000000000000';
 
         DOM.recoveryNominee.textContent = isActive ? shortAddress(nominee) : "No asignado";
-        DOM.recoveryStatus.textContent = approved ? "✅ Aprobado" : (isActive ? "🕓 Pendiente" : "—");
+        const deadlineDate = new Date(parseInt(deadline, 10) * 1000); // milisegundos
+        DOM.recoveryDeadline.textContent = deadlineDate.toLocaleString(); // Muestra como "27/6/2025, 14:00:00"
+        DOM.recoveryApproved.textContent = approved ? "✅ Aprobado" : (isActive ? "🕓 Pendiente" : "—");
         
         const seconds = parseInt(remainingTime, 10);
         if (seconds > 0) {
             const hours = Math.floor(seconds / 3600);
             const minutes = Math.floor((seconds % 3600) / 60);
-            DOM.recoveryCountdown.textContent = `${hours}h ${minutes}m restantes`;
+            //DOM.recoveryCountdown.textContent = `${hours}h ${minutes}m restantes`;
+            DOM.recoveryRemainingTime.textContent = `${hours}h ${minutes}m restantes`;
         } else {
-            DOM.recoveryCountdown.textContent = approved ? "Proceso finalizado" : "Expirado o inactivo";
+            //DOM.recoveryCountdown.textContent = approved ? "Proceso finalizado" : "Expirado o inactivo";
+            DOM.recoveryRemainingTime.textContent = approved ? "Proceso finalizado" : "Expirado o inactivo";
         }
     } catch (error) {
         console.error("Error actualizando la UI de recuperación:", error);
@@ -744,7 +755,7 @@ async function loadInitialData() {
         DOM.contractStatus.textContent = paused ? '⛔ PAUSADO' : '✅ Activo';
         DOM.walletStatusIndicator.textContent = walletPaused ? '⛔ PAUSADA' : '✅ Activa';
         DOM.auxiliaryAddress.textContent = auxiliary === '0x0000000000000000000000000000000000000000' ? 
-            'No asignado' : utils.shortAddress(auxiliary);
+            'No asignado' : shortAddress(auxiliary);
         // Verificación de roles segura
         const owner = await contract.methods.owner().call();
         isOwner = userAddress.toLowerCase() === owner.toLowerCase();
