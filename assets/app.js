@@ -393,9 +393,13 @@ const connectWallet = async () => {
       if (contractEvents) {
         configureContractEventHandlers();
       }
-
+      if (DOM.copyContractAddress) {
+         DOM.copyContractAddress.style.display = 'inline-block';
+         DOM.copyContractAddress.classList.add('persistent');
+      }
       await loadInitialData();
       updateUI();
+        
       showNotification("¡Conectado correctamente!", "success");
       return true;
     });
@@ -776,6 +780,7 @@ async function loadInitialData() {
         // Asegurar que el botón de copiar está visible
         if (DOM.copyContractAddress) {
             DOM.copyContractAddress.style.display = 'inline-block';
+            DOM.copyContractAddress.classList.add('persistent');  //lo puse yo
         }
     } catch (error) {
         handleError(error, "Error cargando datos iniciales");
