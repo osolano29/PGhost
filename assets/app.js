@@ -27,12 +27,20 @@ const utils = {
     },*/
 };
 function toWei(amount) {
-    return web3.utils.toWei(amount.toString(), 'ether');
+  if (amount === null || amount === undefined || amount === '' || isNaN(amount)) {
+    throw new Error("Cantidad inválida para conversión a wei");
+  }
+  return web3.utils.toWei(amount.toString(), 'ether');
 }
 
 function fromWei(amount) {
-    //return web3.utils.fromWei(amount.toString(), 'ether');
-    return parseFloat(web3.utils.fromWei(amount.toString(), 'ether'));
+  try {
+    const value = web3.utils.fromWei(amount.toString(), 'ether');
+    return parseFloat(value).toFixed(decimals).replace(/\.?0+$/, '');
+  } catch (e) {
+    console.error("Error en fromWei:", e);
+    return '0';
+  }
 }
 
 function shortAddress(address) {
@@ -635,44 +643,6 @@ async function updateTokenBalance() {
         console.error("Error actualizando balance:", error);
     }
 }
-
-/* function configureContractEventHandlers() {
-    if (!contract || !contract.events) {
-        console.warn("El contrato no está listo para suscribir eventos");
-        return;
-    }
-    
-    clearEventSubscriptions();
-
-    const eventHandlers = {
-        'Transfer': (event) => {
-            console.log("Evento Transfer:", event);
-            if (utils.compareAddresses(event.returnValues.from, userAddress) || 
-                utils.compareAddresses(event.returnValues.to, userAddress)) {
-                updateTokenBalance();
-            }
-        },
-        'Approval': (event) => {
-            console.log("Evento Approval:", event);
-        }
-    };
-
-    Object.keys(eventHandlers).forEach(eventName => {
-        try {
-            const subscription = contract.events[eventName]({
-                fromBlock: 'latest'
-            })
-            .on('data', eventHandlers[eventName])
-            .on('error', err => {
-                console.error(`Error en evento ${eventName}:`, err);
-            });
-            
-            contractEventSubscriptions.push(subscription);
-        } catch (error) {
-            console.error(`Error suscribiendo al evento ${eventName}:`, error);
-        }
-    });
-} */
 
 function showNotification(message, type = "info") {
     if (!DOM.notification || !DOM.notificationMessage) return;
