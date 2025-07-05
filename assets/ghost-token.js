@@ -2,49 +2,17 @@ const FULL_ABI = [
 	{
 		"inputs": [
 			{
-				"internalType": "address",
-				"name": "spender",
-				"type": "address"
+				"internalType": "uint256[]",
+				"name": "tokenIds",
+				"type": "uint256[]"
 			},
 			{
-				"internalType": "uint256",
-				"name": "amount",
-				"type": "uint256"
+				"internalType": "uint256[]",
+				"name": "amounts",
+				"type": "uint256[]"
 			}
 		],
-		"name": "approve",
-		"outputs": [
-			{
-				"internalType": "bool",
-				"name": "",
-				"type": "bool"
-			}
-		],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "bool",
-				"name": "_shouldApprove",
-				"type": "bool"
-			}
-		],
-		"name": "approveRecovery",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "uint256",
-				"name": "amount",
-				"type": "uint256"
-			}
-		],
-		"name": "burn",
+		"name": "burnBatch",
 		"outputs": [],
 		"stateMutability": "nonpayable",
 		"type": "function"
@@ -53,62 +21,16 @@ const FULL_ABI = [
 		"inputs": [
 			{
 				"internalType": "address",
-				"name": "account",
+				"name": "_primaryWallet",
 				"type": "address"
-			},
-			{
-				"internalType": "uint256",
-				"name": "amount",
-				"type": "uint256"
-			}
-		],
-		"name": "burnFrom",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "claimOwnershipFromAuxiliary",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "string",
-				"name": "tokenName",
-				"type": "string"
-			},
-			{
-				"internalType": "string",
-				"name": "tokenSymbol",
-				"type": "string"
 			}
 		],
 		"stateMutability": "nonpayable",
 		"type": "constructor"
 	},
 	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "spender",
-				"type": "address"
-			},
-			{
-				"internalType": "uint256",
-				"name": "allowance",
-				"type": "uint256"
-			},
-			{
-				"internalType": "uint256",
-				"name": "needed",
-				"type": "uint256"
-			}
-		],
-		"name": "ERC20InsufficientAllowance",
+		"inputs": [],
+		"name": "CannotUnauthorizeOwner",
 		"type": "error"
 	},
 	{
@@ -127,9 +49,14 @@ const FULL_ABI = [
 				"internalType": "uint256",
 				"name": "needed",
 				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
 			}
 		],
-		"name": "ERC20InsufficientBalance",
+		"name": "ERC1155InsufficientBalance",
 		"type": "error"
 	},
 	{
@@ -140,7 +67,34 @@ const FULL_ABI = [
 				"type": "address"
 			}
 		],
-		"name": "ERC20InvalidApprover",
+		"name": "ERC1155InvalidApprover",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "idsLength",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "valuesLength",
+				"type": "uint256"
+			}
+		],
+		"name": "ERC1155InvalidArrayLength",
+		"type": "error"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "operator",
+				"type": "address"
+			}
+		],
+		"name": "ERC1155InvalidOperator",
 		"type": "error"
 	},
 	{
@@ -151,7 +105,7 @@ const FULL_ABI = [
 				"type": "address"
 			}
 		],
-		"name": "ERC20InvalidReceiver",
+		"name": "ERC1155InvalidReceiver",
 		"type": "error"
 	},
 	{
@@ -162,18 +116,53 @@ const FULL_ABI = [
 				"type": "address"
 			}
 		],
-		"name": "ERC20InvalidSender",
+		"name": "ERC1155InvalidSender",
 		"type": "error"
 	},
 	{
 		"inputs": [
 			{
 				"internalType": "address",
-				"name": "spender",
+				"name": "operator",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "owner",
 				"type": "address"
 			}
 		],
-		"name": "ERC20InvalidSpender",
+		"name": "ERC1155MissingApprovalForAll",
+		"type": "error"
+	},
+	{
+		"inputs": [],
+		"name": "ExceedsMaxMint",
+		"type": "error"
+	},
+	{
+		"inputs": [],
+		"name": "ExceedsMaxSupply",
+		"type": "error"
+	},
+	{
+		"inputs": [],
+		"name": "FundingPaused",
+		"type": "error"
+	},
+	{
+		"inputs": [],
+		"name": "InvalidAddress",
+		"type": "error"
+	},
+	{
+		"inputs": [],
+		"name": "InvalidAmount",
+		"type": "error"
+	},
+	{
+		"inputs": [],
+		"name": "InvalidWithdrawAddress",
 		"type": "error"
 	},
 	{
@@ -199,29 +188,29 @@ const FULL_ABI = [
 		"type": "error"
 	},
 	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": true,
-				"internalType": "address",
-				"name": "owner",
-				"type": "address"
-			},
-			{
-				"indexed": true,
-				"internalType": "address",
-				"name": "spender",
-				"type": "address"
-			},
-			{
-				"indexed": false,
-				"internalType": "uint256",
-				"name": "value",
-				"type": "uint256"
-			}
-		],
-		"name": "Approval",
-		"type": "event"
+		"inputs": [],
+		"name": "RewardAlreadyClaimed",
+		"type": "error"
+	},
+	{
+		"inputs": [],
+		"name": "TokenDoesNotExist",
+		"type": "error"
+	},
+	{
+		"inputs": [],
+		"name": "TransferFailed",
+		"type": "error"
+	},
+	{
+		"inputs": [],
+		"name": "Unauthorized",
+		"type": "error"
+	},
+	{
+		"inputs": [],
+		"name": "WithdrawAddressSameAsCurrent",
+		"type": "error"
 	},
 	{
 		"anonymous": false,
@@ -229,17 +218,23 @@ const FULL_ABI = [
 			{
 				"indexed": true,
 				"internalType": "address",
-				"name": "oldAuxiliary",
+				"name": "account",
 				"type": "address"
 			},
 			{
 				"indexed": true,
 				"internalType": "address",
-				"name": "newAuxiliary",
+				"name": "operator",
 				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "bool",
+				"name": "approved",
+				"type": "bool"
 			}
 		],
-		"name": "AuxiliaryOwnerSet",
+		"name": "ApprovalForAll",
 		"type": "event"
 	},
 	{
@@ -252,86 +247,30 @@ const FULL_ABI = [
 				"type": "address"
 			},
 			{
-				"indexed": false,
-				"internalType": "uint256",
-				"name": "amount",
-				"type": "uint256"
-			}
-		],
-		"name": "Burn",
-		"type": "event"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
 				"indexed": true,
 				"internalType": "address",
-				"name": "contractAddress",
+				"name": "to",
 				"type": "address"
 			},
 			{
 				"indexed": false,
-				"internalType": "bool",
-				"name": "allowed",
-				"type": "bool"
+				"internalType": "uint256[]",
+				"name": "ids",
+				"type": "uint256[]"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256[]",
+				"name": "amounts",
+				"type": "uint256[]"
 			}
 		],
-		"name": "ContractAllowed",
-		"type": "event"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": false,
-				"internalType": "address",
-				"name": "caller",
-				"type": "address"
-			},
-			{
-				"indexed": false,
-				"internalType": "bool",
-				"name": "isOwner",
-				"type": "bool"
-			},
-			{
-				"indexed": false,
-				"internalType": "bool",
-				"name": "isContractCall",
-				"type": "bool"
-			},
-			{
-				"indexed": false,
-				"internalType": "bool",
-				"name": "isAllowedContract",
-				"type": "bool"
-			}
-		],
-		"name": "DebugMintAccess",
+		"name": "BatchTransferred",
 		"type": "event"
 	},
 	{
 		"inputs": [],
-		"name": "executeRecovery",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "to",
-				"type": "address"
-			},
-			{
-				"internalType": "uint256",
-				"name": "amount",
-				"type": "uint256"
-			}
-		],
-		"name": "mint",
+		"name": "claimMyGhostRewards",
 		"outputs": [],
 		"stateMutability": "nonpayable",
 		"type": "function"
@@ -340,9 +279,98 @@ const FULL_ABI = [
 		"anonymous": false,
 		"inputs": [
 			{
+				"indexed": false,
+				"internalType": "string",
+				"name": "mensaje",
+				"type": "string"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "goToUsdRate",
+				"type": "uint256"
+			}
+		],
+		"name": "ConversionGoRateUpdated",
+		"type": "event"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "amount",
+				"type": "uint256"
+			}
+		],
+		"name": "depositTokenGo",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "bool",
+				"name": "active",
+				"type": "bool"
+			}
+		],
+		"name": "FundingStatusChanged",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
 				"indexed": true,
 				"internalType": "address",
-				"name": "to",
+				"name": "wallet",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "amount",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "timestamp",
+				"type": "uint256"
+			}
+		],
+		"name": "FundsWithdrawn",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "recipient",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "totalAmount",
+				"type": "uint256"
+			}
+		],
+		"name": "GhostRewardsClaimed",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "recipient",
 				"type": "address"
 			},
 			{
@@ -352,7 +380,33 @@ const FULL_ABI = [
 				"type": "uint256"
 			}
 		],
-		"name": "Mint",
+		"name": "GhostRewardsGranted",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "bool",
+				"name": "active",
+				"type": "bool"
+			}
+		],
+		"name": "GhostRewardsToggled",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "uint256[]",
+				"name": "rewards",
+				"type": "uint256[]"
+			}
+		],
+		"name": "GhostRewardsUpdated",
 		"type": "event"
 	},
 	{
@@ -361,17 +415,30 @@ const FULL_ABI = [
 			{
 				"indexed": true,
 				"internalType": "address",
-				"name": "previousOwner",
-				"type": "address"
-			},
-			{
-				"indexed": true,
-				"internalType": "address",
-				"name": "newOwner",
+				"name": "newAddress",
 				"type": "address"
 			}
 		],
-		"name": "OwnershipClaimedByAuxiliary",
+		"name": "GhostTokenAddressUpdated",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "nftType",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "string",
+				"name": "newUri",
+				"type": "string"
+			}
+		],
+		"name": "NFTTypeURIUpdated",
 		"type": "event"
 	},
 	{
@@ -404,6 +471,25 @@ const FULL_ABI = [
 		"anonymous": false,
 		"inputs": [
 			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "recipient",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "amount",
+				"type": "uint256"
+			}
+		],
+		"name": "POLWithdrawn",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
 				"indexed": false,
 				"internalType": "address",
 				"name": "account",
@@ -414,61 +500,16 @@ const FULL_ABI = [
 		"type": "event"
 	},
 	{
-		"inputs": [],
-		"name": "pauseMyWallet",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
 		"anonymous": false,
 		"inputs": [
-			{
-				"indexed": true,
-				"internalType": "address",
-				"name": "owner",
-				"type": "address"
-			},
-			{
-				"indexed": false,
-				"internalType": "bool",
-				"name": "approved",
-				"type": "bool"
-			}
-		],
-		"name": "RecoveryApproval",
-		"type": "event"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": true,
-				"internalType": "address",
-				"name": "recoveredOwner",
-				"type": "address"
-			}
-		],
-		"name": "RecoveryExecuted",
-		"type": "event"
-	},
-	{
-		"anonymous": false,
-		"inputs": [
-			{
-				"indexed": true,
-				"internalType": "address",
-				"name": "nominee",
-				"type": "address"
-			},
 			{
 				"indexed": false,
 				"internalType": "uint256",
-				"name": "deadline",
+				"name": "newRate",
 				"type": "uint256"
 			}
 		],
-		"name": "RecoveryNomination",
+		"name": "PolConversionRateUpdated",
 		"type": "event"
 	},
 	{
@@ -481,17 +522,83 @@ const FULL_ABI = [
 	{
 		"inputs": [
 			{
+				"internalType": "uint256",
+				"name": "amount",
+				"type": "uint256"
+			}
+		],
+		"name": "RetiraGhostTokens",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "amount",
+				"type": "uint256"
+			}
+		],
+		"name": "RetiraPolTokens",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "string",
+				"name": "token",
+				"type": "string"
+			},
+			{
+				"indexed": true,
 				"internalType": "address",
-				"name": "contractAddress",
+				"name": "wallet",
 				"type": "address"
 			},
 			{
-				"internalType": "bool",
-				"name": "allowed",
-				"type": "bool"
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "amount",
+				"type": "uint256"
 			}
 		],
-		"name": "setAllowedContract",
+		"name": "RetiroDeGo",
+		"type": "event"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "from",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "to",
+				"type": "address"
+			},
+			{
+				"internalType": "uint256[]",
+				"name": "ids",
+				"type": "uint256[]"
+			},
+			{
+				"internalType": "uint256[]",
+				"name": "values",
+				"type": "uint256[]"
+			},
+			{
+				"internalType": "bytes",
+				"name": "data",
+				"type": "bytes"
+			}
+		],
+		"name": "safeBatchTransferFrom",
 		"outputs": [],
 		"stateMutability": "nonpayable",
 		"type": "function"
@@ -500,17 +607,9 @@ const FULL_ABI = [
 		"inputs": [
 			{
 				"internalType": "address",
-				"name": "newAuxiliaryOwner",
+				"name": "from",
 				"type": "address"
-			}
-		],
-		"name": "setAuxiliaryOwner",
-		"outputs": [],
-		"stateMutability": "nonpayable",
-		"type": "function"
-	},
-	{
-		"inputs": [
+			},
 			{
 				"internalType": "address",
 				"name": "to",
@@ -518,20 +617,151 @@ const FULL_ABI = [
 			},
 			{
 				"internalType": "uint256",
-				"name": "amount",
+				"name": "id",
 				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "value",
+				"type": "uint256"
+			},
+			{
+				"internalType": "bytes",
+				"name": "data",
+				"type": "bytes"
 			}
 		],
-		"name": "transfer",
-		"outputs": [
+		"name": "safeTransferFrom",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "operator",
+				"type": "address"
+			},
 			{
 				"internalType": "bool",
-				"name": "",
+				"name": "approved",
 				"type": "bool"
 			}
 		],
+		"name": "setApprovalForAll",
+		"outputs": [],
 		"stateMutability": "nonpayable",
 		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "bool",
+				"name": "active",
+				"type": "bool"
+			}
+		],
+		"name": "setFundingActive",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "newAddress",
+				"type": "address"
+			}
+		],
+		"name": "setGhostTokenAddress",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "goRate",
+				"type": "uint256"
+			}
+		],
+		"name": "setGoConvertRates",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "rate",
+				"type": "uint256"
+			}
+		],
+		"name": "setPolConversionRate",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address payable",
+				"name": "newWallet",
+				"type": "address"
+			}
+		],
+		"name": "setWithdrawWallet",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "bool",
+				"name": "active",
+				"type": "bool"
+			}
+		],
+		"name": "toggleGhostRewards",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "string",
+				"name": "token",
+				"type": "string"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "sender",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "amount",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "amountInUsd",
+				"type": "uint256"
+			}
+		],
+		"name": "TokenGoDeposited",
+		"type": "event"
 	},
 	{
 		"anonymous": false,
@@ -551,41 +781,111 @@ const FULL_ABI = [
 			{
 				"indexed": false,
 				"internalType": "uint256",
-				"name": "value",
+				"name": "id",
 				"type": "uint256"
-			}
-		],
-		"name": "Transfer",
-		"type": "event"
-	},
-	{
-		"inputs": [
-			{
-				"internalType": "address",
-				"name": "from",
-				"type": "address"
 			},
 			{
-				"internalType": "address",
-				"name": "to",
-				"type": "address"
-			},
-			{
+				"indexed": false,
 				"internalType": "uint256",
 				"name": "amount",
 				"type": "uint256"
 			}
 		],
-		"name": "transferFrom",
-		"outputs": [
+		"name": "TokenTransferred",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
 			{
-				"internalType": "bool",
-				"name": "",
-				"type": "bool"
+				"indexed": true,
+				"internalType": "address",
+				"name": "burner",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256[]",
+				"name": "tokenIds",
+				"type": "uint256[]"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256[]",
+				"name": "amounts",
+				"type": "uint256[]"
 			}
 		],
-		"stateMutability": "nonpayable",
-		"type": "function"
+		"name": "TokensBurned",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "recipient",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256[]",
+				"name": "tokenIds",
+				"type": "uint256[]"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256[]",
+				"name": "amounts",
+				"type": "uint256[]"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "totalPaid",
+				"type": "uint256"
+			}
+		],
+		"name": "TokensMinted",
+		"type": "event"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "operator",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "from",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "to",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256[]",
+				"name": "ids",
+				"type": "uint256[]"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256[]",
+				"name": "values",
+				"type": "uint256[]"
+			}
+		],
+		"name": "TransferBatch",
+		"type": "event"
 	},
 	{
 		"inputs": [
@@ -601,11 +901,67 @@ const FULL_ABI = [
 		"type": "function"
 	},
 	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "operator",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "from",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "to",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "id",
+				"type": "uint256"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "value",
+				"type": "uint256"
+			}
+		],
+		"name": "TransferSingle",
+		"type": "event"
+	},
+	{
 		"inputs": [],
 		"name": "unpause",
 		"outputs": [],
 		"stateMutability": "nonpayable",
 		"type": "function"
+	},
+	{
+		"anonymous": false,
+		"inputs": [
+			{
+				"indexed": false,
+				"internalType": "string",
+				"name": "value",
+				"type": "string"
+			},
+			{
+				"indexed": true,
+				"internalType": "uint256",
+				"name": "id",
+				"type": "uint256"
+			}
+		],
+		"name": "URI",
+		"type": "event"
 	},
 	{
 		"anonymous": false,
@@ -621,8 +977,50 @@ const FULL_ABI = [
 		"type": "event"
 	},
 	{
-		"inputs": [],
-		"name": "unpauseMyWallet",
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "wallet",
+				"type": "address"
+			},
+			{
+				"internalType": "bool",
+				"name": "authorized",
+				"type": "bool"
+			}
+		],
+		"name": "updateAuthorizedWallet",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256[]",
+				"name": "rewards",
+				"type": "uint256[]"
+			}
+		],
+		"name": "updateGhostRewards",
+		"outputs": [],
+		"stateMutability": "nonpayable",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "nftType",
+				"type": "uint256"
+			},
+			{
+				"internalType": "string",
+				"name": "newUri",
+				"type": "string"
+			}
+		],
+		"name": "updateTypeURI",
 		"outputs": [],
 		"stateMutability": "nonpayable",
 		"type": "function"
@@ -631,13 +1029,19 @@ const FULL_ABI = [
 		"anonymous": false,
 		"inputs": [
 			{
-				"indexed": true,
+				"indexed": false,
 				"internalType": "address",
 				"name": "wallet",
 				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "bool",
+				"name": "authorized",
+				"type": "bool"
 			}
 		],
-		"name": "WalletPaused",
+		"name": "WalletAuthorized",
 		"type": "event"
 	},
 	{
@@ -646,45 +1050,49 @@ const FULL_ABI = [
 			{
 				"indexed": true,
 				"internalType": "address",
-				"name": "wallet",
+				"name": "previousWallet",
 				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "newWallet",
+				"type": "address"
+			},
+			{
+				"indexed": true,
+				"internalType": "address",
+				"name": "changedBy",
+				"type": "address"
+			},
+			{
+				"indexed": false,
+				"internalType": "uint256",
+				"name": "timestamp",
+				"type": "uint256"
 			}
 		],
-		"name": "WalletUnpaused",
+		"name": "WithdrawWalletUpdated",
 		"type": "event"
+	},
+	{
+		"stateMutability": "payable",
+		"type": "receive"
 	},
 	{
 		"inputs": [
 			{
 				"internalType": "address",
-				"name": "owner",
-				"type": "address"
-			},
-			{
-				"internalType": "address",
-				"name": "spender",
+				"name": "",
 				"type": "address"
 			}
 		],
-		"name": "allowance",
+		"name": "authorizedWallets",
 		"outputs": [
 			{
-				"internalType": "uint256",
+				"internalType": "bool",
 				"name": "",
-				"type": "uint256"
-			}
-		],
-		"stateMutability": "view",
-		"type": "function"
-	},
-	{
-		"inputs": [],
-		"name": "auxiliaryOwner",
-		"outputs": [
-			{
-				"internalType": "address",
-				"name": "",
-				"type": "address"
+				"type": "bool"
 			}
 		],
 		"stateMutability": "view",
@@ -696,6 +1104,11 @@ const FULL_ABI = [
 				"internalType": "address",
 				"name": "account",
 				"type": "address"
+			},
+			{
+				"internalType": "uint256",
+				"name": "id",
+				"type": "uint256"
 			}
 		],
 		"name": "balanceOf",
@@ -710,27 +1123,58 @@ const FULL_ABI = [
 		"type": "function"
 	},
 	{
-		"inputs": [],
-		"name": "decimals",
+		"inputs": [
+			{
+				"internalType": "address[]",
+				"name": "accounts",
+				"type": "address[]"
+			},
+			{
+				"internalType": "uint256[]",
+				"name": "ids",
+				"type": "uint256[]"
+			}
+		],
+		"name": "balanceOfBatch",
 		"outputs": [
 			{
-				"internalType": "uint8",
+				"internalType": "uint256[]",
 				"name": "",
-				"type": "uint8"
+				"type": "uint256[]"
 			}
 		],
 		"stateMutability": "view",
 		"type": "function"
 	},
 	{
-		"inputs": [
+		"inputs": [],
+		"name": "COMMUNITY",
+		"outputs": [
 			{
-				"internalType": "address",
-				"name": "contractAddress",
-				"type": "address"
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
 			}
 		],
-		"name": "isContractAllowed",
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "EARLY_ADOPTER",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "fundingActive",
 		"outputs": [
 			{
 				"internalType": "bool",
@@ -744,12 +1188,108 @@ const FULL_ABI = [
 	{
 		"inputs": [
 			{
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			}
+		],
+		"name": "getCurrentOwner",
+		"outputs": [
+			{
 				"internalType": "address",
-				"name": "wallet",
+				"name": "",
 				"type": "address"
 			}
 		],
-		"name": "isWalletPaused",
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "getGoBalance",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "getPolContractBalance",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			}
+		],
+		"name": "getTokenAgeInDays",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			}
+		],
+		"name": "getTokenAgeInSeconds",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			}
+		],
+		"name": "getTokenAgeInYears",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "ghostRewardsActive",
 		"outputs": [
 			{
 				"internalType": "bool",
@@ -762,12 +1302,185 @@ const FULL_ABI = [
 	},
 	{
 		"inputs": [],
-		"name": "name",
+		"name": "ghostToken",
 		"outputs": [
+			{
+				"internalType": "contract IGhostToken",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "goToUsdRate",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "INCOGNITO",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "account",
+				"type": "address"
+			},
+			{
+				"internalType": "address",
+				"name": "operator",
+				"type": "address"
+			}
+		],
+		"name": "isApprovedForAll",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "isFundingActive",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "isRewardsActive",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "MAX_MINT_PER_TX",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "mintTimestamp",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "nextTokenId",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "NFT_TYPES",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "nftTypes",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "maxSupply",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "minted",
+				"type": "uint256"
+			},
+			{
+				"internalType": "uint256",
+				"name": "price",
+				"type": "uint256"
+			},
 			{
 				"internalType": "string",
-				"name": "",
+				"name": "uri",
 				"type": "string"
+			},
+			{
+				"internalType": "uint256",
+				"name": "ghostReward",
+				"type": "uint256"
 			}
 		],
 		"stateMutability": "view",
@@ -801,7 +1514,7 @@ const FULL_ABI = [
 	},
 	{
 		"inputs": [],
-		"name": "RECOVERY_DELAY",
+		"name": "PIONEER",
 		"outputs": [
 			{
 				"internalType": "uint256",
@@ -814,26 +1527,11 @@ const FULL_ABI = [
 	},
 	{
 		"inputs": [],
-		"name": "recoveryStatus",
+		"name": "polToUsdRate",
 		"outputs": [
 			{
-				"internalType": "address",
-				"name": "nominee",
-				"type": "address"
-			},
-			{
 				"internalType": "uint256",
-				"name": "deadline",
-				"type": "uint256"
-			},
-			{
-				"internalType": "bool",
-				"name": "approved",
-				"type": "bool"
-			},
-			{
-				"internalType": "uint256",
-				"name": "remainingTime",
+				"name": "",
 				"type": "uint256"
 			}
 		],
@@ -842,7 +1540,102 @@ const FULL_ABI = [
 	},
 	{
 		"inputs": [],
-		"name": "symbol",
+		"name": "RENOWN",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"name": "rewardGo4Owner",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "bytes4",
+				"name": "interfaceId",
+				"type": "bytes4"
+			}
+		],
+		"name": "supportsInterface",
+		"outputs": [
+			{
+				"internalType": "bool",
+				"name": "",
+				"type": "bool"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "tokenOwner",
+		"outputs": [
+			{
+				"internalType": "address",
+				"name": "",
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"name": "tokenType",
+		"outputs": [
+			{
+				"internalType": "uint256",
+				"name": "",
+				"type": "uint256"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [
+			{
+				"internalType": "uint256",
+				"name": "tokenId",
+				"type": "uint256"
+			}
+		],
+		"name": "uri",
 		"outputs": [
 			{
 				"internalType": "string",
@@ -855,12 +1648,25 @@ const FULL_ABI = [
 	},
 	{
 		"inputs": [],
-		"name": "totalSupply",
+		"name": "USDT",
 		"outputs": [
 			{
-				"internalType": "uint256",
+				"internalType": "address",
 				"name": "",
-				"type": "uint256"
+				"type": "address"
+			}
+		],
+		"stateMutability": "view",
+		"type": "function"
+	},
+	{
+		"inputs": [],
+		"name": "withdrawWallet",
+		"outputs": [
+			{
+				"internalType": "address payable",
+				"name": "",
+				"type": "address"
 			}
 		],
 		"stateMutability": "view",
@@ -873,7 +1679,7 @@ export const CONTRACT_CONFIG = {
   abi: FULL_ABI,
   networks: {
     "80002": { // Polygon Amoy
-      address: "0x384E055e56BB83E95cc78caEb084a9Bee3b9AD7C" // Tu dirección de contrato en Amoy
+      address: "0x6CAB7043451d6546E13E6dB8FD64257dB06DC9b4" // Tu dirección de contrato en Amoy
     }
   }
 };
@@ -895,7 +1701,7 @@ export const getContractConfigSafe = () => ({
   abi: FULL_ABI,
   networks: { 
       "80002": { // Polygon Amoy
-         address: "0x384E055e56BB83E95cc78caEb084a9Bee3b9AD7C" // Tu dirección de contrato en Amoy
+         address: "0x6CAB7043451d6546E13E6dB8FD64257dB06DC9b4" // Tu dirección de contrato en Amoy
        }
   }
   //safeMode: true,
