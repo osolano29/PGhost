@@ -1692,7 +1692,7 @@ export const AMOY_CONFIG = {
     symbol: 'POL',
     decimals: 18
   },
-  rpcUrls: ['https://rpc-amoy.polygon.technology/'],
+  rpcUrls: ['wss://rpc-amoy.polygon.technology/ws'],     //['https://rpc-amoy.polygon.technology/'],
   blockExplorerUrls: ['https://amoy.polygonscan.com/']
 };
 
