@@ -2,7 +2,7 @@
 import { CONTRACT_CONFIG, getContractConfigSafe, AMOY_CONFIG } from './ghost-token.js';
 
 // Variables globales
-let web3, contract, contractEvents = null, userAddress, isOwner = false, isAuxiliary = false;
+let web3, contract, contractEvents = null, userAddress, isOwner = false; //isAuxiliary = false;
 let contractEventSubscriptions = [];
 const decimals = 18;
 
@@ -748,7 +748,7 @@ async function loadInitialData() {
             /* contract.methods.auxiliaryOwner().call(),
             contract.methods.recoveryStatus().call() */
         ]);
-
+        isOwner = await contract.methods.isOwner(userAddress).call();
         DOM.contractAddressShort.dataset.fullAddress = CONTRACT_CONFIG.networks["80002"].address;
         DOM.tokenBalance.textContent = `${fromWei(balance)} GO`;
         DOM.totalSupply.textContent = `${fromWei(supply)} GO`;
@@ -762,6 +762,7 @@ async function loadInitialData() {
         isAuxiliary = userAddress.toLowerCase() === auxiliary.toLowerCase();
         isOwner = utils.compareAddresses(userAddress, owner);
         isAuxiliary = utils.compareAddresses(userAddress, auxiliary);*/
+        
         isOwner = await contract.methods.isOwner(userAddress).call();
         toggleRoleSections(); // Mostrar/ocultar funciones según roles
 
@@ -1345,7 +1346,10 @@ function updateUI() {
 }
 
 function toggleRoleSections() {
-    if (isOwner) {
+    if (DOM.ownerSection) {
+        DOM.ownerSection.style.display = isOwner ? 'block' : 'none';
+    }
+/*    if (isOwner) {
         DOM.ownerSection.style.display = 'block';
     } else {
         DOM.ownerSection.style.display = 'none';
@@ -1355,7 +1359,7 @@ function toggleRoleSections() {
         DOM.auxiliarySection.style.display = 'block';
     } else {
         DOM.auxiliarySection.style.display = 'none';
-    }
+    } */
 }
 
 function setupEventListeners() {
