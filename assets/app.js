@@ -180,14 +180,14 @@ const DOM = {
     unpauseContractBtn: document.getElementById('unpauseContract'),
     
     // Auxiliar
-    newAuxiliary: document.getElementById('newAuxiliary'),
+/*    newAuxiliary: document.getElementById('newAuxiliary'),
     setAuxiliaryBtn: document.getElementById('setAuxiliaryBtn'),
     claimOwnershipBtn: document.getElementById('claimOwnershipBtn'),
     auxiliaryAddress: document.getElementById('auxiliaryAddress'),
     estimateSetAuxiliaryGas: document.getElementById('estimateSetAuxiliaryGas'),  //***
     estimateClaimOwnershipGas: document.getElementById('estimateClaimOwnershipGas'), //***
     auxiliaryGasEstimate: document.getElementById('auxiliaryGasEstimate'),         //****
-    auxiliaryGasUsed: document.getElementById('auxiliaryGasUsed'),                //****
+    auxiliaryGasUsed: document.getElementById('auxiliaryGasUsed'),                //****  */
 
     // Aprobación de gastos
     spenderContract: document.getElementById('spenderContract'),              //***
@@ -202,8 +202,8 @@ const DOM = {
     loaderText: document.getElementById('loaderText'),
     notification: document.getElementById('notification'),
     notificationMessage: document.getElementById('notificationMessage'),
-    ownerSection: document.getElementById('ownerSection'),
-    auxiliarySection: document.getElementById('auxiliarySection'),
+/*    ownerSection: document.getElementById('ownerSection'),
+    auxiliarySection: document.getElementById('auxiliarySection'),*/
     metaMaskModal: document.getElementById('metaMaskModal'),
 
      // Sistema de recovery
@@ -740,13 +740,13 @@ async function loadInitialData() {
             throw new Error("El contrato no está disponible");
         }
         // Usa Promise.all para llamadas seguras
-        const [balance, supply, paused, walletPaused, auxiliary,recovery] = await Promise.all([
+        const [balance, supply, paused, walletPaused, /*auxiliary,recovery*/ ] = await Promise.all([
             contract.methods.balanceOf(userAddress).call(),
             contract.methods.totalSupply().call(),
             contract.methods.paused().call(),
-            contract.methods.isWalletPaused(userAddress).call(),
-            contract.methods.auxiliaryOwner().call(),
-            contract.methods.recoveryStatus().call()
+            contract.methods.isWalletPaused(userAddress).call()
+            /* contract.methods.auxiliaryOwner().call(),
+            contract.methods.recoveryStatus().call() */
         ]);
 
         DOM.contractAddressShort.dataset.fullAddress = CONTRACT_CONFIG.networks["80002"].address;
@@ -757,11 +757,12 @@ async function loadInitialData() {
         DOM.auxiliaryAddress.textContent = auxiliary === '0x0000000000000000000000000000000000000000' ? 
             'No asignado' : shortAddress(auxiliary);
         // Verificación de roles segura
-        const owner = await contract.methods.owner().call();
+        /*const owner = await contract.methods.owner().call();
         isOwner = userAddress.toLowerCase() === owner.toLowerCase();
         isAuxiliary = userAddress.toLowerCase() === auxiliary.toLowerCase();
-        /*isOwner = utils.compareAddresses(userAddress, owner);
+        isOwner = utils.compareAddresses(userAddress, owner);
         isAuxiliary = utils.compareAddresses(userAddress, auxiliary);*/
+        isOwner = await contract.methods.isOwner(userAddress).call();
         toggleRoleSections(); // Mostrar/ocultar funciones según roles
 
         updateRecoveryUI(recovery);  // Actualizar datos de recovery
@@ -948,7 +949,7 @@ async function toggleContractPause(pause) {
     }
 }
 
-async function setAuxiliaryOwner() {
+/*async function setAuxiliaryOwner() {
     if (!isOwner) {
         showNotification("Solo el owner puede asignar auxiliar", "error");
         return;
@@ -990,7 +991,7 @@ async function setAuxiliaryOwner() {
     } finally {
         hideLoader();
     }
-}
+}  
 
 async function approveRecovery(approve) {
     if (!isOwner) {
@@ -1111,7 +1112,7 @@ async function claimOwnership() {
     } finally {
         hideLoader();
     }
-}
+} */
 
 async function estimateApprovalGas() {
     try {
@@ -1442,12 +1443,12 @@ function setupEventListeners() {
         );
     });
      // Funciones de auxiliar   ********************
-    if (DOM.setAuxiliaryBtn) DOM.setAuxiliaryBtn.addEventListener('click', setAuxiliaryOwner);  //***
+/*    if (DOM.setAuxiliaryBtn) DOM.setAuxiliaryBtn.addEventListener('click', setAuxiliaryOwner);  //***
     if (DOM.claimOwnershipBtn) DOM.claimOwnershipBtn.addEventListener('click', claimOwnership);  //****
         // Recovery
     if (DOM.approveRecoveryBtn) DOM.approveRecoveryBtn.addEventListener('click', approveRecovery(true));  //**
     if (DOM.executeRecoveryBtn) DOM.executeRecoveryBtn.addEventListener('click', executeRecovery);  //**
-
+*/
     DOM.burnBtn?.addEventListener('click', burnTokens);   //****
     if (DOM.pauseContractBtn) DOM.pauseContractBtn.addEventListener('click', () => toggleContractPause(true));   //**
     if (DOM.unpauseContractBtn) DOM.unpauseContractBtn.addEventListener('click', () => toggleContractPause(false));  //**
