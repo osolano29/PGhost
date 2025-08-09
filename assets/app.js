@@ -202,12 +202,12 @@ const DOM = {
     loaderText: document.getElementById('loaderText'),
     notification: document.getElementById('notification'),
     notificationMessage: document.getElementById('notificationMessage'),
-/*    ownerSection: document.getElementById('ownerSection'),
-    auxiliarySection: document.getElementById('auxiliarySection'),*/
+    ownerSection: document.getElementById('ownerSection'),
+    //auxiliarySection: document.getElementById('auxiliarySection'),*/
     metaMaskModal: document.getElementById('metaMaskModal'),
 
      // Sistema de recovery
-    approveRecoveryBtn: document.getElementById('approveRecoveryBtn'),
+   /* approveRecoveryBtn: document.getElementById('approveRecoveryBtn'),
     estimateApproveRecoveryGas: document.getElementById('estimateApproveRecoveryGas'),
     executeRecoveryBtn: document.getElementById('executeRecoveryBtn'),
     estimateExecuteRecoveryGas: document.getElementById('estimateExecuteRecoveryGas'),
@@ -217,7 +217,7 @@ const DOM = {
     recoveryApproved: document.getElementById('recoveryApproved'),
     recoveryRemainingTime: document.getElementById('recoveryRemainingTime'),
     recoveryGasEstimate: document.getElementById('recoveryGasEstimate'),
-    recoveryGasUsed: document.getElementById('recoveryGasUsed'),
+    recoveryGasUsed: document.getElementById('recoveryGasUsed'),*/
     
     // Configuración de Gas
     gasConfigPanel: document.getElementById('gasConfigPanel'),
@@ -699,7 +699,7 @@ const handleCSPError = (error) => {
   }
 };
 
-function updateRecoveryUI(recoveryData) {
+/*function updateRecoveryUI(recoveryData) {
     if (!DOM.recoveryNominee || !DOM.recoveryStatus || !DOM.recoveryCountdown) {
        console.warn("⚠️ Elementos del DOM de recuperación no encontrados");
        return;
@@ -729,7 +729,7 @@ function updateRecoveryUI(recoveryData) {
     } catch (error) {
         console.error("Error actualizando la UI de recuperación:", error);
     }
-}
+}  */
         
 // ================ FUNCIONES DEL CONTRATO ================
 async function loadInitialData() {
