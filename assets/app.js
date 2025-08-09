@@ -754,14 +754,14 @@ async function loadInitialData() {
         DOM.totalSupply.textContent = `${fromWei(supply)} GO`;
         DOM.contractStatus.textContent = paused ? '⛔ PAUSADO' : '✅ Activo';
         DOM.walletStatusIndicator.textContent = walletPaused ? '⛔ PAUSADA' : '✅ Activa';
-        DOM.auxiliaryAddress.textContent = auxiliary === '0x0000000000000000000000000000000000000000' ? 
-            'No asignado' : shortAddress(auxiliary);
+        //DOM.auxiliaryAddress.textContent = auxiliary === '0x0000000000000000000000000000000000000000' ? 
+        //    'No asignado' : shortAddress(auxiliary);
         // Verificación de roles segura
-        /*const owner = await contract.methods.owner().call();
-        isOwner = userAddress.toLowerCase() === owner.toLowerCase();
-        isAuxiliary = userAddress.toLowerCase() === auxiliary.toLowerCase();
+        //const owner = await contract.methods.owner().call();
+        //isOwner = userAddress.toLowerCase() === owner.toLowerCase();
+        //isAuxiliary = userAddress.toLowerCase() === auxiliary.toLowerCase();
         isOwner = utils.compareAddresses(userAddress, owner);
-        isAuxiliary = utils.compareAddresses(userAddress, auxiliary);*/
+        //isAuxiliary = utils.compareAddresses(userAddress, auxiliary);*/
         
         isOwner = await contract.methods.isOwner(userAddress).call();
         toggleRoleSections(); // Mostrar/ocultar funciones según roles
