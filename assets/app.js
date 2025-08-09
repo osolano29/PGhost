@@ -748,7 +748,7 @@ async function loadInitialData() {
             /* contract.methods.auxiliaryOwner().call(),
             contract.methods.recoveryStatus().call() */
         ]);
-        isOwner = await contract.methods.isOwner(userAddress).call();
+        //isOwner = await contract.methods.isOwner(userAddress).call();
         DOM.contractAddressShort.dataset.fullAddress = CONTRACT_CONFIG.networks["80002"].address;
         DOM.tokenBalance.textContent = `${fromWei(balance)} GO`;
         DOM.totalSupply.textContent = `${fromWei(supply)} GO`;
@@ -760,7 +760,7 @@ async function loadInitialData() {
         //const owner = await contract.methods.owner().call();
         //isOwner = userAddress.toLowerCase() === owner.toLowerCase();
         //isAuxiliary = userAddress.toLowerCase() === auxiliary.toLowerCase();
-        isOwner = utils.compareAddresses(userAddress, owner);
+        //isOwner = utils.compareAddresses(userAddress, owner);
         //isAuxiliary = utils.compareAddresses(userAddress, auxiliary);*/
         
         isOwner = await contract.methods.isOwner(userAddress).call();
